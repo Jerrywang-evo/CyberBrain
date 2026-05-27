@@ -38,6 +38,9 @@
       --rail-w: 44px;
       --grid-left: var(--sidebar-w);
       --grid-right: var(--priority-w);
+      --scrollbar-track: rgba(15, 23, 42, 0.06);
+      --scrollbar-thumb: rgba(8, 145, 178, 0.35);
+      --scrollbar-thumb-hover: rgba(8, 145, 178, 0.55);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -54,6 +57,8 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
     }
 
     .topbar {
@@ -126,6 +131,8 @@
       grid-template-columns: var(--grid-left) 1fr var(--grid-right);
       flex: 1;
       min-height: 0;
+      height: 100%;
+      align-items: stretch;
       transition: grid-template-columns 0.2s ease;
     }
 
@@ -219,10 +226,15 @@
 
       .topbar-nav .topbar-divider { display: none; }
 
-      .shell { min-height: 100dvh; }
+      .shell {
+        min-height: 100dvh;
+        height: auto;
+        overflow: visible;
+      }
 
       .app {
         display: block;
+        height: auto;
         position: relative;
         min-height: calc(100dvh - var(--topbar-h) - var(--mobile-tabbar-h));
         grid-template-columns: 1fr !important;
@@ -246,12 +258,16 @@
         bottom: var(--mobile-tabbar-h);
         width: 100% !important;
         max-width: none;
+        height: auto !important;
         max-height: none !important;
         padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
         transform: translateX(-110%);
         transition: transform 0.25s ease;
         box-shadow: var(--shadow);
         border: none;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
       .priority-panel {
@@ -384,6 +400,23 @@
       gap: 0.75rem;
       overflow: hidden;
       min-width: 0;
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
+    }
+
+    .sidebar-content {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      overflow: hidden;
+    }
+
+    .sidebar-content > .btn,
+    .sidebar-actions {
+      flex-shrink: 0;
     }
 
     .sidebar.collapsed {
@@ -468,16 +501,9 @@
 
     .project-list {
       list-style: none;
-      flex: 1;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
       gap: 0.35rem;
-      min-height: 0;
-    }
-
-    #leftPanelProjects.active .project-list {
-      min-height: 120px;
     }
 
     .project-item {
@@ -1166,11 +1192,46 @@
 
     .sidebar-tab-panel.active { display: flex; }
 
+    .sidebar-main > .section-label,
+    .sidebar-main > .tag-filter-bar,
+    .priority-panel-body > .section-label,
+    .priority-panel-body > .tag-filter-bar,
+    .sidebar-tabs,
+    .daily-filter-bar {
+      flex-shrink: 0;
+    }
+
     .sidebar-scroll-panel {
       flex: 1;
-      overflow-y: auto;
       min-height: 0;
-      padding-right: 0.1rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+      padding-right: 0.15rem;
+      margin-right: -0.05rem;
+    }
+
+    .sidebar-scroll-panel::-webkit-scrollbar {
+      width: 7px;
+    }
+
+    .sidebar-scroll-panel::-webkit-scrollbar-track {
+      background: var(--scrollbar-track);
+      border-radius: 4px;
+    }
+
+    .sidebar-scroll-panel::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb);
+      border-radius: 4px;
+      min-height: 32px;
+    }
+
+    .sidebar-scroll-panel::-webkit-scrollbar-thumb:hover {
+      background: var(--scrollbar-thumb-hover);
     }
 
     .daily-day-group { margin-bottom: 0.85rem; }
@@ -1248,8 +1309,10 @@
       padding: 1rem;
       gap: 0.5rem;
       overflow: hidden;
-      max-height: 100vh;
       min-width: 0;
+      min-height: 0;
+      height: 100%;
+      max-height: 100%;
     }
 
     .priority-panel.collapsed {
@@ -1904,7 +1967,7 @@
       <button type="button" class="topbar-btn" id="btnOpenGithub">GitHub 同步</button>
     </nav>
     <span class="topbar-hint" id="topbarHint">数据保存在浏览器本地</span>
-    <input type="file" id="importFileTop" accept=".json,application/json" style="display:none" />
+    <input type="file" id="importFileTop" accept=".json,application/json,text/json,text/plain" style="display:none" />
   </header>
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
@@ -1927,7 +1990,9 @@
           <p class="section-label">项目标签筛选</p>
           <div class="tag-filter-bar" id="leftTagFilter"></div>
           <div class="sidebar-tab-panel active" id="leftPanelProjects">
-            <ul class="project-list" id="projectList"></ul>
+            <div class="sidebar-scroll-panel" id="projectListScroll">
+              <ul class="project-list" id="projectList"></ul>
+            </div>
           </div>
           <div class="sidebar-tab-panel" id="leftPanelDaily">
             <div class="daily-filter-bar" id="dailyFilterBar">
@@ -1962,7 +2027,7 @@
             <button type="button" class="btn btn-ghost" id="btnExport">导出</button>
             <button type="button" class="btn btn-ghost" id="btnImport">导入</button>
           </div>
-          <input type="file" id="importFile" accept=".json,application/json" />
+          <input type="file" id="importFile" accept=".json,application/json,text/json,text/plain" />
           <span class="save-hint" id="saveHint">已自动保存</span>
         </div>
       </div>
@@ -4093,12 +4158,18 @@ ${lines.join("\n\n")}`;
     }
 
     function importData(file) {
+      if (!file) return;
+      const name = (file.name || "").toLowerCase();
+      if (!name.endsWith(".json") && file.type && !/json|text/i.test(file.type)) {
+        toast("请选择 .json 备份文件（如 wjy-cyber-brain-xxxx.json）");
+        return;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         try {
           const data = JSON.parse(reader.result);
           if (!data || !Array.isArray(data.projects)) {
-            toast("文件格式无效");
+            toast("文件格式无效：需包含 projects 数组");
             return;
           }
           const merge = confirm(
@@ -4139,10 +4210,11 @@ ${lines.join("\n\n")}`;
           render();
           toast("导入成功");
         } catch (e) {
-          toast("解析 JSON 失败");
+          toast("解析 JSON 失败，请确认是 WjyCyberBrain 导出的备份");
         }
       };
-      reader.readAsText(file);
+      reader.onerror = () => toast("读取文件失败，请重试");
+      reader.readAsText(file, "utf-8");
     }
 
     function escapeHtml(str) {
@@ -4274,8 +4346,14 @@ ${lines.join("\n\n")}`;
     );
     document.getElementById("btnPushGithub").addEventListener("click", () =>
       pushToGitHub(true).catch((e) => {
-        if (String(e.message).includes("409")) toast("冲突：请先从 GitHub 拉取再编辑");
-        else toast(e.message);
+        const msg = String(e.message || e);
+        if (e.status === 409 || /409|sha.*match|does not match/i.test(msg)) {
+          toast("推送冲突：手机/电脑同时改过数据。请先点「从 GitHub 拉取」，再编辑后推送");
+        } else if (/401|403|Bad credentials/i.test(msg)) {
+          toast("Token 无效或权限不足，请检查 GitHub Token 是否有 repo 权限");
+        } else {
+          toast(msg.length > 80 ? msg.slice(0, 80) + "…" : msg);
+        }
       })
     );
     document.getElementById("btnGenerateSummary").addEventListener("click", generateAiSummary);
