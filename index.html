@@ -1688,18 +1688,20 @@
 
     .summary-output.error { color: var(--danger); }
 
-    .kimi-config-panel {
+    .llm-config-panel {
       margin-top: 0.75rem;
       padding-top: 0.75rem;
       border-top: 1px solid var(--border);
     }
 
-    .kimi-config-panel summary {
+    .llm-config-panel summary {
       font-size: 0.78rem;
       color: var(--text-muted);
       cursor: pointer;
       user-select: none;
     }
+
+    .llm-config-panel[hidden] { display: none; }
 
     .field-hint {
       font-size: 0.68rem;
@@ -2234,8 +2236,15 @@
 
   <div class="modal-overlay" id="modalSummary">
     <div class="modal modal-summary">
-      <h3>AI 完成总结（Kimi）</h3>
+      <h3>AI 完成总结</h3>
       <p class="meta" style="margin-bottom:0.75rem">根据所选时间段与标签汇总已完成任务，生成一段工作总结，归纳说明做了些什么（基于条目信息，非简单罗列，不编造）。</p>
+      <div class="field">
+        <label for="summaryProviderSelect">大模型</label>
+        <select id="summaryProviderSelect">
+          <option value="kimi">Kimi（Moonshot）</option>
+          <option value="deepseek">DeepSeek</option>
+        </select>
+      </div>
       <div class="grid-2">
         <div class="field">
           <label for="summaryDateFrom">开始日期</label>
@@ -2256,7 +2265,7 @@
         <label>总结结果</label>
         <div class="summary-output" id="summaryOutput">选择条件后点击「生成总结」</div>
       </div>
-      <details class="kimi-config-panel">
+      <details class="llm-config-panel" id="kimiConfigPanel" open>
         <summary>Kimi API 配置（仅存本地浏览器）</summary>
         <div class="field" style="margin-top:0.65rem">
           <label for="kimiApiKeyInput">API Key</label>
@@ -2272,12 +2281,33 @@
           <input type="text" id="kimiModelInput" placeholder="kimi-k2.6" />
         </div>
         <div class="field">
-          <label for="kimiTemperatureInput">Temperature</label>
+          <label for="kimiTemperatureInput">Temperature（Kimi）</label>
           <input type="number" id="kimiTemperatureInput" min="0" max="2" step="0.1" value="1" />
-          <p class="field-hint">部分模型（如 kimi-k2.6）仅支持 temperature = 1，否则会报错。</p>
+          <p class="field-hint">控制回答随机程度：越大越发散。部分 Kimi 模型（如 kimi-k2.6）<strong>仅允许填 1</strong>，其他值会报错。</p>
         </div>
-        <button type="button" class="btn btn-ghost btn-sm" id="btnSaveKimiConfig">保存 API 配置</button>
       </details>
+      <details class="llm-config-panel" id="deepseekConfigPanel" hidden>
+        <summary>DeepSeek API 配置（仅存本地浏览器）</summary>
+        <div class="field" style="margin-top:0.65rem">
+          <label for="deepseekApiKeyInput">API Key</label>
+          <input type="password" id="deepseekApiKeyInput" placeholder="sk-..." autocomplete="off" />
+          <p class="field-hint">在 platform.deepseek.com 创建；密钥仅存本机，不会写入导出文件。</p>
+        </div>
+        <div class="field">
+          <label for="deepseekBaseUrlInput">Base URL</label>
+          <input type="text" id="deepseekBaseUrlInput" placeholder="https://api.deepseek.com/v1" />
+        </div>
+        <div class="field">
+          <label for="deepseekModelInput">模型</label>
+          <input type="text" id="deepseekModelInput" placeholder="deepseek-chat" />
+        </div>
+        <div class="field">
+          <label for="deepseekTemperatureInput">Temperature（DeepSeek）</label>
+          <input type="number" id="deepseekTemperatureInput" min="0" max="2" step="0.1" value="1" />
+          <p class="field-hint">控制随机程度：<strong>0～0.5</strong> 更稳定、适合严谨总结；<strong>1</strong> 为常用默认；<strong>1～2</strong> 更活泼。与 Kimi 规则不同，可按需调节（一般 0～2）。</p>
+        </div>
+      </details>
+      <button type="button" class="btn btn-ghost btn-sm" id="btnSaveLlmConfig" style="margin-top:0.5rem">保存 API 配置</button>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalSummary">关闭</button>
         <button type="button" class="btn btn-primary" id="btnGenerateSummary">生成总结</button>
@@ -2291,6 +2321,7 @@
     const STORAGE_KEY = "wjy-cyber-brain-v1";
     const GITHUB_CONFIG_KEY = "wjy-github-config";
     const KIMI_CONFIG_KEY = "wjy-kimi-config";
+    const LLM_CONFIG_KEY = "wjy-llm-summary-config";
     const GITHUB_DEFAULTS = {
       enabled: false,
       autoSync: true,
@@ -2309,6 +2340,13 @@
       apiKey: "",
       temperature: 1,
     };
+    const DEEPSEEK_DEFAULTS = {
+      baseUrl: "https://api.deepseek.com/v1",
+      model: "deepseek-chat",
+      apiKey: "",
+      temperature: 1,
+    };
+    const LLM_PROVIDER_LABELS = { kimi: "Kimi", deepseek: "DeepSeek" };
     const STATUS_LABELS = { active: "进行中", paused: "暂停", completed: "已完成" };
     const TASK_STATUS_LABELS = { todo: "待办", doing: "进行中", done: "已完成" };
     const PRIORITY_LABELS = { low: "低", medium: "中", high: "高" };
@@ -3033,38 +3071,103 @@
       return items.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
     }
 
-    function loadKimiConfig() {
+    function loadLlmSummaryConfig() {
       try {
-        const raw = localStorage.getItem(KIMI_CONFIG_KEY);
-        if (raw) return { ...KIMI_DEFAULTS, ...JSON.parse(raw) };
+        const raw = localStorage.getItem(LLM_CONFIG_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          return {
+            provider: parsed.provider === "deepseek" ? "deepseek" : "kimi",
+            kimi: { ...KIMI_DEFAULTS, ...(parsed.kimi || {}) },
+            deepseek: { ...DEEPSEEK_DEFAULTS, ...(parsed.deepseek || {}) },
+          };
+        }
       } catch (e) {
-        console.warn("读取 Kimi 配置失败", e);
+        console.warn("读取大模型配置失败", e);
       }
-      return { ...KIMI_DEFAULTS };
+      try {
+        const legacy = localStorage.getItem(KIMI_CONFIG_KEY);
+        if (legacy) {
+          return {
+            provider: "kimi",
+            kimi: { ...KIMI_DEFAULTS, ...JSON.parse(legacy) },
+            deepseek: { ...DEEPSEEK_DEFAULTS },
+          };
+        }
+      } catch (e) {
+        console.warn("读取旧版 Kimi 配置失败", e);
+      }
+      return {
+        provider: "kimi",
+        kimi: { ...KIMI_DEFAULTS },
+        deepseek: { ...DEEPSEEK_DEFAULTS },
+      };
     }
 
-    function saveKimiConfig(cfg) {
-      localStorage.setItem(KIMI_CONFIG_KEY, JSON.stringify(cfg));
+    function saveLlmSummaryConfig(cfg) {
+      localStorage.setItem(LLM_CONFIG_KEY, JSON.stringify(cfg));
+      localStorage.setItem(KIMI_CONFIG_KEY, JSON.stringify(cfg.kimi));
     }
 
-    function fillKimiConfigForm() {
-      const cfg = loadKimiConfig();
-      document.getElementById("kimiApiKeyInput").value = cfg.apiKey || "";
-      document.getElementById("kimiBaseUrlInput").value = cfg.baseUrl || KIMI_DEFAULTS.baseUrl;
-      document.getElementById("kimiModelInput").value = cfg.model || KIMI_DEFAULTS.model;
-      document.getElementById("kimiTemperatureInput").value =
-        cfg.temperature != null ? cfg.temperature : KIMI_DEFAULTS.temperature;
+    function parseTemperatureInput(inputId, fallback) {
+      const tempRaw = document.getElementById(inputId).value;
+      const temperature = tempRaw === "" ? fallback : Number(tempRaw);
+      return Number.isFinite(temperature) ? temperature : fallback;
     }
 
     function readKimiConfigFromForm() {
-      const tempRaw = document.getElementById("kimiTemperatureInput").value;
-      const temperature = tempRaw === "" ? KIMI_DEFAULTS.temperature : Number(tempRaw);
       return {
         apiKey: document.getElementById("kimiApiKeyInput").value.trim(),
         baseUrl: document.getElementById("kimiBaseUrlInput").value.trim() || KIMI_DEFAULTS.baseUrl,
         model: document.getElementById("kimiModelInput").value.trim() || KIMI_DEFAULTS.model,
-        temperature: Number.isFinite(temperature) ? temperature : KIMI_DEFAULTS.temperature,
+        temperature: parseTemperatureInput("kimiTemperatureInput", KIMI_DEFAULTS.temperature),
       };
+    }
+
+    function readDeepseekConfigFromForm() {
+      return {
+        apiKey: document.getElementById("deepseekApiKeyInput").value.trim(),
+        baseUrl: document.getElementById("deepseekBaseUrlInput").value.trim() || DEEPSEEK_DEFAULTS.baseUrl,
+        model: document.getElementById("deepseekModelInput").value.trim() || DEEPSEEK_DEFAULTS.model,
+        temperature: parseTemperatureInput("deepseekTemperatureInput", DEEPSEEK_DEFAULTS.temperature),
+      };
+    }
+
+    function readLlmSummaryConfigFromForm() {
+      const provider = document.getElementById("summaryProviderSelect").value;
+      return {
+        provider: provider === "deepseek" ? "deepseek" : "kimi",
+        kimi: readKimiConfigFromForm(),
+        deepseek: readDeepseekConfigFromForm(),
+      };
+    }
+
+    function getActiveLlmFromConfig(allCfg) {
+      const provider = allCfg.provider === "deepseek" ? "deepseek" : "kimi";
+      return { provider, cfg: allCfg[provider] };
+    }
+
+    function fillLlmSummaryConfigForm() {
+      const all = loadLlmSummaryConfig();
+      document.getElementById("summaryProviderSelect").value = all.provider;
+      document.getElementById("kimiApiKeyInput").value = all.kimi.apiKey || "";
+      document.getElementById("kimiBaseUrlInput").value = all.kimi.baseUrl || KIMI_DEFAULTS.baseUrl;
+      document.getElementById("kimiModelInput").value = all.kimi.model || KIMI_DEFAULTS.model;
+      document.getElementById("kimiTemperatureInput").value =
+        all.kimi.temperature != null ? all.kimi.temperature : KIMI_DEFAULTS.temperature;
+      document.getElementById("deepseekApiKeyInput").value = all.deepseek.apiKey || "";
+      document.getElementById("deepseekBaseUrlInput").value = all.deepseek.baseUrl || DEEPSEEK_DEFAULTS.baseUrl;
+      document.getElementById("deepseekModelInput").value = all.deepseek.model || DEEPSEEK_DEFAULTS.model;
+      document.getElementById("deepseekTemperatureInput").value =
+        all.deepseek.temperature != null ? all.deepseek.temperature : DEEPSEEK_DEFAULTS.temperature;
+      updateSummaryProviderPanels();
+    }
+
+    function updateSummaryProviderPanels() {
+      const provider = document.getElementById("summaryProviderSelect").value;
+      const isKimi = provider !== "deepseek";
+      document.getElementById("kimiConfigPanel").hidden = !isKimi;
+      document.getElementById("deepseekConfigPanel").hidden = isKimi;
     }
 
     function buildSummaryPrompt(tasks, tagLabel, fromKey, toKey) {
@@ -3091,9 +3194,11 @@
 ${lines.join("\n\n")}`;
     }
 
-    async function callKimiChat(userPrompt) {
-      const cfg = readKimiConfigFromForm();
-      if (!cfg.apiKey) throw new Error("请先配置 Kimi API Key");
+    async function callLlmChat(userPrompt) {
+      const allCfg = readLlmSummaryConfigFromForm();
+      const { provider, cfg } = getActiveLlmFromConfig(allCfg);
+      const label = LLM_PROVIDER_LABELS[provider];
+      if (!cfg.apiKey) throw new Error(`请先配置 ${label} API Key`);
       const url = `${cfg.baseUrl.replace(/\/$/, "")}/chat/completions`;
       const res = await fetch(url, {
         method: "POST",
@@ -3145,7 +3250,7 @@ ${lines.join("\n\n")}`;
       document.getElementById("summaryOutput").textContent = "选择条件后点击「生成总结」";
       document.getElementById("summaryOutput").className = "summary-output";
       renderSummaryTagSelect();
-      fillKimiConfigForm();
+      fillLlmSummaryConfigForm();
       openModal("modalSummary");
     }
 
@@ -3164,7 +3269,9 @@ ${lines.join("\n\n")}`;
         return;
       }
 
-      saveKimiConfig(readKimiConfigFromForm());
+      const llmCfg = readLlmSummaryConfigFromForm();
+      saveLlmSummaryConfig(llmCfg);
+      const providerLabel = LLM_PROVIDER_LABELS[llmCfg.provider] || "模型";
 
       const tasks = collectCompletedTasksForSummary(fromKey, toKey, tagId);
       if (!tasks.length) {
@@ -3177,17 +3284,17 @@ ${lines.join("\n\n")}`;
       const prompt = buildSummaryPrompt(tasks, tagLabel, fromKey, toKey);
 
       out.className = "summary-output loading";
-      out.textContent = "正在请求 Kimi 生成总结，请稍候…";
+      out.textContent = `正在请求 ${providerLabel} 生成总结，请稍候…`;
       document.getElementById("btnGenerateSummary").disabled = true;
 
       try {
-        const text = await callKimiChat(prompt);
+        const text = await callLlmChat(prompt);
         out.className = "summary-output";
         out.textContent = text;
         toast("总结已生成");
       } catch (e) {
         out.className = "summary-output error";
-        out.textContent = `生成失败：${e.message}\n\n若提示跨域错误，请确认网络可访问 Moonshot API，或检查 API Key 是否有效。`;
+        out.textContent = `生成失败：${e.message}\n\n请检查 ${providerLabel} API Key、模型名与 Temperature 设置；若提示跨域，请确认网络可访问对应 API。`;
         toast("总结生成失败");
       } finally {
         document.getElementById("btnGenerateSummary").disabled = false;
@@ -4357,9 +4464,14 @@ ${lines.join("\n\n")}`;
       })
     );
     document.getElementById("btnGenerateSummary").addEventListener("click", generateAiSummary);
-    document.getElementById("btnSaveKimiConfig").addEventListener("click", () => {
-      saveKimiConfig(readKimiConfigFromForm());
-      toast("Kimi 配置已保存到本地");
+    document.getElementById("summaryProviderSelect").addEventListener("change", () => {
+      updateSummaryProviderPanels();
+      saveLlmSummaryConfig(readLlmSummaryConfigFromForm());
+    });
+
+    document.getElementById("btnSaveLlmConfig").addEventListener("click", () => {
+      saveLlmSummaryConfig(readLlmSummaryConfigFromForm());
+      toast("大模型 API 配置已保存到本地");
     });
 
     bindDailyFilterEvents();
