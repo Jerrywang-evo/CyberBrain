@@ -2019,6 +2019,7 @@
                 <button type="button" class="daily-quick-btn" data-range="30">近30天</button>
                 <button type="button" class="daily-quick-btn" data-range="all">全部</button>
               </div>
+              <p class="field-hint" style="margin:0">「今天」从 6:00 起算至次日 6:00；0～6 点完成的任务仍算在前一自然日。</p>
             </div>
             <div class="sidebar-scroll-panel" id="dailyDigestPanel"></div>
           </div>
@@ -2154,6 +2155,11 @@
           <button type="button" class="btn btn-ghost btn-sm" id="btnClearDueDate">清除</button>
         </div>
       </div>
+      <div class="field" id="taskCompletedAtField" style="display:none">
+        <label for="taskCompletedAtInput">完成时间</label>
+        <input type="datetime-local" id="taskCompletedAtInput" step="60" />
+        <p class="field-hint">标记为已完成时可填写或修改。统计按<strong>6:00～次日 6:00</strong>为一天：凌晨完成的任务仍计入前一自然日。</p>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalTask">取消</button>
         <button type="button" class="btn btn-primary" id="btnConfirmTask">保存</button>
@@ -2237,7 +2243,7 @@
   <div class="modal-overlay" id="modalSummary">
     <div class="modal modal-summary">
       <h3>AI 完成总结</h3>
-      <p class="meta" style="margin-bottom:0.75rem">根据所选时间段与标签汇总已完成任务，生成一段工作总结，归纳说明做了些什么（基于条目信息，非简单罗列，不编造）。</p>
+      <p class="meta" style="margin-bottom:0.75rem">根据所选时间段与标签汇总已完成任务，按任务分段生成工作总结（每项一段，基于条目信息，不编造）。日期按 6:00～次日 6:00 为一天统计。</p>
       <div class="field">
         <label for="summaryProviderSelect">大模型</label>
         <select id="summaryProviderSelect">
@@ -2351,6 +2357,8 @@
     const TASK_STATUS_LABELS = { todo: "待办", doing: "进行中", done: "已完成" };
     const PRIORITY_LABELS = { low: "低", medium: "中", high: "高" };
     const TAG_COLORS = ["#0891b2", "#6366f1", "#16a34a", "#b45309", "#dc2626", "#9333ea", "#db2777", "#64748b"];
+    /** 完成时间「今日」起点：当日 6:00 至次日 6:00 为同一逻辑日 */
+    const DAY_START_HOUR = 6;
     let newTagColor = TAG_COLORS[0];
 
     let state = {
@@ -2358,7 +2366,7 @@
       tags: [],
       tagFilterId: null,
       activeProjectId: null,
-      taskSort: "updatedAt-desc",
+      taskSort: "createdAt-desc",
       logSort: "createdAt-desc",
       leftSidebarTab: "projects",
       rightSidebarTab: "priority",
@@ -2628,7 +2636,7 @@
       state.projects = (data.projects || []).map(normalizeProject);
       state.tagFilterId = data.tagFilterId && tags.some((t) => t.id === data.tagFilterId) ? data.tagFilterId : null;
       state.activeProjectId = data.activeProjectId || null;
-      state.taskSort = data.taskSort || "updatedAt-desc";
+      state.taskSort = data.taskSort || "createdAt-desc";
       state.logSort = data.logSort || "createdAt-desc";
       state.leftSidebarTab = data.leftSidebarTab === "daily" ? "daily" : data.dailyDigestOpen ? "daily" : "projects";
       state.rightSidebarTab = data.rightSidebarTab === "deadline" ? "deadline" : data.deadlineDigestOpen ? "deadline" : "priority";
@@ -2971,6 +2979,31 @@
         : `共 ${state.projects.length} 个项目 · 本地保存${ghHint}`;
     }
 
+    function isoToDatetimeLocal(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return "";
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function readTaskCompletedAtFromForm(fallbackIso) {
+      const raw = document.getElementById("taskCompletedAtInput").value;
+      if (!raw) return fallbackIso || new Date().toISOString();
+      const d = new Date(raw);
+      return Number.isNaN(d.getTime()) ? fallbackIso || new Date().toISOString() : d.toISOString();
+    }
+
+    function syncTaskCompletedAtFieldVisibility() {
+      const isDone = document.getElementById("taskStatusInput").value === "done";
+      const field = document.getElementById("taskCompletedAtField");
+      const input = document.getElementById("taskCompletedAtInput");
+      if (field) field.style.display = isDone ? "" : "none";
+      if (isDone && input && !input.value) {
+        input.value = isoToDatetimeLocal(new Date().toISOString());
+      }
+    }
+
     function syncTaskCompletedAt(task, prevStatus) {
       const now = new Date().toISOString();
       if (task.status === "done") {
@@ -2981,7 +3014,7 @@
       }
     }
 
-    function dayKey(iso) {
+    function calendarDayKey(iso) {
       const d = new Date(iso);
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -2989,13 +3022,38 @@
       return `${y}-${m}-${day}`;
     }
 
+    /** 完成时间逻辑日：当日 6:00 至次日 6:00 归为同一 dayKey */
+    function dayKey(iso) {
+      const d = new Date(iso);
+      const shifted = new Date(d.getTime() - DAY_START_HOUR * 60 * 60 * 1000);
+      const y = shifted.getFullYear();
+      const m = String(shifted.getMonth() + 1).padStart(2, "0");
+      const day = String(shifted.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    }
+
+    function todayLogicalDayKey() {
+      return dayKey(new Date().toISOString());
+    }
+
+    function prevLogicalDayKey(key) {
+      const [y, m, d] = key.split("-").map(Number);
+      const start = new Date(y, m - 1, d, DAY_START_HOUR, 0, 0, 0);
+      return dayKey(new Date(start.getTime() - 1).toISOString());
+    }
+
+    function addLogicalDays(key, delta) {
+      const [y, m, d] = key.split("-").map(Number);
+      const start = new Date(y, m - 1, d, DAY_START_HOUR, 0, 0, 0);
+      start.setDate(start.getDate() + delta);
+      return dayKey(start.toISOString());
+    }
+
     function formatDayLabel(key) {
       const [y, m, d] = key.split("-").map(Number);
       const date = new Date(y, m - 1, d);
-      const todayKey = dayKey(new Date().toISOString());
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayKey = dayKey(yesterday.toISOString());
+      const todayKey = todayLogicalDayKey();
+      const yesterdayKey = prevLogicalDayKey(todayKey);
       const weekday = date.toLocaleDateString("zh-CN", { weekday: "short" });
       const short = `${m}月${d}日 ${weekday}`;
       if (key === todayKey) return `今天 · ${short}`;
@@ -3004,12 +3062,10 @@
     }
 
     function initDailyDateState(data) {
-      const today = dayKey(new Date().toISOString());
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 6);
+      const today = todayLogicalDayKey();
       state.dailyDateMode = data?.dailyDateMode === "range" ? "range" : "day";
       state.dailySingleDate = data?.dailySingleDate || today;
-      state.dailyRangeFrom = data?.dailyRangeFrom || dayKey(weekAgo.toISOString());
+      state.dailyRangeFrom = data?.dailyRangeFrom || addLogicalDays(today, -6);
       state.dailyRangeTo = data?.dailyRangeTo || today;
     }
 
@@ -3173,22 +3229,22 @@
     function buildSummaryPrompt(tasks, tagLabel, fromKey, toKey) {
       const lines = tasks.map((t, i) => {
         const desc = (t.taskDescription || "").trim() || "（无任务说明）";
-        return `${i + 1}. 完成日期：${t.completedDay}
+        const completedTime = t.completedAt ? formatDate(t.completedAt) : t.completedDay;
+        return `${i + 1}. 完成时间：${completedTime}
    项目：${t.projectName}
    任务标题：${t.taskTitle}
    任务说明：${desc}`;
       });
       const periodLabel = fromKey === toKey ? fromKey : `${fromKey} 至 ${toKey}`;
       const dayWord = fromKey === toKey ? "今天" : "这段时间";
-      return `以下是 ${periodLabel} 期间已完成的任务记录（筛选：${tagLabel}）。请根据这些条目，写一段${dayWord}的工作总结，说明${dayWord}做了些什么。
+      return `以下是 ${periodLabel} 期间已完成的任务记录（筛选：${tagLabel}）。请根据这些条目，写${dayWord}的工作总结，说明${dayWord}做了些什么。
 
 写作要求：
-- 输出为一段连贯的中文总结报告（仅一个自然段），不要分点、不要小标题、不要编号列表
-- 以归纳、串联为主：将各条任务的信息融入叙述，说明实际完成了什么工作，而不是逐条照搬或简单罗列
-- 叙述中须覆盖清单里的每一项任务，并体现每条对应的项目名称、任务标题、任务说明（可改写语序使行文流畅，但含义须与清单一致；无说明的可不展开）
-- 可按项目或主题自然归类合并表述，避免「第一、第二」式机械枚举
+- 每个任务单独成段：共 ${tasks.length} 项任务须输出 ${tasks.length} 个自然段，段与段之间空一行
+- 每段只描述对应序号的一条任务，段首不要写编号；须体现该任务的项目名称、任务标题、任务说明（可改写语序，含义须一致；无说明的可不展开）
+- 禁止把多个任务的内容混写在同一段里，禁止分点、小标题或编号列表
 - 仅依据清单已有信息总结，禁止编造清单中未出现的工作、结论、数据或评价
-- 语气平实，像日报/周报里的一段完成情况说明
+- 语气平实，像日报/周报里的完成情况说明
 
 任务记录（共 ${tasks.length} 项）：
 ${lines.join("\n\n")}`;
@@ -3212,7 +3268,7 @@ ${lines.join("\n\n")}`;
             {
               role: "system",
               content:
-                "你是 WjyCyberBrain 的工作总结助手。根据用户提供的已完成任务记录，撰写一段中文总结报告，说明当天或指定时段做了哪些事。要求：信息全部来自任务记录（项目、任务标题、任务说明），可归纳串联、按项目归类，但不要机械逐条罗列；不得遗漏任何一条任务的核心信息，不得编造记录中没有的内容。只输出一个自然段，不要分点、不要列表、不要标题。",
+                "你是 WjyCyberBrain 的工作总结助手。根据用户提供的已完成任务记录撰写中文总结。要求：每个任务单独一个自然段，段与段之间空一行；每段只描述一条任务，须体现项目名、任务标题与任务说明，不得把多条任务混在同一段；不得遗漏任何一条任务，不得编造记录中没有的内容。不要分点、不要列表、不要标题、不要段首编号。",
             },
             { role: "user", content: userPrompt },
           ],
@@ -3241,11 +3297,9 @@ ${lines.join("\n\n")}`;
     }
 
     function openSummaryModal() {
-      const today = dayKey(new Date().toISOString());
-      const weekAgo = new Date();
-      weekAgo.setDate(weekAgo.getDate() - 6);
-      document.getElementById("summaryDateFrom").value = state.dailyRangeFrom || dayKey(weekAgo.toISOString());
-      document.getElementById("summaryDateTo").value = state.dailyRangeTo || today;
+      const today = todayLogicalDayKey();
+      document.getElementById("summaryDateFrom").value = today;
+      document.getElementById("summaryDateTo").value = today;
       if (state.tagFilterId) document.getElementById("summaryTagSelect").value = state.tagFilterId;
       document.getElementById("summaryOutput").textContent = "选择条件后点击「生成总结」";
       document.getElementById("summaryOutput").className = "summary-output";
@@ -3325,7 +3379,7 @@ ${lines.join("\n\n")}`;
       });
 
       document.getElementById("dailySingleDate").addEventListener("change", (e) => {
-        state.dailySingleDate = e.target.value || dayKey(new Date().toISOString());
+        state.dailySingleDate = e.target.value || todayLogicalDayKey();
         save();
         renderDailyDigest();
       });
@@ -3344,9 +3398,9 @@ ${lines.join("\n\n")}`;
 
       document.querySelectorAll("#dailyFilterDay .daily-quick-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const d = new Date();
-          if (btn.dataset.preset === "yesterday") d.setDate(d.getDate() - 1);
-          state.dailySingleDate = dayKey(d.toISOString());
+          const today = todayLogicalDayKey();
+          state.dailySingleDate =
+            btn.dataset.preset === "yesterday" ? prevLogicalDayKey(today) : today;
           save();
           syncDailyFilterUI();
           renderDailyDigest();
@@ -3355,16 +3409,13 @@ ${lines.join("\n\n")}`;
 
       document.querySelectorAll("#dailyRangeQuick .daily-quick-btn").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const today = new Date();
-          const to = dayKey(today.toISOString());
+          const to = todayLogicalDayKey();
           if (btn.dataset.range === "all") {
             state.dailyRangeFrom = "2020-01-01";
             state.dailyRangeTo = to;
           } else {
             const days = parseInt(btn.dataset.range, 10) || 7;
-            const from = new Date();
-            from.setDate(from.getDate() - (days - 1));
-            state.dailyRangeFrom = dayKey(from.toISOString());
+            state.dailyRangeFrom = addLogicalDays(to, -(days - 1));
             state.dailyRangeTo = to;
           }
           save();
@@ -3622,7 +3673,7 @@ ${lines.join("\n\n")}`;
       const startPad = first.getDay();
       const daysInMonth = new Date(y, m + 1, 0).getDate();
       const prevMonthDays = new Date(y, m, 0).getDate();
-      const todayKey = dayKey(new Date().toISOString());
+      const todayKey = calendarDayKey(new Date().toISOString());
       const weekdays = ["日", "一", "二", "三", "四", "五", "六"];
       const cells = weekdays.map((w) => `<div class="calendar-weekday">${w}</div>`).join("");
 
@@ -4001,6 +4052,7 @@ ${lines.join("\n\n")}`;
                 <span class="badge ${statusClass}">${TASK_STATUS_LABELS[task.status]}</span>
                 <span class="badge ${priClass}">${PRIORITY_LABELS[task.priority] || "中"} 优先级</span>
                 ${dueLabel ? `<span class="due-meta ${dueClass}">${escapeHtml(dueLabel)}</span>` : ""}
+                ${task.status === "done" && task.completedAt ? `<span class="time-meta">完成 ${formatDate(task.completedAt)}</span>` : ""}
                 <span class="time-meta">更新 ${formatDate(task.updatedAt)}</span>
               </div>
             </div>
@@ -4209,10 +4261,16 @@ ${lines.join("\n\n")}`;
       document.getElementById("taskStatusInput").value = task?.status || "todo";
       document.getElementById("taskPriorityInput").value = task?.priority || "medium";
       document.getElementById("taskDueDateInput").value = task?.dueDate || "";
+      document.getElementById("taskCompletedAtInput").value = task?.completedAt
+        ? isoToDatetimeLocal(task.completedAt)
+        : isoToDatetimeLocal(new Date().toISOString());
 
       document.getElementById("btnClearDueDate").onclick = () => {
         document.getElementById("taskDueDateInput").value = "";
       };
+
+      document.getElementById("taskStatusInput").onchange = syncTaskCompletedAtFieldVisibility;
+      syncTaskCompletedAtFieldVisibility();
 
       document.getElementById("btnConfirmTask").onclick = () => {
         const title = document.getElementById("taskTitleInput").value.trim();
@@ -4232,15 +4290,18 @@ ${lines.join("\n\n")}`;
           updatedAt: now,
         };
 
+        if (newStatus === "done") {
+          payload.completedAt = readTaskCompletedAtFromForm(task?.completedAt || now);
+        } else {
+          payload.completedAt = null;
+        }
+
         if (!project.tasks) project.tasks = [];
 
         if (task) {
-          const prevStatus = task.status;
           Object.assign(task, payload);
-          syncTaskCompletedAt(task, prevStatus);
         } else {
           const newTask = { id: uid(), ...payload, createdAt: now };
-          syncTaskCompletedAt(newTask, "todo");
           project.tasks.push(newTask);
         }
         project.updatedAt = now;
