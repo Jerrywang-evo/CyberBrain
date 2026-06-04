@@ -4,12 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" id="metaAppleStatusBar" />
+  <meta name="format-detection" content="telephone=no" />
   <meta name="theme-color" content="#f0f4f8" id="metaThemeColor" />
   <title>Earth-Online</title>
   <script>
     (function () {
+      var SKIN_BOOT = {
+        default: { theme: "#f0f4f8", bar: "default" },
+        eva: { theme: "#08060f", bar: "black-translucent" },
+        diablo: { theme: "#0c0806", bar: "black-translucent" },
+        starcraft: { theme: "#0a1218", bar: "black-translucent" },
+        cyberpunk: { theme: "#0a0a0f", bar: "black-translucent" },
+        zelda: { theme: "#e8f0e0", bar: "default" },
+      };
       try {
-        document.documentElement.setAttribute("data-skin", localStorage.getItem("earth-online-ui-skin") || "default");
+        var id = localStorage.getItem("earth-online-ui-skin") || "default";
+        if (!SKIN_BOOT[id]) id = "default";
+        document.documentElement.setAttribute("data-skin", id);
+        var boot = SKIN_BOOT[id];
+        document.addEventListener("DOMContentLoaded", function () {
+          var themeMeta = document.getElementById("metaThemeColor");
+          var barMeta = document.getElementById("metaAppleStatusBar");
+          if (themeMeta) themeMeta.setAttribute("content", boot.theme);
+          if (barMeta) barMeta.setAttribute("content", boot.bar);
+        });
       } catch (e) { /* ignore */ }
     })();
   </script>
@@ -69,7 +89,20 @@
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
+      min-height: 100dvh;
       line-height: 1.5;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body.scroll-locked {
+      position: fixed;
+      width: 100%;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    button, .topbar-btn, .topbar-dropdown-item, .mobile-tab, .skin-card {
+      -webkit-tap-highlight-color: transparent;
     }
 
     .shell {
@@ -86,7 +119,8 @@
       align-items: center;
       gap: 0.75rem;
       padding: 0 1rem;
-      height: 48px;
+      padding-top: env(safe-area-inset-top, 0px);
+      height: calc(48px + env(safe-area-inset-top, 0px));
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
@@ -120,7 +154,85 @@
       display: flex;
       align-items: center;
       gap: 0.25rem;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+
+    .topbar-btn-primary {
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+      border: 1px solid var(--accent-border);
+    }
+
+    .topbar-btn-primary:hover {
+      background: var(--accent);
+      color: var(--on-accent);
+    }
+
+    .topbar-dropdown {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .topbar-dropdown-toggle::after {
+      content: "▾";
+      font-size: 0.65em;
+      margin-left: 0.2em;
+      opacity: 0.65;
+    }
+
+    .topbar-dropdown.open .topbar-dropdown-toggle::after {
+      transform: rotate(180deg);
+      display: inline-block;
+    }
+
+    .topbar-dropdown-menu {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 168px;
+      padding: 0.35rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      z-index: 200;
+    }
+
+    .topbar-dropdown.open .topbar-dropdown-menu {
+      display: block;
+    }
+
+    .topbar-dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      width: 100%;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.45rem 0.6rem;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .topbar-dropdown-item:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+
+    .topbar-dropdown-item .item-icon {
+      width: 1.1rem;
+      text-align: center;
+      flex-shrink: 0;
     }
 
     .topbar-btn {
@@ -150,6 +262,10 @@
       font-size: 0.72rem;
       color: var(--text-muted);
       white-space: nowrap;
+    }
+
+    @media (max-width: 1200px) {
+      .topbar-hint { display: none; }
     }
 
     .app {
@@ -183,35 +299,84 @@
 
     .mobile-tabbar,
     .mobile-backdrop,
-    .topbar-menu-btn { display: none; }
+    .topbar-menu-btn,
+    .topbar-nav-backdrop,
+    .mobile-adventure-sheet { display: none; }
+
+    .topbar-nav-backdrop {
+      position: fixed;
+      z-index: 115;
+      inset: 0;
+      background: var(--overlay);
+      border: none;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .topbar-nav-backdrop[hidden] { display: none; }
 
     @media (max-width: 768px) {
       :root {
-        --topbar-h: 48px;
+        --topbar-h: calc(48px + env(safe-area-inset-top, 0px));
         --mobile-tabbar-h: 52px;
         --sidebar-w: 100%;
         --priority-w: 100%;
         --rail-w: 0px;
       }
 
+      input, select, textarea {
+        font-size: 16px;
+      }
+
       .topbar {
         height: var(--topbar-h);
         padding: 0 0.5rem;
+        padding-top: env(safe-area-inset-top, 0px);
         padding-left: max(0.5rem, env(safe-area-inset-left));
         padding-right: max(0.5rem, env(safe-area-inset-right));
         gap: 0.35rem;
+      }
+
+      .topbar-brand {
+        margin-right: auto;
+        min-width: 0;
       }
 
       .topbar-brand span { display: none; }
 
       .topbar-hint { display: none; }
 
+      .topbar-xp {
+        display: flex;
+        margin-left: 0;
+        margin-right: 0.15rem;
+        gap: 0.3rem;
+        flex-shrink: 1;
+        min-width: 0;
+        max-width: 42vw;
+        cursor: pointer;
+      }
+
+      .topbar-xp .xp-text { display: none; }
+
+      .topbar-xp .xp-bar-wrap {
+        width: 52px;
+        height: 6px;
+        flex-shrink: 1;
+      }
+
+      .topbar-xp .hero-badge {
+        font-size: 0.62rem;
+        flex-shrink: 0;
+      }
+
       .topbar-menu-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
         border: 1px solid var(--border);
         border-radius: 10px;
         background: var(--input-bg);
@@ -220,6 +385,10 @@
         color: var(--text);
         cursor: pointer;
         flex-shrink: 0;
+      }
+
+      .topbar-nav-backdrop:not([hidden]) {
+        display: block;
       }
 
       .topbar-nav {
@@ -237,8 +406,9 @@
         border: 1px solid var(--border);
         border-radius: var(--radius);
         box-shadow: var(--shadow);
-        max-height: calc(100vh - var(--topbar-h) - var(--mobile-tabbar-h) - 24px);
+        max-height: calc(100dvh - var(--topbar-h) - var(--mobile-tabbar-h) - env(safe-area-inset-bottom) - 24px);
         overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .topbar-nav.open { display: flex; }
@@ -246,11 +416,224 @@
       .topbar-nav .topbar-btn {
         width: 100%;
         text-align: left;
-        padding: 0.65rem 0.75rem;
+        padding: 0.72rem 0.75rem;
         font-size: 0.9rem;
+        min-height: 44px;
       }
 
       .topbar-nav .topbar-divider { display: none; }
+
+      .topbar-dropdown {
+        width: 100%;
+      }
+
+      .topbar-dropdown-toggle {
+        width: 100%;
+        text-align: left;
+        padding: 0.72rem 0.75rem;
+        font-size: 0.9rem;
+        min-height: 44px;
+      }
+
+      .topbar-dropdown-menu {
+        position: static;
+        min-width: 0;
+        margin-top: 0.15rem;
+        padding: 0 0 0.25rem 0.5rem;
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        border-left: 2px solid var(--border);
+        border-radius: 0;
+      }
+
+      .topbar-dropdown-item {
+        padding: 0.72rem 0.65rem;
+        font-size: 0.88rem;
+        min-height: 44px;
+      }
+
+      .mobile-adventure-sheet {
+        display: block;
+        position: fixed;
+        z-index: 95;
+        inset: 0;
+        pointer-events: none;
+        visibility: hidden;
+      }
+
+      .mobile-adventure-sheet.open {
+        pointer-events: auto;
+        visibility: visible;
+      }
+
+      .mobile-adventure-backdrop {
+        position: absolute;
+        inset: 0;
+        background: var(--overlay);
+        border: none;
+        padding: 0;
+        opacity: 0;
+        transition: opacity 0.25s;
+      }
+
+      .mobile-adventure-sheet.open .mobile-adventure-backdrop {
+        opacity: 1;
+      }
+
+      .mobile-adventure-panel {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        border-radius: 16px 16px 0 0;
+        padding: 0.85rem max(1rem, env(safe-area-inset-right)) calc(0.85rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+        box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.12);
+        transform: translateY(105%);
+        transition: transform 0.28s ease;
+      }
+
+      .mobile-adventure-sheet.open .mobile-adventure-panel {
+        transform: translateY(0);
+      }
+
+      .mobile-adventure-handle {
+        width: 36px;
+        height: 4px;
+        border-radius: 999px;
+        background: var(--border);
+        margin: 0 auto 0.75rem;
+      }
+
+      .mobile-adventure-xp {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+        margin-bottom: 0.85rem;
+        padding: 0.55rem 0.65rem;
+        background: var(--input-bg);
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+      }
+
+      .mobile-adventure-xp .xp-bar-wrap {
+        flex: 1;
+        height: 8px;
+      }
+
+      .mobile-adventure-xp .xp-text {
+        font-size: 0.65rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+      }
+
+      .mobile-adventure-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+
+      .mobile-adventure-btn {
+        font-family: inherit;
+        font-size: 0.82rem;
+        font-weight: 500;
+        min-height: 52px;
+        padding: 0.65rem 0.55rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--input-bg);
+        color: var(--text);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.25rem;
+      }
+
+      .mobile-adventure-btn .adv-icon { font-size: 1.25rem; line-height: 1; }
+
+      .mobile-adventure-btn:active {
+        background: var(--surface-hover);
+        transform: scale(0.98);
+      }
+
+      .skin-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
+      }
+
+      .skin-card { min-height: 44px; }
+
+      .hero-panel-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+      }
+
+      .hero-panel-tab {
+        flex: 0 0 auto;
+        min-width: 4.2rem;
+        min-height: 44px;
+        padding: 0.45rem 0.65rem;
+      }
+
+      .world-map-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .equip-slots {
+        grid-template-columns: 1fr;
+      }
+
+      .inventory-grid {
+        max-height: none;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .achievement-list { max-height: none; }
+
+      .modal-overlay {
+        z-index: 130;
+        padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
+        align-items: flex-end;
+      }
+
+      .modal {
+        max-width: 100%;
+        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem);
+        margin: 0;
+        border-radius: 16px 16px 0 0;
+        padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom));
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+
+      .modal.modal-wide,
+      .modal.modal-calendar {
+        max-width: 100%;
+      }
+
+      .modal-actions {
+        position: sticky;
+        bottom: 0;
+        background: var(--surface);
+        padding-top: 0.65rem;
+        margin-top: 0.85rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .modal-actions .btn {
+        min-height: 44px;
+      }
+
+      .toast {
+        left: max(0.75rem, env(safe-area-inset-left));
+        right: max(0.75rem, env(safe-area-inset-right));
+        bottom: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 0.65rem);
+      }
 
       .shell {
         min-height: 100dvh;
@@ -381,6 +764,11 @@
       .mobile-tab[data-mobile-panel="projects"]::before { content: "📁"; }
       .mobile-tab[data-mobile-panel="work"]::before { content: "✓"; }
       .mobile-tab[data-mobile-panel="tasks"]::before { content: "⚡"; }
+      .mobile-tab[data-mobile-panel="adventure"]::before { content: "⚔"; }
+
+      .mobile-tab {
+        min-height: 44px;
+      }
 
       .mobile-tab.active { color: var(--accent); font-weight: 600; }
 
@@ -2625,10 +3013,6 @@
       border-radius: var(--radius);
       box-shadow: 0 2px 8px var(--accent-dim);
     }
-
-    @media (max-width: 768px) {
-      .topbar-xp { display: none; }
-    }
   </style>
 </head>
 <body class="game-theme">
@@ -2637,21 +3021,33 @@
     <button type="button" class="topbar-menu-btn" id="btnTopbarMenu" aria-label="菜单">☰</button>
     <div class="topbar-brand"><span id="topbarBrandIcon">🌍</span> <span>Earth-Online</span></div>
     <nav class="topbar-nav" id="topbarNav">
-      <button type="button" class="topbar-btn" id="btnOpenSkins">界面皮肤</button>
-      <button type="button" class="topbar-btn" id="btnWorldMap">世界地图</button>
-      <button type="button" class="topbar-btn" id="btnOpenHero">角色 · 背包</button>
-      <button type="button" class="topbar-btn" id="btnManageTags">大陆管理</button>
-      <span class="topbar-divider"></span>
-      <button type="button" class="topbar-btn" id="btnExportTop">导出数据</button>
-      <button type="button" class="topbar-btn" id="btnImportTop">导入数据</button>
-      <span class="topbar-divider"></span>
-      <button type="button" class="topbar-btn" id="btnNewProjectTop">新建任务线</button>
-      <span class="topbar-divider"></span>
-      <button type="button" class="topbar-btn" id="btnOpenCalendar">任务日历</button>
-      <button type="button" class="topbar-btn" id="btnOpenSummary">AI 总结</button>
-      <button type="button" class="topbar-btn" id="btnOpenGithub">GitHub 同步</button>
+      <button type="button" class="topbar-btn topbar-btn-primary" id="btnNewProjectTop">＋ 新建任务线</button>
+      <div class="topbar-dropdown" data-dropdown>
+        <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">世界</button>
+        <div class="topbar-dropdown-menu" role="menu">
+          <button type="button" class="topbar-dropdown-item" id="btnWorldMap" role="menuitem"><span class="item-icon">🗺</span>世界地图</button>
+          <button type="button" class="topbar-dropdown-item" id="btnManageTags" role="menuitem"><span class="item-icon">🏔</span>大陆管理</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenHero" role="menuitem"><span class="item-icon">🎒</span>角色 · 背包</button>
+        </div>
+      </div>
+      <div class="topbar-dropdown" data-dropdown>
+        <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">工具</button>
+        <div class="topbar-dropdown-menu" role="menu">
+          <button type="button" class="topbar-dropdown-item" id="btnOpenCalendar" role="menuitem"><span class="item-icon">📅</span>任务日历</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenSummary" role="menuitem"><span class="item-icon">✨</span>AI 总结</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenSkins" role="menuitem"><span class="item-icon">🎨</span>界面皮肤</button>
+        </div>
+      </div>
+      <div class="topbar-dropdown" data-dropdown>
+        <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">数据</button>
+        <div class="topbar-dropdown-menu" role="menu">
+          <button type="button" class="topbar-dropdown-item" id="btnExportTop" role="menuitem"><span class="item-icon">📤</span>导出数据</button>
+          <button type="button" class="topbar-dropdown-item" id="btnImportTop" role="menuitem"><span class="item-icon">📥</span>导入数据</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenGithub" role="menuitem"><span class="item-icon">☁</span>GitHub 同步</button>
+        </div>
+      </div>
     </nav>
-    <div class="topbar-xp" id="topbarXp">
+    <div class="topbar-xp" id="topbarXp" role="button" tabindex="0" title="点击查看角色与背包">
       <span class="hero-badge" id="heroLevelBadge">Lv.1</span>
       <div class="xp-bar-wrap" title="经验值"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
       <span class="xp-text" id="xpText">0 XP</span>
@@ -2659,6 +3055,7 @@
     <span class="topbar-hint" id="topbarHint">冒险进度保存在本地</span>
     <input type="file" id="importFileTop" accept=".json,application/json,text/json,text/plain" style="display:none" />
   </header>
+  <button type="button" class="topbar-nav-backdrop" id="topbarNavBackdrop" hidden aria-label="关闭菜单"></button>
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
@@ -2762,17 +3159,35 @@
     </aside>
   </div>
   <button type="button" class="mobile-backdrop" id="mobileBackdrop" hidden aria-label="关闭侧栏"></button>
+  <div class="mobile-adventure-sheet" id="mobileAdventureSheet" aria-hidden="true">
+    <button type="button" class="mobile-adventure-backdrop" id="mobileAdventureBackdrop" aria-label="关闭冒险面板"></button>
+    <div class="mobile-adventure-panel" role="dialog" aria-label="冒险快捷入口">
+      <div class="mobile-adventure-handle"></div>
+      <div class="mobile-adventure-xp">
+        <span class="hero-badge" id="mobileHeroLevel">Lv.1</span>
+        <div class="xp-bar-wrap"><div class="xp-bar-fill" id="mobileXpBarFill" style="width:0%"></div></div>
+        <span class="xp-text" id="mobileXpText">0 XP</span>
+      </div>
+      <div class="mobile-adventure-grid">
+        <button type="button" class="mobile-adventure-btn" data-adv-action="world"><span class="adv-icon">🗺</span>世界地图</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="hero"><span class="adv-icon">🎒</span>角色 · 背包</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="maps"><span class="adv-icon">🏔</span>大陆管理</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="skins"><span class="adv-icon">🎨</span>界面皮肤</button>
+      </div>
+    </div>
+  </div>
   <nav class="mobile-tabbar" id="mobileTabbar" aria-label="手机导航">
     <button type="button" class="mobile-tab" data-mobile-panel="projects">任务线</button>
     <button type="button" class="mobile-tab active" data-mobile-panel="work">工作区</button>
     <button type="button" class="mobile-tab" data-mobile-panel="tasks">侧栏</button>
+    <button type="button" class="mobile-tab" data-mobile-panel="adventure">冒险</button>
   </nav>
   </div>
 
   <div class="modal-overlay" id="modalSkins">
     <div class="modal modal-wide">
       <h3>🎨 界面皮肤</h3>
-      <p class="meta" style="margin-bottom:0.75rem">切换 Earth-Online 的视觉风格。皮肤保存在本机浏览器，不会写入任务数据导出。</p>
+      <p class="meta" style="margin-bottom:0.75rem">切换 Earth-Online 的视觉风格。皮肤会写入 JSON 备份与 GitHub 同步（<code>preferences.uiSkin</code>），并在各设备导入后恢复。</p>
       <div class="skin-grid" id="skinGrid"></div>
       <p class="field-hint" style="margin-top:0.65rem">风格灵感来自经典游戏美学，仅作 UI 主题致敬，与官方无关。</p>
       <div class="modal-actions">
@@ -3092,6 +3507,7 @@
 
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
+    const STATE_SCHEMA_VERSION = 2;
     const UI_SKIN_KEY = "earth-online-ui-skin";
 
     const UI_SKINS = {
@@ -3104,6 +3520,7 @@
         preview: "linear-gradient(135deg, #e0ecf4 0%, #0891b2 100%)",
         swatches: ["#f0f4f8", "#0891b2", "#7c3aed"],
         themeColor: "#f0f4f8",
+        statusBarStyle: "default",
       },
       eva: {
         id: "eva",
@@ -3114,6 +3531,7 @@
         preview: "linear-gradient(160deg, #110e1a 0%, #7bcb3b 120%)",
         swatches: ["#08060f", "#7bcb3b", "#b44aff"],
         themeColor: "#08060f",
+        statusBarStyle: "black-translucent",
       },
       diablo: {
         id: "diablo",
@@ -3124,6 +3542,7 @@
         preview: "linear-gradient(180deg, #1a1008 0%, #c41e1e 80%)",
         swatches: ["#0c0806", "#c41e1e", "#d4a017"],
         themeColor: "#0c0806",
+        statusBarStyle: "black-translucent",
       },
       starcraft: {
         id: "starcraft",
@@ -3134,6 +3553,7 @@
         preview: "linear-gradient(135deg, #0a1218 0%, #00a8e8 100%)",
         swatches: ["#0f1a24", "#00a8e8", "#ffb020"],
         themeColor: "#0a1218",
+        statusBarStyle: "black-translucent",
       },
       cyberpunk: {
         id: "cyberpunk",
@@ -3144,6 +3564,7 @@
         preview: "linear-gradient(90deg, #ff2a6d, #0a0a0f 40%, #fcee0a)",
         swatches: ["#0a0a0f", "#fcee0a", "#ff2a6d"],
         themeColor: "#0a0a0f",
+        statusBarStyle: "black-translucent",
       },
       zelda: {
         id: "zelda",
@@ -3154,6 +3575,7 @@
         preview: "linear-gradient(180deg, #e8f0e0 0%, #2a8828 70%)",
         swatches: ["#f5f9f0", "#2a8828", "#c8a028"],
         themeColor: "#e8f0e0",
+        statusBarStyle: "default",
       },
     };
 
@@ -3179,6 +3601,11 @@
       if (sidebarIconEl) sidebarIconEl.textContent = skin.icon;
       const themeMeta = document.getElementById("metaThemeColor");
       if (themeMeta && skin.themeColor) themeMeta.setAttribute("content", skin.themeColor);
+      const barMeta = document.getElementById("metaAppleStatusBar");
+      if (barMeta && skin.statusBarStyle) barMeta.setAttribute("content", skin.statusBarStyle);
+      if (state) {
+        state.preferences = { ...(state.preferences || {}), uiSkin: id };
+      }
       document.querySelectorAll(".skin-card").forEach((c) => {
         c.classList.toggle("active", c.dataset.skinId === id);
       });
@@ -3206,6 +3633,7 @@
       grid.querySelectorAll(".skin-card").forEach((btn) => {
         btn.addEventListener("click", () => {
           applyUiSkin(btn.dataset.skinId);
+          save();
           toast(`已切换皮肤：${UI_SKINS[btn.dataset.skinId].name}`);
         });
       });
@@ -3347,11 +3775,68 @@
         xp,
         skillPoints,
         skills,
-        inventory: Array.isArray(p.inventory) ? p.inventory.filter((i) => ITEM_CATALOG[i.itemId]) : [],
+        inventory: Array.isArray(p.inventory)
+          ? p.inventory
+              .map((inv) => ({
+                id: inv?.id || uid(),
+                itemId: inv?.itemId,
+                obtainedAt: inv?.obtainedAt || null,
+                ...(inv?.meta && typeof inv.meta === "object" ? { meta: inv.meta } : {}),
+              }))
+              .filter((i) => i.itemId && ITEM_CATALOG[i.itemId])
+          : [],
         equipment,
         achievements: Array.isArray(p.achievements) ? p.achievements : [],
         stats: { ...base.stats, ...(p.stats || {}) },
       };
+    }
+
+    function mergePlayerData(current, incoming) {
+      const pa = normalizePlayer(current);
+      const pb = normalizePlayer(incoming);
+      const invById = new Map();
+      [...pa.inventory, ...pb.inventory].forEach((item) => {
+        if (item?.itemId && ITEM_CATALOG[item.itemId]) invById.set(item.id, item);
+      });
+      const skills = defaultSkills();
+      Object.keys(SKILL_CATALOG).forEach((id) => {
+        skills[id] = Math.max(pa.skills[id] || 0, pb.skills[id] || 0);
+      });
+      const stats = { ...defaultPlayer().stats };
+      Object.keys(stats).forEach((k) => {
+        stats[k] = Math.max(pa.stats[k] || 0, pb.stats[k] || 0);
+      });
+      const xp = Math.max(pa.xp, pb.xp);
+      const level = getLevelFromXp(xp);
+      const earnedPoints = Math.max(0, level - 1);
+      const spent = Object.values(skills).reduce((s, lv) => s + lv, 0);
+      const equipment = { ...pa.equipment };
+      Object.entries(pb.equipment || {}).forEach(([slot, itemId]) => {
+        if (itemId) equipment[slot] = itemId;
+      });
+      return normalizePlayer({
+        xp,
+        skillPoints: Math.max(pa.skillPoints, pb.skillPoints, earnedPoints - spent),
+        skills,
+        inventory: [...invById.values()],
+        equipment,
+        achievements: [...new Set([...(pa.achievements || []), ...(pb.achievements || [])])],
+        stats,
+      });
+    }
+
+    function applyImportedPreferences(preferences) {
+      if (!preferences || typeof preferences !== "object") return;
+      if (preferences.uiSkin && UI_SKINS[preferences.uiSkin]) applyUiSkin(preferences.uiSkin);
+    }
+
+    function normalizeStateForPersistence() {
+      state.schemaVersion = STATE_SCHEMA_VERSION;
+      state.app = "Earth-Online";
+      state.player = normalizePlayer(state.player);
+      state.tags = (state.tags || []).map(normalizeTag);
+      state.projects = (state.projects || []).map(normalizeProject);
+      state.preferences = { uiSkin: loadUiSkin() };
     }
 
     function totalXpForLevel(level) {
@@ -3801,9 +4286,16 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const fill = document.getElementById("xpBarFill");
       const badge = document.getElementById("heroLevelBadge");
       const txt = document.getElementById("xpText");
+      const mobileFill = document.getElementById("mobileXpBarFill");
+      const mobileBadge = document.getElementById("mobileHeroLevel");
+      const mobileTxt = document.getElementById("mobileXpText");
+      const xpLine = `${state.player?.xp || 0} XP · ${state.player?.skillPoints || 0} 技能点`;
       if (fill) fill.style.width = `${prog.pct}%`;
       if (badge) badge.textContent = `Lv.${prog.level}`;
-      if (txt) txt.textContent = `${state.player?.xp || 0} XP · ${state.player?.skillPoints || 0} 技能点`;
+      if (txt) txt.textContent = xpLine;
+      if (mobileFill) mobileFill.style.width = `${prog.pct}%`;
+      if (mobileBadge) mobileBadge.textContent = `Lv.${prog.level}`;
+      if (mobileTxt) mobileTxt.textContent = xpLine;
     }
 
     function renderWorldMap() {
@@ -4181,6 +4673,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       updateGithubSyncStatus();
       try {
         touchStateMeta();
+        normalizeStateForPersistence();
         const body = JSON.stringify(state, null, 2);
         const payload = {
           message: `Earth-Online 同步 ${state.updatedAt}`,
@@ -4287,6 +4780,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         state.activeProjectId = state.projects[0]?.id || null;
       }
       if (data.updatedAt) state.updatedAt = data.updatedAt;
+      applyImportedPreferences(data.preferences);
+      normalizeStateForPersistence();
       updateTopbarHint();
     }
 
@@ -4300,6 +4795,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         } else {
           initDailyDateState();
         }
+        normalizeStateForPersistence();
       } catch (e) {
         console.warn("加载本地数据失败", e);
         initDailyDateState();
@@ -4362,7 +4858,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       } else {
         task.completedAt = null;
       }
-      if (task.xpAwarded != null) task.xpAwarded = task.xpAwarded;
+      if (task.xpAwarded != null) task.xpAwarded = Number(task.xpAwarded) || 0;
       return task;
     }
 
@@ -5125,12 +5621,82 @@ ${lines.join("\n\n")}`;
     }
 
     let mobilePanel = "work";
+    let scrollLockY = 0;
 
     function isMobileLayout() {
       return window.matchMedia("(max-width: 768px)").matches;
     }
 
+    function updateBodyScrollLock() {
+      const locked =
+        !!document.querySelector(".modal-overlay.open") ||
+        document.getElementById("topbarNav")?.classList.contains("open") ||
+        document.getElementById("mobileAdventureSheet")?.classList.contains("open");
+      if (locked) {
+        if (!document.body.classList.contains("scroll-locked")) {
+          scrollLockY = window.scrollY || 0;
+          document.body.classList.add("scroll-locked");
+          document.body.style.top = `-${scrollLockY}px`;
+        }
+      } else if (document.body.classList.contains("scroll-locked")) {
+        document.body.classList.remove("scroll-locked");
+        document.body.style.top = "";
+        window.scrollTo(0, scrollLockY);
+      }
+    }
+
+    function setTopbarNavOpen(open) {
+      const nav = document.getElementById("topbarNav");
+      const backdrop = document.getElementById("topbarNavBackdrop");
+      nav?.classList.toggle("open", open);
+      if (backdrop) backdrop.hidden = !open;
+      updateBodyScrollLock();
+    }
+
+    function closeMobileAdventureSheet() {
+      const sheet = document.getElementById("mobileAdventureSheet");
+      sheet?.classList.remove("open");
+      sheet?.setAttribute("aria-hidden", "true");
+      if (isMobileLayout() && mobilePanel === "adventure") {
+        mobilePanel = "work";
+        document.querySelectorAll(".mobile-tab").forEach((tab) => {
+          tab.classList.toggle("active", tab.dataset.mobilePanel === "work");
+        });
+      }
+      updateBodyScrollLock();
+    }
+
+    function openMobileAdventureSheet() {
+      if (!isMobileLayout()) return;
+      setTopbarNavOpen(false);
+      closeAllTopbarDropdowns();
+      updateXpBar();
+      const sheet = document.getElementById("mobileAdventureSheet");
+      sheet?.classList.add("open");
+      sheet?.setAttribute("aria-hidden", "false");
+      document.querySelectorAll(".mobile-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.mobilePanel === "adventure");
+      });
+      const app = document.getElementById("app");
+      const backdrop = document.getElementById("mobileBackdrop");
+      app?.classList.remove("mobile-panel-projects", "mobile-panel-tasks");
+      if (backdrop) backdrop.hidden = true;
+      updateBodyScrollLock();
+    }
+
+    function closeMobileOverlays() {
+      setTopbarNavOpen(false);
+      closeAllTopbarDropdowns();
+      closeMobileAdventureSheet();
+    }
+
     function setMobilePanel(panel) {
+      if (panel === "adventure") {
+        mobilePanel = "adventure";
+        openMobileAdventureSheet();
+        return;
+      }
+      closeMobileAdventureSheet();
       mobilePanel = panel;
       const app = document.getElementById("app");
       const backdrop = document.getElementById("mobileBackdrop");
@@ -5163,7 +5729,9 @@ ${lines.join("\n\n")}`;
         document.getElementById("app")?.classList.remove("mobile-panel-projects", "mobile-panel-tasks");
         const backdrop = document.getElementById("mobileBackdrop");
         if (backdrop) backdrop.hidden = true;
-        document.getElementById("topbarNav")?.classList.remove("open");
+        setTopbarNavOpen(false);
+        closeAllTopbarDropdowns();
+        closeMobileAdventureSheet();
       }
     }
 
@@ -5492,6 +6060,7 @@ ${lines.join("\n\n")}`;
 
     function save() {
       touchStateMeta();
+      normalizeStateForPersistence();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       showSaveHint();
       scheduleGitHubSync();
@@ -5556,11 +6125,14 @@ ${lines.join("\n\n")}`;
     }
 
     function openModal(id) {
+      closeMobileOverlays();
       document.getElementById(id).classList.add("open");
+      updateBodyScrollLock();
     }
 
     function closeModal(id) {
       document.getElementById(id).classList.remove("open");
+      updateBodyScrollLock();
     }
 
     function renderProjectList() {
@@ -6032,14 +6604,28 @@ ${lines.join("\n\n")}`;
       setTimeout(() => document.getElementById("taskTitleInput").focus(), 100);
     }
 
+    function mergeImportedTag(existing, incoming) {
+      const norm = normalizeTag(incoming);
+      if (!existing) return norm;
+      const merged = { ...existing, ...norm };
+      if (!incoming.mapStory && existing.mapStory) merged.mapStory = existing.mapStory;
+      if (!incoming.mapLayout?.landmarks?.length && existing.mapLayout?.landmarks?.length) {
+        merged.mapLayout = existing.mapLayout;
+      }
+      if (existing.loreGenerated && !incoming.loreGenerated) merged.loreGenerated = true;
+      return normalizeTag(merged);
+    }
+
     function exportData() {
+      normalizeStateForPersistence();
       const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
       a.download = `earth-online-${new Date().toISOString().slice(0, 10)}.json`;
       a.click();
       URL.revokeObjectURL(a.href);
-      toast("已导出 JSON 文件");
+      const lv = getLevelFromXp(state.player?.xp || 0);
+      toast(`已导出 JSON（含 Lv.${lv} · 装备 · 技能 · 成就）`);
     }
 
     function importData(file) {
@@ -6076,19 +6662,19 @@ ${lines.join("\n\n")}`;
               }
             });
             if (Array.isArray(data.tags)) {
-              const tagIds = new Set(state.tags.map((t) => t.id));
               data.tags.forEach((t) => {
                 const norm = normalizeTag(t);
-                if (!tagIds.has(norm.id)) {
-                  state.tags.push(norm);
-                  tagIds.add(norm.id);
-                }
+                const idx = state.tags.findIndex((x) => x.id === norm.id);
+                if (idx >= 0) state.tags[idx] = mergeImportedTag(state.tags[idx], norm);
+                else state.tags.push(norm);
               });
             }
-            if (data.player) state.player = normalizePlayer({ ...state.player, ...data.player });
+            if (data.player) state.player = mergePlayerData(state.player, data.player);
+            applyImportedPreferences(data.preferences);
             if (data.tagFilterId) state.tagFilterId = data.tagFilterId;
             if (data.activeProjectId) state.activeProjectId = data.activeProjectId;
             state.projects = state.projects.map(normalizeProject);
+            normalizeStateForPersistence();
           } else {
             applyStateFromData(data);
           }
@@ -6272,7 +6858,7 @@ ${lines.join("\n\n")}`;
 
     bindDailyFilterEvents();
 
-    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail"].forEach((id) => {
+    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins"].forEach((id) => {
       document.getElementById(id).addEventListener("click", (e) => {
         if (e.target.id === id) closeModal(id);
       });
@@ -6289,29 +6875,89 @@ ${lines.join("\n\n")}`;
     document.querySelectorAll(".mobile-tab").forEach((tab) => {
       tab.addEventListener("click", () => {
         setMobilePanel(tab.dataset.mobilePanel);
-        document.getElementById("topbarNav")?.classList.remove("open");
+        setTopbarNavOpen(false);
       });
     });
 
     document.getElementById("mobileBackdrop")?.addEventListener("click", () => setMobilePanel("work"));
 
+    document.getElementById("mobileAdventureBackdrop")?.addEventListener("click", () => closeMobileAdventureSheet());
+
+    document.querySelectorAll(".mobile-adventure-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const action = btn.dataset.advAction;
+        closeMobileAdventureSheet();
+        if (action === "world") openWorldMapModal();
+        else if (action === "hero") openHeroModal();
+        else if (action === "maps") openTagsModal();
+        else if (action === "skins") openSkinsModal();
+      });
+    });
+
+    document.getElementById("topbarXp")?.addEventListener("click", () => {
+      if (isMobileLayout()) openMobileAdventureSheet();
+      else openHeroModal();
+    });
+    document.getElementById("topbarXp")?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        document.getElementById("topbarXp")?.click();
+      }
+    });
+
+    document.getElementById("topbarNavBackdrop")?.addEventListener("click", () => setTopbarNavOpen(false));
+
+    function closeAllTopbarDropdowns() {
+      document.querySelectorAll(".topbar-dropdown.open").forEach((dd) => {
+        dd.classList.remove("open");
+        dd.querySelector(".topbar-dropdown-toggle")?.setAttribute("aria-expanded", "false");
+      });
+    }
+
+    function initTopbarDropdowns() {
+      document.querySelectorAll(".topbar-dropdown-toggle").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const dd = btn.closest(".topbar-dropdown");
+          if (!dd) return;
+          const wasOpen = dd.classList.contains("open");
+          closeAllTopbarDropdowns();
+          if (!wasOpen) {
+            dd.classList.add("open");
+            btn.setAttribute("aria-expanded", "true");
+          }
+        });
+      });
+    }
+
+    initTopbarDropdowns();
+
     document.getElementById("btnTopbarMenu")?.addEventListener("click", (e) => {
       e.stopPropagation();
-      document.getElementById("topbarNav")?.classList.toggle("open");
+      const nav = document.getElementById("topbarNav");
+      const opening = !nav?.classList.contains("open");
+      closeAllTopbarDropdowns();
+      closeMobileAdventureSheet();
+      setTopbarNavOpen(opening);
     });
 
     document.getElementById("topbarNav")?.addEventListener("click", (e) => {
-      if (e.target.closest(".topbar-btn")) {
-        document.getElementById("topbarNav")?.classList.remove("open");
+      if (e.target.closest(".topbar-btn-primary") || e.target.closest(".topbar-dropdown-item")) {
+        setTopbarNavOpen(false);
+        closeAllTopbarDropdowns();
       }
     });
 
     document.addEventListener("click", (e) => {
       const nav = document.getElementById("topbarNav");
       const menuBtn = document.getElementById("btnTopbarMenu");
+      if (!e.target.closest(".topbar-dropdown")) {
+        closeAllTopbarDropdowns();
+      }
       if (!nav?.classList.contains("open")) return;
       if (nav.contains(e.target) || menuBtn?.contains(e.target)) return;
-      nav.classList.remove("open");
+      setTopbarNavOpen(false);
+      closeAllTopbarDropdowns();
     });
 
     window.addEventListener("resize", () => {
