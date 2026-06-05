@@ -80,6 +80,13 @@
       --font-display: "DM Sans", system-ui, sans-serif;
       --skin-pattern: none;
       --topbar-glow: none;
+      --z-app: 1;
+      --z-topbar-backdrop: 110;
+      --z-topbar: 120;
+      --z-topbar-dropdown: 121;
+      --z-mobile-sheet: 115;
+      --z-modal: 200;
+      --z-toast: 250;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -114,6 +121,8 @@
     }
 
     .topbar {
+      position: relative;
+      z-index: var(--z-topbar);
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -124,6 +133,7 @@
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       box-shadow: 0 1px 0 rgba(15, 23, 42, 0.04);
+      overflow: visible;
     }
 
     .topbar-brand {
@@ -184,8 +194,7 @@
 
     .adv-icon-img { width: 1.35rem; height: 1.35rem; }
 
-    #topbarBrandIcon,
-    #sidebarBrandIcon {
+    #topbarBrandIcon {
       background: none;
       -webkit-text-fill-color: initial;
       background-clip: border-box;
@@ -198,6 +207,7 @@
       flex-wrap: nowrap;
       flex-shrink: 1;
       min-width: 0;
+      overflow: visible;
     }
 
     .topbar-btn-primary {
@@ -215,6 +225,7 @@
     .topbar-dropdown {
       position: relative;
       flex-shrink: 0;
+      overflow: visible;
     }
 
     .topbar-dropdown-toggle::after {
@@ -240,7 +251,7 @@
       border: 1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      z-index: 200;
+      z-index: var(--z-topbar-dropdown);
     }
 
     .topbar-dropdown.open .topbar-dropdown-menu {
@@ -310,6 +321,8 @@
     }
 
     .app {
+      position: relative;
+      z-index: var(--z-app);
       display: grid;
       grid-template-columns: var(--grid-left) 1fr var(--grid-right);
       flex: 1;
@@ -346,7 +359,7 @@
 
     .topbar-nav-backdrop {
       position: fixed;
-      z-index: 115;
+      z-index: var(--z-topbar-backdrop);
       inset: 0;
       background: var(--overlay);
       border: none;
@@ -473,7 +486,7 @@
         top: calc(var(--topbar-h) + 6px);
         left: max(0.5rem, env(safe-area-inset-left));
         right: max(0.5rem, env(safe-area-inset-right));
-        z-index: 120;
+        z-index: var(--z-topbar-dropdown);
         flex-direction: column;
         align-items: stretch;
         gap: 0.35rem;
@@ -532,7 +545,7 @@
       .mobile-adventure-sheet {
         display: block;
         position: fixed;
-        z-index: 95;
+        z-index: var(--z-mobile-sheet);
         inset: 0;
         pointer-events: none;
         visibility: hidden;
@@ -659,7 +672,108 @@
         padding: 0.45rem 0.65rem;
       }
 
-      .world-map-grid {
+  
+    .world-ocean-map {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      min-height: 260px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid rgba(14, 116, 144, 0.45);
+    }
+    .world-ocean-bg {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, #042f4a 0%, #075985 28%, #0ea5e9 52%, #0369a1 72%, #0c4a6e 100%);
+    }
+    .world-ocean-waves {
+      position: absolute;
+      inset: 0;
+      opacity: 0.22;
+      background: repeating-linear-gradient( -12deg, transparent, transparent 18px, rgba(255,255,255,0.07) 18px, rgba(255,255,255,0.07) 36px );
+      animation: ocean-drift 24s linear infinite;
+    }
+    @keyframes ocean-drift { from { transform: translateX(0); } to { transform: translateX(36px); } }
+    .world-ocean-empty {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: rgba(255,255,255,0.75);
+      font-size: 0.82rem;
+      margin: 0;
+      padding: 0 1rem;
+    }
+    .world-continent-pin {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      border: none;
+      background: none;
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+      z-index: 2;
+      transition: transform 0.15s;
+    }
+    .world-continent-pin:hover { transform: translate(-50%, -50%) scale(1.08); z-index: 3; }
+    .continent-island {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 44px;
+      border-radius: 45% 55% 50% 50%;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 -2px 8px rgba(0,0,0,0.15);
+      border: 2px solid rgba(255,255,255,0.35);
+    }
+    .continent-island.terrain-forest { background: linear-gradient(145deg, #166534, #4ade80); }
+    .continent-island.terrain-desert { background: linear-gradient(145deg, #b45309, #fcd34d); }
+    .continent-island.terrain-ocean { background: linear-gradient(145deg, #0369a1, #38bdf8); }
+    .continent-island.terrain-mountain { background: linear-gradient(145deg, #475569, #cbd5e1); }
+    .continent-island.terrain-volcanic { background: linear-gradient(145deg, #991b1b, #fb923c); }
+    .continent-island.terrain-tundra { background: linear-gradient(145deg, #0e7490, #e0f2fe); }
+    .continent-pin-label {
+      display: block;
+      margin-top: 0.2rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.65);
+      white-space: nowrap;
+      max-width: 88px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .continent-pin-sub {
+      display: block;
+      font-size: 0.55rem;
+      color: rgba(255,255,255,0.82);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+    }
+    .continent-region-panel { margin-bottom: 0.75rem; }
+    .continent-region-list { display: flex; flex-direction: column; gap: 0.3rem; margin-bottom: 0.65rem; }
+    .continent-region-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.1rem;
+      width: 100%;
+      text-align: left;
+      padding: 0.45rem 0.55rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--input-bg);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .continent-region-item.static { cursor: default; opacity: 0.85; }
+    .continent-region-item:hover:not(.static) { border-color: var(--accent-border); background: var(--surface-hover); }
+    .continent-region-item .cr-name { font-size: 0.8rem; font-weight: 600; }
+    .continent-region-item .cr-meta { font-size: 0.65rem; color: var(--text-muted); }
+    #worldMapGrid { display: block; }
+    .world-map-grid {
         grid-template-columns: 1fr;
         gap: 0.65rem;
       }
@@ -690,7 +804,7 @@
       .achievement-list { max-height: none; }
 
       .modal-overlay {
-        z-index: 130;
+        z-index: var(--z-modal);
         padding: max(0.5rem, env(safe-area-inset-top)) max(0.5rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.5rem, env(safe-area-inset-left));
         align-items: flex-end;
       }
@@ -1007,7 +1121,7 @@
 
       .sidebar.collapsed .sidebar-rail,
       .priority-panel.collapsed .priority-panel-rail,
-      .sidebar-top .rail-btn,
+      .sidebar-tabs-row .sidebar-collapse-btn,
       .priority-panel-header { display: none !important; }
 
       .sidebar-main,
@@ -1136,8 +1250,8 @@
       border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      padding: 1rem;
-      gap: 0.75rem;
+      padding: 0.45rem 0.55rem;
+      gap: 0.35rem;
       overflow: hidden;
       min-width: 0;
       min-height: 0;
@@ -1150,7 +1264,7 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.35rem;
       overflow: hidden;
     }
 
@@ -1164,15 +1278,25 @@
       align-items: center;
     }
 
-    .sidebar-top {
+    .sidebar-tabs-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 0.35rem;
+      gap: 0.25rem;
       flex-shrink: 0;
     }
 
-    .sidebar.collapsed .sidebar-top { display: none; }
+    .sidebar-tabs-row .sidebar-tabs {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-tabs-row .sidebar-collapse-btn {
+      width: 26px;
+      height: 26px;
+      font-size: 0.62rem;
+      flex-shrink: 0;
+    }
+
     .sidebar.collapsed .sidebar-content,
     .sidebar.collapsed .sidebar-actions { display: none; }
 
@@ -1835,7 +1959,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      z-index: var(--z-modal);
       padding: 1rem;
       opacity: 0;
       visibility: hidden;
@@ -1867,6 +1991,13 @@
       margin-top: 1.25rem;
     }
 
+    .llm-action-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin-top: 0.5rem;
+    }
+
     .toast {
       position: fixed;
       bottom: 1.5rem;
@@ -1877,7 +2008,7 @@
       border-radius: var(--radius);
       font-size: 0.85rem;
       box-shadow: var(--shadow);
-      z-index: 200;
+      z-index: var(--z-toast);
       transform: translateY(20px);
       opacity: 0;
       transition: transform 0.25s, opacity 0.25s;
@@ -1901,16 +2032,98 @@
       min-height: 0;
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 0.35rem;
       overflow: hidden;
     }
 
+    .sidebar-filters {
+      display: flex;
+      flex-direction: column;
+      gap: 0.18rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-filter-row {
+      display: flex;
+      align-items: center;
+      gap: 0.28rem;
+      min-width: 0;
+    }
+
+    .sidebar-filter-label {
+      font-size: 0.58rem;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      width: 1.55rem;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+
+    .sidebar-filter-chips {
+      flex: 1;
+      min-width: 0;
+      margin-bottom: 0 !important;
+      gap: 0.18rem !important;
+    }
+
+    .sidebar-filter-chips .tag-filter-chip,
+    .sidebar-filter-chips .quest-filter-chip {
+      font-size: 0.58rem;
+      padding: 0.1rem 0.3rem;
+    }
+
+    .sidebar-filter-chips .tag-filter-chip::before {
+      width: 5px;
+      height: 5px;
+      margin-right: 0.2rem;
+    }
+
+    .sidebar-quick-actions {
+      display: flex;
+      gap: 0.22rem;
+      flex-shrink: 0;
+    }
+
+    .sidebar-quick-actions .btn {
+      flex: 1;
+      padding: 0.22rem 0.35rem;
+      font-size: 0.62rem;
+      font-weight: 500;
+    }
+
+    .sidebar-save-hint {
+      font-size: 0.58rem;
+      text-align: center;
+      opacity: 0.45;
+      padding: 0.1rem 0;
+      flex-shrink: 0;
+    }
+
+    .sidebar .section-label-compact {
+      font-size: 0.58rem;
+      margin: 0.1rem 0 0;
+      letter-spacing: 0.04em;
+    }
+
+    .sidebar .project-item {
+      padding: 0.42rem 0.5rem;
+      gap: 0.35rem;
+    }
+
+    .sidebar .project-item .name { font-size: 0.82rem; }
+    .sidebar .project-item .sub { font-size: 0.6rem; margin-top: 0.05rem; }
+    .sidebar .progress-pill { font-size: 0.58rem; padding: 0.1rem 0.35rem; }
+    .sidebar .side-quest-item,
+    .sidebar .daily-action-item { padding: 0.4rem 0.5rem; margin-bottom: 0.25rem; }
+    .sidebar .side-quest-item .sq-title { font-size: 0.78rem; }
+    .sidebar .side-quest-item .sq-sub { font-size: 0.58rem; }
+
     .sidebar-tabs {
       display: flex;
-      gap: 0.25rem;
+      gap: 0.15rem;
       background: var(--input-bg);
-      padding: 0.2rem;
-      border-radius: 8px;
+      padding: 0.15rem;
+      border-radius: 6px;
       border: 1px solid var(--border);
       flex-shrink: 0;
     }
@@ -1918,9 +2131,9 @@
     .sidebar-tab {
       flex: 1;
       font-family: inherit;
-      font-size: 0.7rem;
+      font-size: 0.62rem;
       font-weight: 500;
-      padding: 0.38rem 0.35rem;
+      padding: 0.26rem 0.2rem;
       border: none;
       border-radius: 6px;
       background: transparent;
@@ -1963,7 +2176,11 @@
 
     .sidebar-tab-panel.active { display: flex; }
 
+    .sidebar-main > .sidebar-tabs-row,
+    .sidebar-main > .sidebar-filters,
+    .sidebar-main > .sidebar-quick-actions,
     .sidebar-main > .section-label,
+    .sidebar-main > .section-label-compact,
     .sidebar-main > .tag-filter-bar,
     .priority-panel-body > .section-label,
     .priority-panel-body > .tag-filter-bar,
@@ -2993,10 +3210,25 @@
     }
 
     .achievement-item.unlocked { background: var(--success-dim); border-color: rgba(22, 163, 74, 0.3); }
-    .achievement-item .ach-icon { font-size: 1.35rem; flex-shrink: 0; opacity: 0.35; }
+    .achievement-item.locked { opacity: 0.72; }
+    .achievement-item .ach-icon { font-size: 1.35rem; flex-shrink: 0; width: 1.5rem; text-align: center; opacity: 0.35; font-weight: 700; }
     .achievement-item.unlocked .ach-icon { opacity: 1; }
+    .achievement-item.locked .ach-icon { color: var(--text-muted); font-size: 1.1rem; }
     .achievement-item h5 { font-size: 0.8rem; margin-bottom: 0.1rem; }
     .achievement-item p { font-size: 0.68rem; color: var(--text-muted); }
+    .collection-section-title { font-size: 0.78rem; margin: 0.5rem 0 0.35rem; display: flex; justify-content: space-between; align-items: center; }
+    .collection-section-title:first-child { margin-top: 0; }
+    .codex-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.35rem; max-height: 240px; overflow-y: auto; }
+    .codex-item { display: flex; gap: 0.4rem; padding: 0.45rem 0.5rem; border-radius: var(--radius); border: 1px solid var(--border); background: var(--input-bg); align-items: flex-start; }
+    .codex-item.unknown { opacity: 0.55; }
+    .codex-item.known.rarity-rare { border-color: rgba(99, 102, 241, 0.35); }
+    .codex-item.known.rarity-epic { border-color: rgba(124, 58, 237, 0.4); background: var(--rpg-purple-dim); }
+    .codex-icon { font-size: 1.1rem; flex-shrink: 0; width: 1.4rem; text-align: center; font-weight: 700; color: var(--text-muted); }
+    .codex-item.known .codex-icon { font-weight: 400; }
+    .codex-body h5 { font-size: 0.72rem; margin-bottom: 0.08rem; }
+    .codex-body p { font-size: 0.6rem; color: var(--text-muted); line-height: 1.35; }
+    .codex-attr { font-size: 0.55rem; color: var(--accent); display: block; margin-top: 0.12rem; }
+    .loot-ach-title { font-size: 0.85rem; color: var(--warning); font-weight: 600; }
 
     .loot-modal-body { text-align: center; padding: 0.5rem 0; }
     .loot-xp { font-size: 1.75rem; font-weight: 700; color: var(--rpg-purple); margin: 0.5rem 0; }
@@ -3309,7 +3541,20 @@
     [data-skin="starcraft"] .topbar {
       background: linear-gradient(180deg, #122030, #0a1218);
       border-bottom: 2px solid var(--accent);
-      clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 4px));
+      overflow: visible;
+    }
+
+    [data-skin="starcraft"] .topbar::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -4px;
+      height: 4px;
+      background: var(--accent);
+      clip-path: polygon(12px 0, calc(100% - 12px) 0, 100% 100%, 0 100%);
+      pointer-events: none;
+      z-index: 0;
     }
 
     [data-skin="starcraft"] .topbar-brand .brand-name {
@@ -3443,6 +3688,34 @@
       border-radius: var(--radius);
       box-shadow: 0 2px 8px var(--accent-dim);
     }
+
+    /* —— 生命 / 日常 / 属性 —— */
+    .vitals-bar { display:flex; align-items:center; gap:0.35rem; flex-shrink:0; }
+    .vital-chip { font-size:0.58rem; padding:0.12rem 0.35rem; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); white-space:nowrap; }
+    .vital-chip.warn { border-color:var(--warning); color:var(--warning); background:var(--warning-dim); }
+    .vital-chip.danger { border-color:var(--danger); color:var(--danger); background:var(--danger-dim); }
+    .quest-filter-bar { display:flex; gap:0.18rem; flex-wrap:wrap; margin-bottom:0; }
+    .quest-filter-chip { font-family:inherit; font-size:0.58rem; padding:0.1rem 0.3rem; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-muted); cursor:pointer; }
+    .quest-filter-chip.active { background:var(--accent-dim); border-color:var(--accent-border); color:var(--accent); font-weight:600; }
+    .side-quest-item, .daily-action-item { border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem 0.65rem; margin-bottom:0.35rem; background:var(--input-bg); cursor:pointer; }
+    .side-quest-item.active, .daily-action-item:hover { border-color:var(--accent-border); background:var(--surface-hover); }
+    .side-quest-item .sq-title { font-size:0.82rem; font-weight:600; }
+    .side-quest-item .sq-sub { font-size:0.62rem; color:var(--text-muted); }
+    .attr-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:0.45rem; }
+    .attr-card { border:1px solid var(--border); border-radius:var(--radius); padding:0.5rem 0.55rem; background:var(--input-bg); }
+    .attr-card h5 { font-size:0.72rem; margin-bottom:0.15rem; }
+    .attr-card .attr-val { font-size:1rem; font-weight:700; color:var(--accent); }
+    .vital-meter { margin-bottom:0.65rem; }
+    .vital-meter label { font-size:0.68rem; color:var(--text-muted); display:flex; justify-content:space-between; margin-bottom:0.2rem; }
+    .vital-meter .xp-bar-wrap { height:10px; }
+    .vital-alert-box { padding:0.55rem 0.65rem; margin-bottom:0.65rem; border-radius:var(--radius); border:1px solid var(--warning); background:var(--warning-dim); font-size:0.78rem; line-height:1.45; }
+    .vital-alert-box p { margin:0; }
+    .health-condition-row { display:flex; gap:0.35rem; align-items:center; margin-bottom:0.35rem; }
+    .health-condition-row input { flex:1; font-size:0.8rem; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:6px; background:var(--input-bg); }
+    .task-attr-tags { display:flex; flex-wrap:wrap; gap:0.2rem; margin-top:0.25rem; }
+    .task-attr-tag { font-size:0.58rem; padding:0.1rem 0.35rem; border-radius:4px; background:var(--rpg-purple-dim); color:var(--rpg-purple); border:1px solid rgba(124,58,237,0.25); }
+    @media (max-width:768px) { .vitals-bar { display:none; } .attr-grid { grid-template-columns:1fr; } }
+
   </style>
 </head>
 <body class="game-theme">
@@ -3451,7 +3724,7 @@
     <button type="button" class="topbar-menu-btn" id="btnTopbarMenu" aria-label="菜单">☰</button>
     <div class="topbar-brand"><img id="topbarBrandIcon" class="brand-logo" src="" alt="" width="20" height="20" /><span class="brand-name">Earth-Online</span><span class="brand-version">V.0.10</span></div>
     <nav class="topbar-nav" id="topbarNav">
-      <button type="button" class="topbar-btn topbar-btn-primary" id="btnNewProjectTop">＋ 新建任务线</button>
+      <button type="button" class="topbar-btn topbar-btn-primary" id="btnOpenHeroTop"><img class="ui-icon item-icon" data-ui-icon="hero" alt="" width="16" height="16" style="margin-right:0.25rem" />角色 · 属性</button>
       <div class="topbar-dropdown" data-dropdown>
         <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">世界</button>
         <div class="topbar-dropdown-menu" role="menu">
@@ -3477,6 +3750,7 @@
         </div>
       </div>
     </nav>
+    <div class="vitals-bar" id="topbarVitals"></div>
     <div class="topbar-xp" id="topbarXp" role="button" tabindex="0" title="点击查看角色与背包">
       <span class="hero-badge" id="heroLevelBadge">Lv.1</span>
       <div class="xp-bar-wrap" title="经验值"><div class="xp-bar-fill" id="xpBarFill" style="width:0%"></div></div>
@@ -3488,28 +3762,46 @@
   <button type="button" class="topbar-nav-backdrop" id="topbarNavBackdrop" hidden aria-label="关闭菜单"></button>
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
-      <div class="sidebar-top">
-        <div class="logo"><img id="sidebarBrandIcon" class="brand-logo" src="" alt="" width="20" height="20" /><span class="brand-name">Earth-Online</span><span class="brand-version">V.0.10</span></div>
-        <button type="button" class="rail-btn" id="btnCollapseLeft" title="收起左侧栏">◀</button>
-      </div>
       <div class="sidebar-rail">
         <button type="button" class="rail-btn" id="btnExpandLeft" title="展开左侧栏">▶</button>
-        <button type="button" class="rail-btn rail-btn-vertical" id="btnNewProjectRail" title="新建项目">新建</button>
+        <button type="button" class="rail-btn rail-btn-vertical" id="btnNewProjectRail" title="新建地图">新建</button>
       </div>
       <div class="sidebar-content">
         <div class="sidebar-main">
-          <div class="sidebar-tabs" id="leftSidebarTabs">
-            <button type="button" class="sidebar-tab active" data-tab="projects">任务线</button>
-            <button type="button" class="sidebar-tab" data-tab="daily">
-              战报<span class="sidebar-tab-badge success" id="dailyTabBadge">0</span>
-            </button>
+          <div class="sidebar-tabs-row">
+            <div class="sidebar-tabs" id="leftSidebarTabs">
+              <button type="button" class="sidebar-tab active" data-tab="projects">地图</button>
+              <button type="button" class="sidebar-tab" data-tab="routines">日常</button>
+              <button type="button" class="sidebar-tab" data-tab="daily">
+                战报<span class="sidebar-tab-badge success" id="dailyTabBadge">0</span>
+              </button>
+            </div>
+            <button type="button" class="rail-btn sidebar-collapse-btn" id="btnCollapseLeft" title="收起左侧栏">◀</button>
           </div>
-          <p class="section-label">大陆筛选</p>
-          <div class="tag-filter-bar" id="leftTagFilter"></div>
+          <div class="sidebar-filters">
+            <div class="sidebar-filter-row">
+              <span class="sidebar-filter-label">大陆</span>
+              <div class="tag-filter-bar sidebar-filter-chips" id="leftTagFilter"></div>
+            </div>
+            <div class="sidebar-filter-row">
+              <span class="sidebar-filter-label">任务</span>
+              <div class="quest-filter-bar sidebar-filter-chips" id="questLineFilter"></div>
+            </div>
+          </div>
+          <div class="sidebar-quick-actions">
+            <button type="button" class="btn btn-primary btn-xs" id="btnNewProject">+ 地图</button>
+            <button type="button" class="btn btn-ghost btn-xs" id="btnNewSideQuest">+ 支线</button>
+          </div>
+          <p class="section-label section-label-compact" id="sideQuestLabel" style="display:none">大陆支线</p>
+          <div class="sidebar-scroll-panel" id="sideQuestListScroll" style="display:none;max-height:100px;margin-bottom:0.15rem"></div>
           <div class="sidebar-tab-panel active" id="leftPanelProjects">
             <div class="sidebar-scroll-panel" id="projectListScroll">
               <ul class="project-list" id="projectList"></ul>
             </div>
+          </div>
+          <div class="sidebar-tab-panel" id="leftPanelRoutines">
+            <div class="sidebar-scroll-panel" id="dailyRoutinesPanel"></div>
+            <button type="button" class="btn btn-primary btn-xs" id="btnNewDailyAction" style="margin-top:0.2rem;width:100%">+ 登记日常</button>
           </div>
           <div class="sidebar-tab-panel" id="leftPanelDaily">
             <div class="daily-filter-bar" id="dailyFilterBar">
@@ -3534,20 +3826,12 @@
                 <button type="button" class="daily-quick-btn" data-range="30">近30天</button>
                 <button type="button" class="daily-quick-btn" data-range="all">全部</button>
               </div>
-              <p class="field-hint" style="margin:0">「今天」从 6:00 起算至次日 6:00；0～6 点完成的任务仍算在前一自然日。</p>
+              <p class="field-hint" style="margin:0;font-size:0.58rem">6:00 起算为一天</p>
             </div>
             <div class="sidebar-scroll-panel" id="dailyDigestPanel"></div>
           </div>
         </div>
-        <button type="button" class="btn btn-primary" id="btnNewProject">+ 新建任务线</button>
-        <div class="sidebar-actions">
-          <div class="import-export-row">
-            <button type="button" class="btn btn-ghost" id="btnExport">导出</button>
-            <button type="button" class="btn btn-ghost" id="btnImport">导入</button>
-          </div>
-          <input type="file" id="importFile" accept=".json,application/json,text/json,text/plain" />
-          <span class="save-hint" id="saveHint">已自动保存</span>
-        </div>
+        <span class="save-hint sidebar-save-hint" id="saveHint">已自动保存</span>
       </div>
     </aside>
 
@@ -3555,7 +3839,7 @@
       <div class="empty-state">
         <h2>欢迎来到 Earth-Online</h2>
         <p>在广袤大陆上推进主线与支线，完成任务获取经验、装备与成就。</p>
-        <button type="button" class="btn btn-primary" id="btnNewProjectEmpty">+ 新建任务线</button>
+        <button type="button" class="btn btn-primary" id="btnNewProjectEmpty">+ 新建地图</button>
       </div>
     </main>
 
@@ -3607,7 +3891,7 @@
     </div>
   </div>
   <nav class="mobile-tabbar" id="mobileTabbar" aria-label="手机导航">
-    <button type="button" class="mobile-tab" data-mobile-panel="projects">任务线</button>
+    <button type="button" class="mobile-tab" data-mobile-panel="projects">地图</button>
     <button type="button" class="mobile-tab active" data-mobile-panel="work">工作区</button>
     <button type="button" class="mobile-tab" data-mobile-panel="tasks">侧栏</button>
     <button type="button" class="mobile-tab" data-mobile-panel="adventure">冒险</button>
@@ -3636,8 +3920,7 @@
         <div class="color-options" id="newTagColors"></div>
         <button type="button" class="btn btn-primary btn-sm" id="btnAddTag">开辟大陆</button>
       </div>
-      <p class="field-hint" id="mapGenStatus"></p>
-      <button type="button" class="btn btn-ghost btn-sm" id="btnEnrichAllMaps" style="margin-bottom:0.5rem">✨ 为现有大陆生成故事 · 图标 · 地图</button>
+      <p class="field-hint" id="mapGenStatus">新建大陆后，在列表中点击「✨ AI 生成/重新生成」补充剧情（写入 JSON）。</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalTags">关闭</button>
       </div>
@@ -3647,7 +3930,7 @@
   <div class="modal-overlay" id="modalWorldMap">
     <div class="modal modal-wide">
       <h3>🌍 Earth-Online 世界地图</h3>
-      <p class="meta" style="margin-bottom:0.75rem">点击大陆可筛选该区域的主线 / 支线任务线。</p>
+      <p class="meta" style="margin-bottom:0.75rem">广袤海洋上漂浮着各块大陆 — 点击大陆查看详情、区域地图与任务分布。</p>
       <div class="world-map-grid" id="worldMapGrid"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalWorldMap">关闭</button>
@@ -3661,9 +3944,9 @@
       <p class="meta" id="mapDetailRegion"></p>
       <div id="mapDetailStory" class="quest-story-box" style="display:none"></div>
       <div id="mapDetailCanvas"></div>
-      <p class="field-hint">金色圆点 = 主线任务线，银色 = 支线；点击任务线可跳转。</p>
+      <p class="field-hint">下方地图：金色 = 区域地图（主线），地标为大陆地貌；点击区域条目或地图上的标记可跳转。</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnRegenMapDetail">重新生成地图设定</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnRegenMapDetail">✨ AI 生成/重新生成 大陆设定</button>
         <button type="button" class="btn btn-ghost" data-close="modalMapDetail">关闭</button>
       </div>
     </div>
@@ -3676,14 +3959,83 @@
         <button type="button" class="hero-panel-tab active" data-hero-tab="equip">装备栏</button>
         <button type="button" class="hero-panel-tab" data-hero-tab="skills">技能</button>
         <button type="button" class="hero-panel-tab" data-hero-tab="bag">背包</button>
-        <button type="button" class="hero-panel-tab" data-hero-tab="ach">成就</button>
+        <button type="button" class="hero-panel-tab" data-hero-tab="attrs">属性</button>
+        <button type="button" class="hero-panel-tab" data-hero-tab="status">状态</button>
+        <button type="button" class="hero-panel-tab" data-hero-tab="ach">收集</button>
       </div>
       <div id="heroPanelEquip" class="hero-tab-panel"></div>
       <div id="heroPanelSkills" class="hero-tab-panel" style="display:none"></div>
       <div id="heroPanelBag" class="hero-tab-panel" style="display:none"></div>
+      <div id="heroPanelAttrs" class="hero-tab-panel" style="display:none"></div>
+      <div id="heroPanelStatus" class="hero-tab-panel" style="display:none"></div>
       <div id="heroPanelAch" class="hero-tab-panel" style="display:none"></div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalHero">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <div class="modal-overlay" id="modalSideQuest">
+    <div class="modal">
+      <h3 id="modalSideQuestTitle">新建支线</h3>
+      <div class="field"><label for="sqContinentSelect">所属大陆</label><select id="sqContinentSelect"></select></div>
+      <div class="field"><label for="sqTitleInput">支线标题</label><input type="text" id="sqTitleInput" autocomplete="off" /></div>
+      <div class="field"><label for="sqDescInput">说明（可选）</label><textarea id="sqDescInput"></textarea></div>
+      <div class="field" id="sqStoryPreviewField" style="display:none">
+        <label>支线剧情（AI）</label>
+        <div class="quest-story-box" id="sqStoryPreview"></div>
+      </div>
+      <div class="field" id="sqAttrTagsField" style="display:none">
+        <label>能力标签（AI）</label>
+        <div class="task-attr-tags" id="sqAttrTagsPreview"></div>
+      </div>
+      <div class="llm-action-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenSideQuest">✨ AI 生成/重新生成 剧情与标签</button>
+      </div>
+      <p class="field-hint" id="sqGenStatus">生成结果会写入 JSON，导出/导入时同步。</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="modalSideQuest">取消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmSideQuest">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modalDailyAction">
+    <div class="modal">
+      <h3 id="modalDailyActionTitle">日常行动</h3>
+      <div class="field"><label for="daNameInput">行动名称</label><input type="text" id="daNameInput" placeholder="如：健身、喝酒、吃药" autocomplete="off" /></div>
+      <div class="field"><label for="daDescInput">描述（可选）</label><textarea id="daDescInput" placeholder="补充细节，供 AI 判断属性影响"></textarea></div>
+      <div class="field"><label for="daCategoryInput">类别</label>
+        <select id="daCategoryInput">
+          <option value="exercise">锻炼 / 运动</option>
+          <option value="medicine">吃药 / 治疗</option>
+          <option value="supplement">保健品</option>
+          <option value="entertainment">娱乐（喝酒、休闲等）</option>
+          <option value="rest">休息 / 睡眠</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div class="field" id="daEffectsPreviewField" style="display:none">
+        <label>AI 影响分析</label>
+        <div class="quest-story-box" id="daEffectsPreview"></div>
+      </div>
+      <div class="llm-action-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenDaily">✨ AI 生成/重新生成 影响与说明</button>
+      </div>
+      <p class="field-hint" id="daGenStatus">点击上方按钮生成；结果写入 JSON。保存后可用「执行」记录。</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="modalDailyAction">取消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmDailyAction">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modalVitalWarn">
+    <div class="modal">
+      <h3>⚠️ 精神状态预警</h3>
+      <p id="vitalWarnText" style="line-height:1.55;margin-bottom:0.75rem"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="btnVitalWarnCancel">取消</button>
+        <button type="button" class="btn btn-primary" id="btnVitalWarnProceed">仍要继续</button>
       </div>
     </div>
   </div>
@@ -3700,33 +4052,31 @@
 
   <div class="modal-overlay" id="modalProject">
     <div class="modal">
-      <h3 id="modalProjectTitle">新建任务线</h3>
-      <div class="grid-2">
-        <div class="field">
-          <label for="projectQuestType">任务类型</label>
-          <select id="projectQuestType">
-            <option value="main">⭐ 主线任务（金色）</option>
-            <option value="side">◆ 支线任务（银色）</option>
-          </select>
-        </div>
-        <div class="field">
+      <h3 id="modalProjectTitle">新建地图</h3>
+            <div class="field">
           <label for="projectMapSelect">所属大陆</label>
           <select id="projectMapSelect"><option value="">— 请选择大陆 —</option></select>
+          <p class="field-hint">项目 = 大陆上的地图；地图内事项为主线任务。支线归属大陆，不在地图中。</p>
         </div>
-      </div>
       <div class="field">
-        <label for="projectNameInput">任务线名称</label>
-        <input type="text" id="projectNameInput" placeholder="例如：觉醒篇、支线·收集草药" autocomplete="off" />
+        <label for="projectNameInput">地图名称</label>
+        <input type="text" id="projectNameInput" placeholder="例如：北境要塞、翡翠森林" autocomplete="off" />
       </div>
       <div class="field">
         <label for="projectDescInput">任务简介（可选）</label>
         <textarea id="projectDescInput" placeholder="描述这条任务线的目标与背景…"></textarea>
       </div>
-      <div id="projectQuestStoryBox" class="quest-story-box" style="display:none"></div>
-      <p class="field-hint" id="questGenStatus"></p>
+      <div class="field" id="projectQuestStoryField" style="display:none">
+        <label>地图剧情（AI）</label>
+        <div id="projectQuestStoryBox" class="quest-story-box"></div>
+      </div>
+      <div class="llm-action-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenProjectStory">✨ AI 生成/重新生成 地图剧情</button>
+      </div>
+      <p class="field-hint" id="questGenStatus">生成结果会写入 JSON，导出/导入时同步。</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalProject">取消</button>
-        <button type="button" class="btn btn-primary" id="btnConfirmProject">确定</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmProject">保存</button>
       </div>
     </div>
   </div>
@@ -3767,12 +4117,22 @@
           <button type="button" class="btn btn-ghost btn-sm" id="btnClearDueDate">清除</button>
         </div>
       </div>
+      <div class="field" id="taskStoryPreviewField" style="display:none">
+        <label>任务剧情（AI）</label>
+        <div class="quest-story-box" id="taskStoryPreview"></div>
+      </div>
+      <div class="field" id="taskAttrTagsField" style="display:none"><label>能力标签（AI）</label><div class="task-attr-tags" id="taskAttrTagsPreview"></div></div>
+      <div class="llm-action-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenTask">✨ AI 生成/重新生成 剧情与标签</button>
+      </div>
+      <p class="field-hint" id="taskGenStatus">生成结果会写入 JSON（含已完成任务），导出/导入时同步。</p>
       <div class="field" id="taskCompletedAtField" style="display:none">
         <label for="taskCompletedAtInput">完成时间</label>
         <input type="datetime-local" id="taskCompletedAtInput" step="60" />
         <p class="field-hint">标记为已完成时可填写或修改。统计按<strong>6:00～次日 6:00</strong>为一天：凌晨完成的任务仍计入前一自然日。</p>
       </div>
       <div class="modal-actions">
+        <button type="button" class="btn btn-danger btn-sm" id="btnDeleteTask" style="margin-right:auto;display:none">删除任务</button>
         <button type="button" class="btn btn-ghost" data-close="modalTask">取消</button>
         <button type="button" class="btn btn-primary" id="btnConfirmTask">保存</button>
       </div>
@@ -3937,7 +4297,28 @@
 
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
-    const STATE_SCHEMA_VERSION = 2;
+    const STATE_SCHEMA_VERSION = 4;
+    // schema 4: 全量 JSON 持久化 + 大陆/地图/任务/支线 LLM 剧情与标签
+    const PHYSICAL_DECAY_PER_HOUR = 2 / 24;
+    const MENTAL_RESET_VALUE = 80;
+    const MENTAL_COST_PER_TASK = 4;
+    const PHYSICAL_WARN_BELOW = 80;
+    const MENTAL_WARN_BELOW = 50;
+
+    const PLAYER_ATTR_KEYS = ["physique","mind","intelligence","technology","humanities","social","lifeSkills"];
+    const PLAYER_ATTR_LABELS = { physique:"体格", mind:"心智", intelligence:"智力", technology:"科技", humanities:"人文艺术", social:"社交能力", lifeSkills:"生活力" };
+    const TASK_ATTR_TAGS = ["体能","精神力","社交能力","科技","人文艺术"];
+    const TASK_ATTR_TO_PLAYER = { "体能":"physique", "精神力":"mind", "社交能力":"social", "科技":"technology", "人文艺术":"humanities" };
+
+    const LLM_SYSTEM_GAME = `你是 Earth-Online 游戏主控 AI。严格遵守：
+1) 只输出要求的 JSON，无 markdown。
+2) 任务能力标签 attrTags 只能从：体能、精神力、社交能力、科技、人文艺术 中选 0-3 个。
+3) 属性增量 attributes 的键只能是：physique,mind,intelligence,technology,humanities,social,lifeSkills，每项为 0-5 的整数。
+4) 身体健康 physicalHealth、精神健康 mentalHealth 变化范围为 -20 到 +20。
+5) 日常行动：锻炼/吃药/保健品可提升 physicalHealth；娱乐/休息/喝酒/休闲可提升 mentalHealth；其余按语义判断。
+6) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
+
+    const DAILY_CATEGORY_LABELS = { exercise:"锻炼", medicine:"吃药", supplement:"保健品", entertainment:"娱乐", rest:"休息", other:"其他" };
     const APP_VERSION = "0.10";
     const APP_VERSION_LABEL = "V.0.10";
     const UI_SKIN_KEY = "earth-online-ui-skin";
@@ -4141,6 +4522,39 @@
         deadline_amulet: "game-icons/sands-of-time",
         night_cloak: "game-icons/cloak",
         map_compass: "game-icons/compass",
+        rookie_badge: "game-icons/medal",
+        iron_bracers: "game-icons/bracer",
+        trail_sneakers: "game-icons/run",
+        vitality_charm: "game-icons/heart-plus",
+        meditation_beads: "game-icons/prayer-beads",
+        mind_crystal: "game-icons/crystal-ball",
+        dream_journal: "game-icons/book-cover",
+        logic_gem: "game-icons/gem-chain",
+        wisdom_tome: "game-icons/book-aura",
+        insight_orb: "game-icons/eyeball",
+        silver_tongue_brooch: "game-icons/conversation",
+        banquet_seal: "game-icons/feast",
+        diplomat_scroll: "game-icons/scroll-unfurled",
+        code_tablet: "game-icons/tablet",
+        quantum_lens: "game-icons/lens",
+        circuit_gauntlet: "game-icons/circuitry",
+        debug_compass: "game-icons/gear-hammer",
+        poet_quill: "game-icons/quill-ink",
+        gallery_brooch: "game-icons/palette",
+        symphony_shard: "game-icons/musical-notes",
+        ancient_inkstone: "game-icons/stone-block",
+        homemaker_satchel: "game-icons/knapsack",
+        recipe_codex: "game-icons/cook",
+        handy_belt: "game-icons/toolbox",
+        lucky_coin: "game-icons/coins",
+        stamina_tea: "game-icons/teapot",
+        healing_herb: "game-icons/herbs-bundle",
+        insight_snack: "game-icons/apple-seeds",
+        ancient_map_fragment: "game-icons/torn-scroll",
+        explorer_cape: "game-icons/cape",
+        scholar_glasses: "game-icons/spectacles",
+        marathon_medal: "game-icons/medal-rank",
+        harmony_pendant: "game-icons/heart-necklace",
       },
       skills: {
         deep_focus: "game-icons/brain",
@@ -4204,7 +4618,7 @@
 
     function updateBrandIcons(skinId) {
       const url = uiIconUrl(UI_ICON_SET.skins[skinId] || UI_ICON_SET.brand, "0891b2");
-      ["topbarBrandIcon", "sidebarBrandIcon"].forEach((id) => {
+      ["topbarBrandIcon"].forEach((id) => {
         const el = document.getElementById(id);
         if (el) el.src = url;
       });
@@ -4214,14 +4628,50 @@
     }
 
     const ITEM_CATALOG = {
-      focus_crystal: { id: "focus_crystal", name: "专注水晶", icon: "💎", type: "equipment", slot: "accessory", rarity: "rare", xpBonus: 0.12, desc: "思绪凝聚，所有任务经验 +12%" },
-      momentum_boots: { id: "momentum_boots", name: "疾风战靴", icon: "👢", type: "equipment", slot: "armor", rarity: "common", xpBonus: 0.06, desc: "步履轻快，经验 +6%" },
-      main_blade: { id: "main_blade", name: "主线之刃", icon: "⚔️", type: "equipment", slot: "weapon", rarity: "epic", mainXpBonus: 0.2, desc: "主线任务经验 +20%" },
-      side_dagger: { id: "side_dagger", name: "支线短刃", icon: "🗡️", type: "equipment", slot: "weapon", rarity: "rare", sideXpBonus: 0.18, desc: "支线任务经验 +18%" },
-      deadline_amulet: { id: "deadline_amulet", name: "临期护符", icon: "⏳", type: "equipment", slot: "accessory", rarity: "rare", urgentBonus: 0.15, desc: "临期/准时完成额外 +15% 经验" },
-      night_cloak: { id: "night_cloak", name: "夜行斗篷", icon: "🌙", type: "equipment", slot: "armor", rarity: "epic", nightBonus: 0.25, desc: "凌晨 0–6 点完成经验 +25%" },
-      map_compass: { id: "map_compass", name: "大陆罗盘", icon: "🧭", type: "equipment", slot: "accessory", rarity: "common", desc: "迷失时仍知方向（心理锚点）" },
+      focus_crystal: { id: "focus_crystal", name: "专注水晶", icon: "💎", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: [], xpBonus: 0.12, desc: "思绪凝聚，所有任务经验 +12%" },
+      momentum_boots: { id: "momentum_boots", name: "疾风战靴", icon: "👢", type: "equipment", slot: "armor", rarity: "common", attrKeys: [], xpBonus: 0.06, desc: "步履轻快，经验 +6%" },
+      main_blade: { id: "main_blade", name: "主线之刃", icon: "⚔️", type: "equipment", slot: "weapon", rarity: "epic", attrKeys: [], mainXpBonus: 0.2, desc: "主线任务经验 +20%" },
+      side_dagger: { id: "side_dagger", name: "支线短刃", icon: "🗡️", type: "equipment", slot: "weapon", rarity: "rare", attrKeys: [], sideXpBonus: 0.18, desc: "支线任务经验 +18%" },
+      deadline_amulet: { id: "deadline_amulet", name: "临期护符", icon: "⏳", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: [], urgentBonus: 0.15, desc: "临期/准时完成额外 +15% 经验" },
+      night_cloak: { id: "night_cloak", name: "夜行斗篷", icon: "🌙", type: "equipment", slot: "armor", rarity: "epic", attrKeys: [], nightBonus: 0.25, desc: "凌晨 0–6 点完成经验 +25%" },
+      map_compass: { id: "map_compass", name: "大陆罗盘", icon: "🧭", type: "equipment", slot: "accessory", rarity: "common", attrKeys: [], desc: "迷失时仍知方向（心理锚点）" },
+      rookie_badge: { id: "rookie_badge", name: "新兵徽章", icon: "🎖️", type: "treasure", rarity: "common", attrKeys: [], desc: "初战告捷的纪念，见证冒险的起点" },
+      iron_bracers: { id: "iron_bracers", name: "铸铁护腕", icon: "🥊", type: "equipment", slot: "armor", rarity: "common", attrKeys: ["physique"], xpBonus: 0.04, desc: "体能事项掉落 · 经验 +4%" },
+      trail_sneakers: { id: "trail_sneakers", name: "越野跑鞋", icon: "👟", type: "equipment", slot: "armor", rarity: "rare", attrKeys: ["physique"], xpBonus: 0.08, desc: "体能事项掉落 · 长途奔袭更从容" },
+      vitality_charm: { id: "vitality_charm", name: "活力护符", icon: "💚", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["physique"], desc: "体能事项掉落 · 身体恢复略有加成" },
+      marathon_medal: { id: "marathon_medal", name: "马拉松奖章", icon: "🏅", type: "treasure", rarity: "epic", attrKeys: ["physique"], desc: "体能事项稀有掉落 · 耐力与意志的证明" },
+      meditation_beads: { id: "meditation_beads", name: "冥想念珠", icon: "📿", type: "equipment", slot: "accessory", rarity: "common", attrKeys: ["mind"], xpBonus: 0.05, desc: "精神力事项掉落 · 经验 +5%" },
+      mind_crystal: { id: "mind_crystal", name: "心智水晶", icon: "🔮", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["mind"], xpBonus: 0.1, desc: "精神力事项掉落 · 思绪澄澈" },
+      dream_journal: { id: "dream_journal", name: "梦境札记", icon: "📔", type: "treasure", rarity: "common", attrKeys: ["mind"], desc: "精神力事项掉落 · 记录灵感与潜意识" },
+      logic_gem: { id: "logic_gem", name: "逻辑宝石", icon: "💠", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["intelligence"], xpBonus: 0.07, desc: "精神力/智力事项掉落 · 推演更敏锐" },
+      wisdom_tome: { id: "wisdom_tome", name: "智慧之书", icon: "📚", type: "treasure", rarity: "epic", attrKeys: ["intelligence"], desc: "智力成长事项掉落 · 知识沉淀为力量" },
+      insight_orb: { id: "insight_orb", name: "洞察之球", icon: "👁️", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["intelligence"], desc: "智力事项掉落 · 看破问题本质" },
+      silver_tongue_brooch: { id: "silver_tongue_brooch", name: "巧言胸针", icon: "🗣️", type: "equipment", slot: "accessory", rarity: "common", attrKeys: ["social"], xpBonus: 0.05, desc: "社交事项掉落 · 沟通更顺畅" },
+      banquet_seal: { id: "banquet_seal", name: "宴会印玺", icon: "🍷", type: "treasure", rarity: "rare", attrKeys: ["social"], desc: "社交事项掉落 · 人脉如宴" },
+      diplomat_scroll: { id: "diplomat_scroll", name: "外交官卷轴", icon: "📜", type: "treasure", rarity: "epic", attrKeys: ["social"], desc: "社交事项稀有掉落 · 斡旋之道" },
+      code_tablet: { id: "code_tablet", name: "代码刻写板", icon: "💻", type: "equipment", slot: "weapon", rarity: "common", attrKeys: ["technology"], xpBonus: 0.06, desc: "科技事项掉落 · 经验 +6%" },
+      quantum_lens: { id: "quantum_lens", name: "量子镜片", icon: "🔬", type: "equipment", slot: "accessory", rarity: "epic", attrKeys: ["technology"], xpBonus: 0.14, desc: "科技事项掉落 · 洞见复杂系统" },
+      circuit_gauntlet: { id: "circuit_gauntlet", name: "电路护手", icon: "🦾", type: "equipment", slot: "armor", rarity: "rare", attrKeys: ["technology"], desc: "科技事项掉落 · 工程巧思护身" },
+      debug_compass: { id: "debug_compass", name: "调试罗盘", icon: "🧭", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["technology"], urgentBonus: 0.08, desc: "科技事项掉落 · 排错如导航" },
+      poet_quill: { id: "poet_quill", name: "诗人羽笔", icon: "🪶", type: "equipment", slot: "weapon", rarity: "common", attrKeys: ["humanities"], xpBonus: 0.05, desc: "人文艺术事项掉落 · 经验 +5%" },
+      gallery_brooch: { id: "gallery_brooch", name: "画廊胸针", icon: "🎨", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["humanities"], desc: "人文艺术事项掉落 · 审美即力量" },
+      symphony_shard: { id: "symphony_shard", name: "交响碎片", icon: "🎵", type: "treasure", rarity: "rare", attrKeys: ["humanities"], desc: "人文艺术事项掉落 · 旋律凝固成晶" },
+      ancient_inkstone: { id: "ancient_inkstone", name: "古砚残片", icon: "🖋️", type: "treasure", rarity: "epic", attrKeys: ["humanities"], desc: "人文艺术稀有掉落 · 千年文脉" },
+      homemaker_satchel: { id: "homemaker_satchel", name: "生活家行囊", icon: "🧺", type: "equipment", slot: "armor", rarity: "common", attrKeys: ["lifeSkills"], xpBonus: 0.04, desc: "生活力事项掉落 · 日常井井有条" },
+      recipe_codex: { id: "recipe_codex", name: "食谱秘典", icon: "📖", type: "treasure", rarity: "rare", attrKeys: ["lifeSkills"], desc: "生活力事项掉落 · 烟火里的智慧" },
+      handy_belt: { id: "handy_belt", name: "巧手工腰带", icon: "🔧", type: "equipment", slot: "armor", rarity: "rare", attrKeys: ["lifeSkills"], desc: "生活力事项掉落 · 万事不求人" },
+      lucky_coin: { id: "lucky_coin", name: "幸运古币", icon: "🪙", type: "treasure", rarity: "common", attrKeys: [], desc: "收藏家的信物 · 偶尔带来好运" },
+      stamina_tea: { id: "stamina_tea", name: "回神茶汤", icon: "🍵", type: "treasure", rarity: "common", attrKeys: [], desc: "日常坚持的象征 · 提神醒脑" },
+      healing_herb: { id: "healing_herb", name: "疗愈药草", icon: "🌿", type: "treasure", rarity: "rare", attrKeys: [], desc: "关怀身体的奖励 · 温和养护" },
+      insight_snack: { id: "insight_snack", name: "灵感小食", icon: "🥐", type: "treasure", rarity: "common", attrKeys: ["mind"], desc: "精神力事项小掉落 · 小憩即有灵感" },
+      ancient_map_fragment: { id: "ancient_map_fragment", name: "古地图残页", icon: "🗺️", type: "treasure", rarity: "rare", attrKeys: [], desc: "探索大陆时偶得 · 指引未知区域" },
+      explorer_cape: { id: "explorer_cape", name: "探险者披风", icon: "🧥", type: "equipment", slot: "armor", rarity: "rare", attrKeys: [], sideXpBonus: 0.1, desc: "开疆拓土成就奖励 · 支线经验 +10%" },
+      scholar_glasses: { id: "scholar_glasses", name: "学者眼镜", icon: "👓", type: "equipment", slot: "accessory", rarity: "rare", attrKeys: ["intelligence", "humanities"], xpBonus: 0.06, desc: "博学成就奖励 · 博览群书" },
+      harmony_pendant: { id: "harmony_pendant", name: "和谐吊坠", icon: "☯️", type: "equipment", slot: "accessory", rarity: "epic", attrKeys: ["mind", "social"], xpBonus: 0.1, desc: "身心平衡成就 · 内外兼修" },
     };
+
+    const LOOT_DROP_CHANCE = 0.28;
+    const TASK_ATTR_EXTRA_KEYS = { "精神力": ["mind", "intelligence"] };
 
     const SKILL_CATALOG = {
       deep_focus: {
@@ -4261,17 +4711,40 @@
     }
 
     const ACHIEVEMENT_DEFS = [
-      { id: "first_quest", icon: "🎯", name: "初战告捷", desc: "完成第一个事项", check: (p) => p.stats.tasksCompleted >= 1 },
-      { id: "main_hero", icon: "⭐", name: "主线英雄", desc: "完成 10 个主线事项", check: (p) => p.stats.mainTasksCompleted >= 10 },
-      { id: "side_explorer", icon: "◆", name: "支线游侠", desc: "完成 10 个支线事项", check: (p) => p.stats.sideTasksCompleted >= 10 },
-      { id: "level_5", icon: "🏅", name: "五级冒险者", desc: "达到 5 级", check: (p) => getLevelFromXp(p.xp) >= 5 },
-      { id: "level_10", icon: "👑", name: "十级传奇", desc: "达到 10 级", check: (p) => getLevelFromXp(p.xp) >= 10 },
-      { id: "map_pioneer", icon: "🗺️", name: "开疆拓土", desc: "创建第一块大陆", check: (p, s) => (s.tags || []).length >= 1 },
-      { id: "night_owl", icon: "🦉", name: "夜行旅人", desc: "在凌晨 0–6 点完成事项", check: (p) => p.stats.nightCompletions >= 1 },
-      { id: "urgency_master", icon: "🔥", name: "临危不乱", desc: "完成 5 个高优先级事项", check: (p) => p.stats.highPriorityCompleted >= 5 },
-      { id: "collector", icon: "🎒", name: "收藏家", desc: "背包中拥有 5 件物品", check: (p) => (p.inventory || []).length >= 5 },
+      { id: "first_quest", icon: "🎯", name: "初战告捷", desc: "完成第一个事项", rewardItemId: "rookie_badge", check: (p) => p.stats.tasksCompleted >= 1 },
+      { id: "main_hero", icon: "⭐", name: "主线英雄", desc: "完成 10 个主线事项", rewardItemId: "main_blade", check: (p) => p.stats.mainTasksCompleted >= 10 },
+      { id: "side_explorer", icon: "◆", name: "支线游侠", desc: "完成 10 个支线事项", rewardItemId: "side_dagger", check: (p) => p.stats.sideTasksCompleted >= 10 },
+      { id: "level_5", icon: "🏅", name: "五级冒险者", desc: "达到 5 级", rewardItemId: "momentum_boots", check: (p) => getLevelFromXp(p.xp) >= 5 },
+      { id: "level_10", icon: "👑", name: "十级传奇", desc: "达到 10 级", rewardItemId: "night_cloak", check: (p) => getLevelFromXp(p.xp) >= 10 },
+      { id: "map_pioneer", icon: "🗺️", name: "开疆拓土", desc: "创建第一块大陆", rewardItemId: "explorer_cape", check: (p, s) => (s.tags || []).length >= 1 },
+      { id: "night_owl", icon: "🦉", name: "夜行旅人", desc: "在凌晨 0–6 点完成事项", rewardItemId: "dream_journal", check: (p) => p.stats.nightCompletions >= 1 },
+      { id: "urgency_master", icon: "🔥", name: "临危不乱", desc: "完成 5 个高优先级事项", rewardItemId: "deadline_amulet", check: (p) => p.stats.highPriorityCompleted >= 5 },
+      { id: "collector", icon: "🎒", name: "收藏家", desc: "发现 8 件装备或道具", rewardItemId: "lucky_coin", check: (p) => (p.discoveredItems || []).length >= 8 },
+      { id: "daily_routine", icon: "☀️", name: "日常修行者", desc: "完成 10 次日常行动", rewardItemId: "stamina_tea", check: (p) => p.stats.dailyActionsCompleted >= 10 },
+      { id: "physique_path", icon: "💪", name: "体魄之道", desc: "体格属性达到 15", rewardItemId: "iron_bracers", check: (p) => (p.attributes?.physique || 0) >= 15 },
+      { id: "tech_path", icon: "⚙️", name: "科技先锋", desc: "科技属性达到 15", rewardItemId: "code_tablet", check: (p) => (p.attributes?.technology || 0) >= 15 },
+      { id: "humanities_path", icon: "🎭", name: "人文旅者", desc: "人文艺术属性达到 15", rewardItemId: "poet_quill", check: (p) => (p.attributes?.humanities || 0) >= 15 },
+      { id: "social_path", icon: "🤝", name: "社交达人", desc: "社交能力达到 15", rewardItemId: "silver_tongue_brooch", check: (p) => (p.attributes?.social || 0) >= 15 },
+      { id: "mind_path", icon: "🧠", name: "心流求索", desc: "心智属性达到 15", rewardItemId: "meditation_beads", check: (p) => (p.attributes?.mind || 0) >= 15 },
+      { id: "life_path", icon: "🏠", name: "生活艺术家", desc: "生活力达到 15", rewardItemId: "homemaker_satchel", check: (p) => (p.attributes?.lifeSkills || 0) >= 15 },
+      { id: "continent_walker", icon: "🌍", name: "大陆行者", desc: "开辟 3 块大陆", rewardItemId: "ancient_map_fragment", check: (p, s) => (s.tags || []).length >= 3 },
+      { id: "map_weaver", icon: "📍", name: "地图编织者", desc: "创建 5 张地图", rewardItemId: "map_compass", check: (p, s) => (s.projects || []).filter((x) => (x.questType || "main") !== "side").length >= 5 },
+      { id: "task_veteran", icon: "⚔️", name: "百战老兵", desc: "累计完成 50 个事项", rewardItemId: "focus_crystal", check: (p) => p.stats.tasksCompleted >= 50 },
+      { id: "codex_scholar", icon: "📚", name: "图鉴学者", desc: "发现 20 件装备或道具", rewardItemId: "scholar_glasses", check: (p) => (p.discoveredItems || []).length >= 20 },
+      { id: "achievement_master", icon: "🏆", name: "成就猎人", desc: "解锁 12 个成就", rewardItemId: "harmony_pendant", check: (p) => (p.achievements || []).length >= 12 },
+      { id: "side_quest_fan", icon: "✦", name: "支线追迹者", desc: "完成 5 个大陆支线", rewardItemId: "symphony_shard", check: (p) => (p.stats.sideQuestsCompleted || 0) >= 5 },
+      { id: "wellness_guard", icon: "💚", name: "健康守护者", desc: "登记过健康档案病况", rewardItemId: "healing_herb", check: (p) => (p.healthProfile?.conditions || []).some((c) => (c.name || "").trim()) },
     ];
 
+    function defaultVitals() {
+      return { physicalHealth: 100, mentalHealth: MENTAL_RESET_VALUE, lastVitalTickAt: null, lastMentalDayKey: null };
+    }
+    function defaultAttributes() {
+      return { physique: 0, mind: 0, intelligence: 0, technology: 0, humanities: 0, social: 0, lifeSkills: 0 };
+    }
+    function defaultHealthProfile() {
+      return { conditions: [], notes: "" };
+    }
     function defaultPlayer() {
       return {
         xp: 0,
@@ -4280,7 +4753,11 @@
         inventory: [],
         equipment: { weapon: null, armor: null, accessory: null },
         achievements: [],
-        stats: { tasksCompleted: 0, mainTasksCompleted: 0, sideTasksCompleted: 0, highPriorityCompleted: 0, nightCompletions: 0 },
+        stats: { tasksCompleted: 0, mainTasksCompleted: 0, sideTasksCompleted: 0, sideQuestsCompleted: 0, highPriorityCompleted: 0, nightCompletions: 0, dailyActionsCompleted: 0 },
+        discoveredItems: [],
+        vitals: defaultVitals(),
+        attributes: defaultAttributes(),
+        healthProfile: defaultHealthProfile(),
       };
     }
 
@@ -4318,9 +4795,44 @@
           : [],
         equipment,
         achievements: Array.isArray(p.achievements) ? p.achievements : [],
+        discoveredItems: Array.isArray(p.discoveredItems) ? [...new Set(p.discoveredItems.filter((id) => ITEM_CATALOG[id]))] : [],
         stats: { ...base.stats, ...(p.stats || {}) },
+        vitals: normalizeVitals(p.vitals),
+        attributes: normalizeAttributes(p.attributes),
+        healthProfile: normalizeHealthProfile(p.healthProfile),
       };
     }
+
+    function normalizeVitals(v) {
+      const b = defaultVitals();
+      if (!v || typeof v !== "object") return b;
+      const out = {
+        physicalHealth: clamp100(typeof v.physicalHealth === "number" ? v.physicalHealth : b.physicalHealth),
+        mentalHealth: clamp100(typeof v.mentalHealth === "number" ? v.mentalHealth : b.mentalHealth),
+        lastVitalTickAt: v.lastVitalTickAt || null,
+        lastMentalDayKey: v.lastMentalDayKey || v.lastVitalDayKey || null,
+      };
+      if (!out.lastVitalTickAt) out.lastVitalTickAt = new Date().toISOString();
+      return out;
+    }
+    function normalizeAttributes(a) {
+      const b = defaultAttributes();
+      if (!a || typeof a !== "object") return b;
+      const out = { ...b };
+      PLAYER_ATTR_KEYS.forEach((k) => { if (typeof a[k] === "number") out[k] = Math.max(0, a[k]); });
+      return out;
+    }
+    function normalizeHealthProfile(h) {
+      const b = defaultHealthProfile();
+      if (!h || typeof h !== "object") return b;
+      return {
+        conditions: Array.isArray(h.conditions) ? h.conditions.map((c) => ({
+          id: c.id || uid(), name: (c.name || "").trim() || "未命名", note: c.note || "", since: c.since || null,
+        })) : [],
+        notes: h.notes || "",
+      };
+    }
+    function clamp100(n) { return Math.min(100, Math.max(0, Math.round(n))); }
 
     function mergePlayerData(current, incoming) {
       const pa = normalizePlayer(current);
@@ -4352,22 +4864,55 @@
         inventory: [...invById.values()],
         equipment,
         achievements: [...new Set([...(pa.achievements || []), ...(pb.achievements || [])])],
+        discoveredItems: [...new Set([...(pa.discoveredItems || []), ...(pb.discoveredItems || [])])],
         stats,
+        vitals: {
+          physicalHealth: Math.max(pa.vitals.physicalHealth, pb.vitals.physicalHealth),
+          mentalHealth: Math.max(pa.vitals.mentalHealth, pb.vitals.mentalHealth),
+          lastVitalTickAt: pa.vitals.lastVitalTickAt || pb.vitals.lastVitalTickAt,
+          lastMentalDayKey: pa.vitals.lastMentalDayKey || pb.vitals.lastMentalDayKey,
+        },
+        attributes: (() => {
+          const out = { ...pa.attributes };
+          PLAYER_ATTR_KEYS.forEach((k) => { out[k] = Math.max(pa.attributes[k] || 0, pb.attributes[k] || 0); });
+          return out;
+        })(),
+        healthProfile: {
+          conditions: [...pa.healthProfile.conditions, ...pb.healthProfile.conditions.filter((c) => !pa.healthProfile.conditions.some((x) => x.id === c.id))],
+          notes: [pa.healthProfile.notes, pb.healthProfile.notes].filter(Boolean).join("\n"),
+        },
       });
     }
 
     function applyImportedPreferences(preferences) {
       if (!preferences || typeof preferences !== "object") return;
       if (preferences.uiSkin && UI_SKINS[preferences.uiSkin]) applyUiSkin(preferences.uiSkin);
+      if (preferences.llmProvider) {
+        const cfg = loadLlmSummaryConfig();
+        if (cfg[preferences.llmProvider]) {
+          cfg.activeProvider = preferences.llmProvider;
+          saveLlmSummaryConfig(cfg);
+        }
+      }
     }
 
     function normalizeStateForPersistence() {
       state.schemaVersion = STATE_SCHEMA_VERSION;
       state.app = "Earth-Online";
       state.player = normalizePlayer(state.player);
-      state.tags = (state.tags || []).map(normalizeTag);
+      const normTags = [];
+      (state.tags || []).forEach((t) => normTags.push(normalizeTag(t, normTags)));
+      state.tags = normTags;
       state.projects = (state.projects || []).map(normalizeProject);
-      state.preferences = { uiSkin: loadUiSkin() };
+      state.sideQuests = (state.sideQuests || []).map(normalizeSideQuest);
+      state.dailyActions = (state.dailyActions || []).map(normalizeDailyAction);
+      state.dailyLogs = Array.isArray(state.dailyLogs) ? state.dailyLogs : [];
+      state.taskFilter = taskFilter || "all";
+      const llmCfg = loadLlmSummaryConfig();
+      state.preferences = {
+        uiSkin: state.preferences?.uiSkin || loadUiSkin(),
+        llmProvider: llmCfg.activeProvider || state.preferences?.llmProvider || "kimi",
+      };
     }
 
     function totalXpForLevel(level) {
@@ -4466,36 +5011,156 @@
       const def = getItemDef(itemId);
       if (!def) return false;
       const p = state.player;
-      if (p.inventory.some((i) => i.itemId === itemId)) return false;
+      if (def.type !== "treasure" && p.inventory.some((i) => i.itemId === itemId)) return false;
       p.inventory.push({ id: uid(), itemId, obtainedAt: new Date().toISOString() });
+      markItemDiscovered(itemId);
       return true;
     }
 
-    function rollFallbackLoot(project) {
-      const pool = project.questType === "side"
-        ? ["side_dagger", "momentum_boots", "map_compass"]
-        : ["main_blade", "focus_crystal", "deadline_amulet"];
-      if (Math.random() > 0.22) return null;
-      const itemId = pool[Math.floor(Math.random() * pool.length)];
-      return addInventoryItem(itemId) ? itemId : null;
+
+    function markItemDiscovered(itemId) {
+      if (!itemId || !ITEM_CATALOG[itemId]) return;
+      if (!state.player.discoveredItems) state.player.discoveredItems = [];
+      if (!state.player.discoveredItems.includes(itemId)) state.player.discoveredItems.push(itemId);
+    }
+
+    function getTaskLootAttrKeys(task) {
+      const keys = new Set();
+      (task?.attrTags || []).forEach((tag) => {
+        const k = TASK_ATTR_TO_PLAYER[tag];
+        if (k) keys.add(k);
+        (TASK_ATTR_EXTRA_KEYS[tag] || []).forEach((ek) => keys.add(ek));
+      });
+      if (task?.attrDelta && typeof task.attrDelta === "object") {
+        PLAYER_ATTR_KEYS.forEach((k) => { if ((task.attrDelta[k] || 0) > 0) keys.add(k); });
+      }
+      return keys;
+    }
+
+    function getLootPoolForAttrKeys(attrKeys) {
+      const keys = attrKeys instanceof Set ? attrKeys : new Set(attrKeys || []);
+      const matched = Object.values(ITEM_CATALOG).filter((item) => {
+        if (!item.attrKeys || !item.attrKeys.length) return false;
+        return item.attrKeys.some((k) => keys.has(k));
+      });
+      const general = Object.values(ITEM_CATALOG).filter((item) => !item.attrKeys || !item.attrKeys.length);
+      return { matched, general };
+    }
+
+    function pickWeightedLootItem(pool) {
+      if (!pool.length) return null;
+      const weights = { common: 50, rare: 28, epic: 12, legendary: 5 };
+      const total = pool.reduce((s, it) => s + (weights[it.rarity] || 40), 0);
+      let roll = Math.random() * total;
+      for (const it of pool) {
+        roll -= weights[it.rarity] || 40;
+        if (roll <= 0) return it.id;
+      }
+      return pool[pool.length - 1].id;
+    }
+
+    function rollTaskLoot(task, project) {
+      if (Math.random() > LOOT_DROP_CHANCE) return null;
+      const keys = getTaskLootAttrKeys(task);
+      const { matched, general } = getLootPoolForAttrKeys(keys);
+      let pool = [];
+      if (matched.length) {
+        pool = [...matched];
+        if (Math.random() < 0.12 && general.length) pool = general;
+      } else if (general.length) {
+        pool = general;
+      } else return null;
+      const owned = new Set((state.player.inventory || []).map((i) => i.itemId));
+      const candidates = pool.filter((it) => !owned.has(it.id) || it.type === "treasure");
+      const finalPool = candidates.length ? candidates : pool;
+      return pickWeightedLootItem(finalPool);
+    }
+
+    function rollFallbackLoot(project, task) {
+      if (task) return rollTaskLoot(task, project);
+      if (Math.random() > LOOT_DROP_CHANCE) return null;
+      const general = Object.values(ITEM_CATALOG).filter((i) => !i.attrKeys || !i.attrKeys.length);
+      const pool = general.length ? general : Object.values(ITEM_CATALOG);
+      return pickWeightedLootItem(pool);
     }
 
     function grantLevelRewards(level, prevLevel) {
       const gained = level - prevLevel;
       if (gained <= 0) return;
       state.player.skillPoints += gained;
-      if (level === 3 && addInventoryItem("focus_crystal")) toast("升级奖励：获得专注水晶！");
-      if (level === 7 && addInventoryItem("night_cloak")) toast("升级奖励：获得夜行斗篷！");
+      let rewardItem = null;
+      if (level === 3 && addInventoryItem("focus_crystal")) rewardItem = "focus_crystal";
+      if (level === 7 && addInventoryItem("night_cloak")) rewardItem = rewardItem || "night_cloak";
+      showLevelUpModal(level, gained, rewardItem);
     }
 
     function checkAchievements() {
       const p = state.player;
+      const unlocked = [];
       ACHIEVEMENT_DEFS.forEach((ach) => {
         if (p.achievements.includes(ach.id)) return;
         if (ach.check(p, state)) {
           p.achievements.push(ach.id);
-          toast(`🏆 成就解锁：${ach.name}`);
+          unlocked.push(ach);
         }
+      });
+      unlocked.forEach((ach) => {
+        if (ach.rewardItemId && addInventoryItem(ach.rewardItemId)) {
+          showAchievementRewardModal(ach, ach.rewardItemId);
+        } else {
+          showAchievementRewardModal(ach, null);
+        }
+      });
+    }
+
+    const rewardModalQueue = [];
+
+    function pumpRewardModalQueue() {
+      if (document.getElementById("modalLoot")?.classList.contains("open")) return;
+      const renderFn = rewardModalQueue.shift();
+      if (!renderFn) return;
+      renderFn();
+      openModal("modalLoot");
+    }
+
+    function queueRewardModal(renderFn) {
+      rewardModalQueue.push(renderFn);
+      pumpRewardModalQueue();
+    }
+
+    function showAchievementRewardModal(ach, itemId) {
+      queueRewardModal(() => {
+        const def = itemId ? getItemDef(itemId) : null;
+        document.getElementById("lootModalBody").innerHTML = `
+          <div class="loot-ach-title">🏆 成就解锁</div>
+          <h4 style="margin:0.5rem 0;font-size:1.05rem">${escapeHtml(ach.name)}</h4>
+          <p class="meta" style="margin-bottom:0.75rem;line-height:1.5">${escapeHtml(ach.desc)}</p>
+          ${def ? `<div class="loot-items"><div class="inv-item rarity-${def.rarity || "common"}">${getItemIconHtml(itemId, 24)}${escapeHtml(def.name)}</div><p class="field-hint" style="margin-top:0.35rem">已放入背包，可在角色面板装备或查看</p></div>` : ""}
+        `;
+      });
+    }
+
+    function showLevelUpModal(level, gained, itemId) {
+      queueRewardModal(() => {
+        const def = itemId ? getItemDef(itemId) : null;
+        document.getElementById("lootModalBody").innerHTML = `
+          <div class="loot-ach-title">🎉 等级提升</div>
+          <div class="loot-xp">Lv.${level}</div>
+          <p class="meta" style="margin-bottom:0.65rem">获得 ${gained} 技能点${def ? "，并发现一件装备" : ""}</p>
+          ${def ? `<div class="loot-items"><div class="inv-item rarity-${def.rarity || "common"}">${getItemIconHtml(itemId, 24)}${escapeHtml(def.name)}</div></div>` : ""}
+        `;
+      });
+    }
+
+    function showItemLootModal(title, narrative, itemId, xp) {
+      queueRewardModal(() => {
+        const def = itemId ? getItemDef(itemId) : null;
+        document.getElementById("lootModalBody").innerHTML = `
+          <div class="loot-ach-title">${escapeHtml(title)}</div>
+          ${xp ? `<div class="loot-xp">+${xp} XP</div>` : ""}
+          <div class="loot-narrative">${escapeHtml(narrative || "")}</div>
+          ${def ? `<div class="loot-items"><div class="inv-item rarity-${def.rarity || "common"}">${getItemIconHtml(itemId, 24)}${escapeHtml(def.name)}</div><p class="field-hint" style="margin-top:0.35rem">已放入背包</p></div>` : ""}
+        `;
       });
     }
 
@@ -4504,6 +5169,7 @@
       const xp = calcTaskXp(task, project);
       const prevLevel = getLevelFromXp(state.player.xp);
       state.player.xp += xp;
+      onMainTaskCompleteVitals(task);
       task.xpAwarded = xp;
       const isMain = (project.questType || "main") === "main";
       state.player.stats.tasksCompleted++;
@@ -4515,7 +5181,6 @@
       const newLevel = getLevelFromXp(state.player.xp);
       if (newLevel > prevLevel) {
         grantLevelRewards(newLevel, prevLevel);
-        toast(`🎉 升级！Lv.${newLevel}，获得 ${newLevel - prevLevel} 技能点`);
       }
       checkAchievements();
       return xp;
@@ -4601,9 +5266,64 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       }));
     }
 
-    function mapNeedsEnrichment(tag) {
-      if (tag.loreGenerated) return false;
-      return !tag.mapStory || tag.mapStory.length < 30;
+    function hasLlmApiKey() {
+      return !!getActiveLlmFromConfig(loadLlmSummaryConfig()).cfg.apiKey;
+    }
+
+    function renderTaskLlmPreviewInModal(data) {
+      const storyField = document.getElementById("taskStoryPreviewField");
+      const storyEl = document.getElementById("taskStoryPreview");
+      const tagsField = document.getElementById("taskAttrTagsField");
+      const tagsEl = document.getElementById("taskAttrTagsPreview");
+      const story = data?.taskStory || "";
+      const tags = data?.attrTags || [];
+      if (storyEl && storyField) {
+        storyEl.textContent = story;
+        storyField.style.display = story ? "" : "none";
+      }
+      if (tagsEl && tagsField) {
+        tagsEl.innerHTML = tags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
+        tagsField.style.display = tags.length ? "" : "none";
+      }
+    }
+
+    function renderProjectLlmPreviewInModal(story) {
+      const field = document.getElementById("projectQuestStoryField");
+      const box = document.getElementById("projectQuestStoryBox");
+      const text = story || "";
+      if (box) box.textContent = text;
+      if (field) field.style.display = text ? "" : "none";
+    }
+
+    function renderSideQuestLlmPreviewInModal(data) {
+      const story = data?.questStory || "";
+      const tags = data?.attrTags || [];
+      const storyField = document.getElementById("sqStoryPreviewField");
+      const storyEl = document.getElementById("sqStoryPreview");
+      const tagsField = document.getElementById("sqAttrTagsField");
+      const tagsEl = document.getElementById("sqAttrTagsPreview");
+      if (storyEl && storyField) {
+        storyEl.textContent = story;
+        storyField.style.display = story ? "" : "none";
+      }
+      if (tagsEl && tagsField) {
+        tagsEl.innerHTML = tags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
+        tagsField.style.display = tags.length ? "" : "none";
+      }
+    }
+
+    function renderDailyLlmPreviewInModal(effects, summary) {
+      const field = document.getElementById("daEffectsPreviewField");
+      const box = document.getElementById("daEffectsPreview");
+      if (!field || !box) return;
+      const ph = effects?.physicalHealth ?? 0;
+      const mh = effects?.mentalHealth ?? 0;
+      const lines = [
+        summary || "",
+        `身体健康 ${ph >= 0 ? "+" : ""}${ph} · 精神健康 ${mh >= 0 ? "+" : ""}${mh}`,
+      ].filter(Boolean);
+      box.textContent = lines.join("\n");
+      field.style.display = lines.length ? "" : "none";
     }
 
     function applyMapLoreToTag(tag, lore) {
@@ -4671,7 +5391,35 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         storyEl.textContent = tag.mapStory;
         storyEl.style.display = "";
       } else storyEl.style.display = "none";
-      document.getElementById("mapDetailCanvas").innerHTML = renderContinentMapCanvas(tag);
+      const regionProjects = state.projects.filter((p) => (p.tagIds || []).includes(tagId) && (p.questType || "main") !== "side");
+      const regionSides = (state.sideQuests || []).filter((q) => q.continentId === tagId);
+      const regionHtml = regionProjects.length || regionSides.length ? `
+        <div class="continent-region-panel">
+          <h4 class="collection-section-title">区域地图 <span class="meta">${regionProjects.length} 张</span></h4>
+          <div class="continent-region-list">${regionProjects.map((p) => {
+            const done = (p.tasks || []).filter((t) => t.status === "done").length;
+            const total = (p.tasks || []).length;
+            return `<button type="button" class="continent-region-item" data-project-id="${p.id}">
+              <span class="cr-name">${questTypeBadgeHtml({ questType: "main" })}${escapeHtml(p.name)}</span>
+              <span class="cr-meta">${total ? `${done}/${total} 任务` : "暂无任务"} · ${p.progress || 0}%</span>
+            </button>`;
+          }).join("")}</div>
+          ${regionSides.length ? `<h4 class="collection-section-title" style="margin-top:0.65rem">大陆支线 <span class="meta">${regionSides.length}</span></h4>
+          <div class="continent-region-list">${regionSides.map((sq) => `<div class="continent-region-item static">${questTypeBadgeHtml({ questType: "side" })}${escapeHtml(sq.title)}</div>`).join("")}</div>` : ""}
+        </div>` : '<p class="meta">该大陆尚无区域地图，请新建地图并归属此大陆。</p>';
+      document.getElementById("mapDetailCanvas").innerHTML = regionHtml + renderContinentMapCanvas(tag);
+      document.getElementById("mapDetailCanvas").querySelectorAll(".continent-region-item[data-project-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.activeProjectId = btn.dataset.projectId;
+          state.activeSideQuestId = null;
+          taskFilter = "all";
+          save();
+          closeModal("modalMapDetail");
+          closeModal("modalWorldMap");
+          render();
+          focusWorkOnMobile();
+        });
+      });
       document.getElementById("mapDetailCanvas").querySelectorAll(".map-quest-pin").forEach((btn) => {
         btn.addEventListener("click", () => {
           state.activeProjectId = btn.dataset.projectId;
@@ -4687,40 +5435,65 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     }
 
     async function enrichMapTag(tag, showToast = true) {
-      const lore = await generateMapLore(tag.name, tag);
-      applyMapLoreToTag(tag, lore);
+      const live = getTag(tag.id) || tag;
+      const lore = await generateMapLore(live.name, live);
+      applyMapLoreToTag(live, lore);
       save();
-      if (showToast) toast(`「${tag.name}」大陆设定已生成`);
-      return tag;
+      if (showToast) toast(`「${live.name}」大陆设定已生成`);
+      return live;
     }
 
-    async function enrichAllExistingMaps(silent = false) {
-      const need = state.tags.filter(mapNeedsEnrichment);
-      if (!need.length) {
-        if (!silent) toast("所有大陆已有完整设定");
-        return;
-      }
-      const statusEl = document.getElementById("mapGenStatus");
-      for (let i = 0; i < need.length; i++) {
-        const tag = need[i];
-        if (statusEl) statusEl.textContent = `正在生成 ${i + 1}/${need.length}：${tag.name}…`;
-        await enrichMapTag(tag, false);
-      }
-      if (statusEl) statusEl.textContent = "";
-      if (!silent) toast(`已为 ${need.length} 块大陆生成故事、图标与地图`);
-      renderTagEditor();
-      renderTagFilters();
-      if (document.getElementById("modalWorldMap")?.classList.contains("open")) renderWorldMap();
-      if (mapDetailTagId) openMapDetailModal(mapDetailTagId);
+    async function enrichProjectStory(project, showToast = false) {
+      const live = findProjectInState(project.id);
+      if (!live) return null;
+      const map = getTag((live.tagIds || [])[0]);
+      const story = await generateQuestStory(live.name, map, live.questType || "main", live.description);
+      live.questStory = story || live.questStory || "";
+      live.loreGenerated = true;
+      live.updatedAt = new Date().toISOString();
+      save();
+      if (showToast) toast(`「${live.name}」地图剧情已生成`);
+      return live;
     }
 
-    async function maybeEnrichExistingMapsOnLoad() {
-      const need = state.tags.filter(mapNeedsEnrichment);
-      if (!need.length) return;
-      const hasApi = !!getActiveLlmFromConfig(loadLlmSummaryConfig()).cfg.apiKey;
-      if (hasApi) toast(`检测到 ${need.length} 块大陆待生成设定，处理中…`);
-      await enrichAllExistingMaps(!hasApi);
-      render();
+    function applyTaskAnalysis(task, analysis) {
+      if (!task || !analysis) return;
+      task.attrTags = (analysis.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
+      task.taskStory = analysis.taskStory || task.taskStory || "";
+      task.attrDelta = analysis.attributes || task.attrDelta || null;
+      if (typeof analysis.physicalHealth === "number" || typeof analysis.mentalHealth === "number") {
+        task.vitalOnComplete = {
+          physical: typeof analysis.physicalHealth === "number" ? analysis.physicalHealth : (task.vitalOnComplete?.physical ?? -1),
+          mental: typeof analysis.mentalHealth === "number" ? analysis.mentalHealth : (task.vitalOnComplete?.mental ?? -MENTAL_COST_PER_TASK),
+        };
+      }
+      task.llmEnriched = true;
+    }
+
+    async function enrichTaskAnalysis(projectId, taskId) {
+      const project = findProjectInState(projectId);
+      const task = findTaskInState(projectId, taskId);
+      if (!project || !task) return false;
+      const analysis = await analyzeTaskWithLlm(task, project);
+      applyTaskAnalysis(task, analysis);
+      task.updatedAt = new Date().toISOString();
+      project.updatedAt = task.updatedAt;
+      save();
+      return true;
+    }
+
+    async function enrichSideQuestStory(sq, showToast = false) {
+      const live = (state.sideQuests || []).find((q) => q.id === sq.id);
+      if (!live) return null;
+      const analysis = await analyzeSideQuestWithLlm(live);
+      live.questStory = analysis?.questStory || live.questStory || "";
+      live.attrTags = (analysis?.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
+      if (analysis?.attributes) live.attrDelta = analysis.attributes;
+      live.loreGenerated = true;
+      live.updatedAt = new Date().toISOString();
+      save();
+      if (showToast) toast(`支线「${live.title}」剧情已生成`);
+      return live;
     }
 
     function upgradeSkill(skillId) {
@@ -4765,51 +5538,76 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       return text || fallback;
     }
 
-    async function generateCompletionLoot(task, project, map, xp) {
+    function buildCompletionLootFallback(task, project, xp) {
       const typeLabel = (project.questType || "main") === "main" ? "主线" : "支线";
-      const fallbackItem = rollFallbackLoot(project);
-      const fallback = {
+      const fallbackItem = rollFallbackLoot(project, task);
+      return {
         narrative: `你完成了${typeLabel}事项「${task.title}」，获得 ${xp} 经验。${fallbackItem ? `发现了 ${getItemDef(fallbackItem)?.name || "战利品"}！` : "继续前行，更多宝藏等待发掘。"}`,
         itemId: fallbackItem,
       };
+    }
+
+    async function enrichLootModalNarrative(task, project, map, xp) {
+      const typeLabel = (project.questType || "main") === "main" ? "主线" : "支线";
       const text = await callLlmNarrative(
         "你是 Earth-Online 奖励裁判。输出 JSON：{\"narrative\":\"50字内完成庆祝语\",\"itemId\":null或focus_crystal/momentum_boots/main_blade/side_dagger/deadline_amulet/night_cloak之一}",
         `大陆${map?.name}，${typeLabel}「${project.name}」完成子任务「${task.title}」，优先级${task.priority}，+${xp}XP。`
       );
-      if (!text) return fallback;
+      if (!text) return;
+      try {
+        const m = text.match(/\{[\s\S]*\}/);
+        if (!m) return;
+        const j = JSON.parse(m[0]);
+        const modal = document.getElementById("modalLoot");
+        if (!modal?.classList.contains("open")) return;
+        const narrativeEl = modal.querySelector(".loot-narrative");
+        if (narrativeEl && j.narrative) narrativeEl.textContent = j.narrative;
+      } catch { /* keep fallback narrative */ }
+    }
+
+    function presentCompletionRewards(task, project, xp, map) {
+      const loot = buildCompletionLootFallback(task, project, xp);
+      if (loot.itemId) addInventoryItem(loot.itemId);
+      showLootModal(xp, loot);
+      save();
+      void enrichLootModalNarrative(task, project, map, xp);
+    }
+
+    async function generateCompletionLoot(task, project, map, xp) {
+      const loot = buildCompletionLootFallback(task, project, xp);
+      const text = await callLlmNarrative(
+        "你是 Earth-Online 奖励裁判。输出 JSON：{\"narrative\":\"50字内完成庆祝语\",\"itemId\":null或focus_crystal/momentum_boots/main_blade/side_dagger/deadline_amulet/night_cloak之一}",
+        `大陆${map?.name}，${(project.questType || "main") === "main" ? "主线" : "支线"}「${project.name}」完成子任务「${task.title}」，优先级${task.priority}，+${xp}XP。`
+      );
+      if (!text) return loot;
       try {
         const m = text.match(/\{[\s\S]*\}/);
         if (m) {
           const j = JSON.parse(m[0]);
           let itemId = j.itemId && getItemDef(j.itemId) ? j.itemId : null;
           if (itemId && !addInventoryItem(itemId)) itemId = null;
-          if (!itemId) itemId = rollFallbackLoot(project);
-          return { narrative: j.narrative || fallback.narrative, itemId };
+          if (!itemId) itemId = loot.itemId;
+          return { narrative: j.narrative || loot.narrative, itemId };
         }
       } catch { /* fallback */ }
-      return fallback;
+      return loot;
     }
 
     function showLootModal(xp, loot) {
-      const body = document.getElementById("lootModalBody");
-      const itemDef = loot.itemId ? getItemDef(loot.itemId) : null;
-      body.innerHTML = `
-        <div class="loot-xp">+${xp} XP</div>
-        <div class="loot-narrative">${escapeHtml(loot.narrative)}</div>
-        ${itemDef ? `<div class="loot-items"><div class="inv-item rarity-${itemDef.rarity || "common"}">${getItemIconHtml(loot.itemId, 24)}${escapeHtml(itemDef.name)}</div></div>` : ""}
-      `;
-      openModal("modalLoot");
+      showItemLootModal("✨ 任务完成", loot.narrative || "", loot.itemId, xp);
     }
 
-    async function handleTaskCompletionRewards(task, project, prevStatus) {
+    async function handleTaskCompletionRewards(projectId, taskId, prevStatus) {
+      const project = findProjectInState(projectId);
+      const task = findTaskInState(projectId, taskId);
+      if (!project || !task) return;
       const xp = awardTaskCompletion(task, project, prevStatus);
       if (!xp) return;
       save();
       updateXpBar();
+      renderTopbarVitals();
       const map = getTag((project.tagIds || [])[0]);
-      const loot = await generateCompletionLoot(task, project, map, xp);
-      showLootModal(xp, loot);
-      save();
+      presentCompletionRewards(task, project, xp, map);
     }
 
     function updateXpBar() {
@@ -4832,48 +5630,25 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     function renderWorldMap() {
       const grid = document.getElementById("worldMapGrid");
       if (!grid) return;
-      if (!state.tags.length) {
-        grid.innerHTML = '<p class="meta">尚无大陆，请先在「大陆管理」中开辟。</p>';
-        return;
-      }
-      const showMiniMap = !isMobileLayout();
-      grid.innerHTML = state.tags
-        .map((t) => {
-          const quests = state.projects.filter((p) => (p.tagIds || []).includes(t.id));
-          const main = quests.filter((p) => p.questType !== "side").length;
-          const side = quests.filter((p) => p.questType === "side").length;
-          const needs = mapNeedsEnrichment(t);
-          const terrain = t.terrain || "forest";
-          return `
-            <div class="map-card-wrap">
-              <button type="button" class="map-card" data-map-id="${t.id}" style="text-align:left;width:100%;cursor:pointer;font-family:inherit">
-                <div class="map-card-visual terrain-${terrain}">${terrainIconHtml(terrain, 40)}</div>
-                <div class="map-card-body">
-                  <h4>${getTagIconHtml(t, 14)} ${escapeHtml(t.name)}${needs ? " <span class='meta'>待生成</span>" : ""}</h4>
-                  <p>${escapeHtml(t.regionName || t.name)} · 主线 ${main} / 支线 ${side}</p>
-                  <p class="map-story-preview">${escapeHtml((t.mapStory || "暂无背景故事").slice(0, 80))}${(t.mapStory || "").length > 80 ? "…" : ""}</p>
-                  ${showMiniMap && t.mapLayout?.landmarks?.length ? `<div class="map-card-mini-canvas">${renderContinentMapCanvas(t, { compact: true })}</div>` : ""}
-                </div>
-              </button>
-              <button type="button" class="btn btn-ghost btn-xs btn-map-view" data-map-id="${t.id}" style="width:100%;margin-top:0.35rem">查看完整地图</button>
-            </div>`;
-        })
-        .join("");
-      grid.querySelectorAll(".map-card").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          state.tagFilterId = btn.dataset.mapId;
-          save();
-          closeModal("modalWorldMap");
-          render();
-          focusWorkOnMobile();
-          setMobilePanel("projects");
-        });
-      });
-      grid.querySelectorAll(".btn-map-view").forEach((btn) => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          openMapDetailModal(btn.dataset.mapId);
-        });
+      const tags = state.tags || [];
+      grid.innerHTML = `
+        <div class="world-ocean-map">
+          <div class="world-ocean-bg" aria-hidden="true"></div>
+          <div class="world-ocean-waves" aria-hidden="true"></div>
+          ${tags.map((t) => {
+            const main = state.projects.filter((p) => (p.tagIds || []).includes(t.id) && (p.questType || "main") !== "side").length;
+            const side = (state.sideQuests || []).filter((q) => q.continentId === t.id).length;
+            const terrain = t.terrain || "forest";
+            return `<button type="button" class="world-continent-pin" data-map-id="${t.id}" style="left:${t.worldX}%;top:${t.worldY}%" title="${escapeHtml(t.name)}">
+              <span class="continent-island terrain-${terrain}">${getTagIconHtml(t, 22)}</span>
+              <span class="continent-pin-label">${escapeHtml(t.name)}</span>
+              <span class="continent-pin-sub">${main} 地图 · ${side} 支线</span>
+            </button>`;
+          }).join("")}
+          ${!tags.length ? '<p class="world-ocean-empty">汪洋无垠 — 请前往「大陆管理」开辟第一块大陆</p>' : ""}
+        </div>`;
+      grid.querySelectorAll(".world-continent-pin").forEach((btn) => {
+        btn.addEventListener("click", () => openMapDetailModal(btn.dataset.mapId));
       });
     }
 
@@ -4884,6 +5659,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     function renderHeroPanel(tab = "equip") {
       document.querySelectorAll(".hero-panel-tab").forEach((b) => b.classList.toggle("active", b.dataset.heroTab === tab));
+      document.getElementById("heroPanelAttrs").style.display = tab === "attrs" ? "" : "none";
+      document.getElementById("heroPanelStatus").style.display = tab === "status" ? "" : "none";
       document.getElementById("heroPanelEquip").style.display = tab === "equip" ? "" : "none";
       document.getElementById("heroPanelSkills").style.display = tab === "skills" ? "" : "none";
       document.getElementById("heroPanelBag").style.display = tab === "bag" ? "" : "none";
@@ -4945,15 +5722,37 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           });
         }
       }
-      if (tab === "ach") {
-        document.getElementById("heroPanelAch").innerHTML = `<div class="achievement-list">${ACHIEVEMENT_DEFS.map((ach) => {
-          const unlocked = p.achievements.includes(ach.id);
-          return `<div class="achievement-item ${unlocked ? "unlocked" : ""}">
-            <span class="ach-icon">${ach.icon}</span>
-            <div><h5>${escapeHtml(ach.name)}</h5><p>${escapeHtml(ach.desc)}</p></div>
-          </div>`;
-        }).join("")}</div>`;
-      }
+      if (tab === "attrs") { renderHeroAttributes(); }
+      if (tab === "status") { renderHeroStatus(); }
+      if (tab === "ach") { renderHeroCollection(p); }
+    }
+
+
+    function renderHeroCollection(p) {
+      const discovered = new Set(p.discoveredItems || []);
+      const achHtml = ACHIEVEMENT_DEFS.map((ach) => {
+        const unlocked = p.achievements.includes(ach.id);
+        return `<div class="achievement-item ${unlocked ? "unlocked" : "locked"}">
+          <span class="ach-icon">${unlocked ? ach.icon : "?"}</span>
+          <div><h5>${unlocked ? escapeHtml(ach.name) : "？？？"}</h5><p>${unlocked ? escapeHtml(ach.desc) : "完成特定条件后解锁"}</p></div>
+        </div>`;
+      }).join("");
+      const itemsHtml = Object.values(ITEM_CATALOG).map((item) => {
+        const known = discovered.has(item.id);
+        const attrHint = (item.attrKeys || []).map((k) => PLAYER_ATTR_LABELS[k] || k).join(" · ");
+        return `<div class="codex-item ${known ? "known" : "unknown"} rarity-${item.rarity || "common"}">
+          <span class="codex-icon">${known ? getItemIconHtml(item.id, 22) : "?"}</span>
+          <div class="codex-body"><h5>${known ? escapeHtml(item.name) : "？？？"}</h5>
+          <p>${known ? escapeHtml(item.desc) : "完成对应属性事项或成就后有机会发现"}</p>
+          ${known && attrHint ? `<span class="codex-attr">${escapeHtml(attrHint)}</span>` : ""}</div>
+        </div>`;
+      }).join("");
+      document.getElementById("heroPanelAch").innerHTML = `
+        <h4 class="collection-section-title">成就 <span class="meta">${p.achievements.length}/${ACHIEVEMENT_DEFS.length}</span></h4>
+        <div class="achievement-list">${achHtml}</div>
+        <h4 class="collection-section-title">装备图鉴 <span class="meta">${discovered.size}/${Object.keys(ITEM_CATALOG).length}</span></h4>
+        <div class="codex-grid">${itemsHtml}</div>
+        <p class="field-hint" style="margin-top:0.5rem">仅完成带对应属性标签的事项才有机会掉落该属性装备；通用装备随机掉落。</p>`;
     }
 
     function equipFromInventory(invId, itemId) {
@@ -4978,8 +5777,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       }
     }
 
-    function openHeroModal() {
-      renderHeroPanel("equip");
+    function openHeroModal(tab = "equip") {
+      renderHeroPanel(tab);
       openModal("modalHero");
     }
 
@@ -4999,10 +5798,15 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     let state = {
       projects: [],
+      sideQuests: [],
+      dailyActions: [],
+      dailyLogs: [],
       tags: [],
       player: defaultPlayer(),
       tagFilterId: null,
+      questLineFilter: "all",
       activeProjectId: null,
+      activeSideQuestId: null,
       taskSort: "createdAt-desc",
       logSort: "createdAt-desc",
       leftSidebarTab: "projects",
@@ -5021,8 +5825,13 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     let saveTimer = null;
     let taskFilter = "all";
     let editingTaskId = null;
+    let taskModalSaving = false;
     let editingProjectId = null;
     let projectModalTagIds = [];
+    let projectModalQuestStory = "";
+    let taskModalLlmDraft = null;
+    let dailyModalLlmDraft = null;
+    let sideQuestModalLlmDraft = null;
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
@@ -5046,11 +5855,42 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       };
     }
 
-    function normalizeTag(t) {
+
+    function pickWorldPosition(existing) {
+      const placed = existing || [];
+      for (let i = 0; i < 48; i++) {
+        const x = 10 + Math.random() * 78;
+        const y = 12 + Math.random() * 72;
+        const ok = placed.every((t) => {
+          const dx = (t.worldX ?? 50) - x;
+          const dy = (t.worldY ?? 50) - y;
+          return Math.hypot(dx, dy) >= 13;
+        });
+        if (ok) return { worldX: Math.round(x * 10) / 10, worldY: Math.round(y * 10) / 10 };
+      }
+      const a = Math.random() * Math.PI * 2;
+      const r = 18 + Math.random() * 28;
+      return { worldX: Math.round((50 + Math.cos(a) * r) * 10) / 10, worldY: Math.round((48 + Math.sin(a) * r) * 10) / 10 };
+    }
+
+    function ensureTagWorldPosition(tag, others) {
+      if (typeof tag.worldX === "number" && typeof tag.worldY === "number") return tag;
+      const pos = pickWorldPosition((others || []).filter((t) => t.id !== tag.id));
+      return { ...tag, worldX: pos.worldX, worldY: pos.worldY };
+    }
+
+    function normalizeTag(t, placedTags) {
       const terrain = MAP_TERRAINS.includes(t.terrain) ? t.terrain : MAP_TERRAINS[Math.abs(hashStr(t.name || "")) % MAP_TERRAINS.length];
       let mapLayout = t.mapLayout;
       if (!mapLayout?.landmarks?.length) {
         mapLayout = fallbackMapLayout(t.name || "大陆", terrain);
+      }
+      let worldX = typeof t.worldX === "number" ? Math.min(92, Math.max(8, t.worldX)) : null;
+      let worldY = typeof t.worldY === "number" ? Math.min(90, Math.max(10, t.worldY)) : null;
+      if (worldX == null || worldY == null) {
+        const pos = pickWorldPosition(placedTags ?? state.tags ?? []);
+        worldX = pos.worldX;
+        worldY = pos.worldY;
       }
       return {
         id: t.id || uid(),
@@ -5062,6 +5902,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         mapStory: t.mapStory || "",
         mapLayout,
         loreGenerated: !!t.loreGenerated,
+        worldX,
+        worldY,
       };
     }
 
@@ -5086,7 +5928,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     }
 
     function getFilteredProjects() {
-      return state.projects.filter(projectMatchesTagFilter);
+      return state.projects.filter((p) => (p.questType || "main") !== "side").filter(projectMatchesTagFilter);
     }
 
     function touchStateMeta() {
@@ -5288,15 +6130,26 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     }
 
     function applyStateFromData(data) {
-      const tags = Array.isArray(data.tags) ? data.tags.map(normalizeTag) : [];
+      const rawTags = Array.isArray(data.tags) ? data.tags : [];
+      const tags = [];
+      rawTags.forEach((t) => tags.push(normalizeTag(t, tags)));
       state.tags = tags;
       state.player = normalizePlayer(data.player);
+      state.sideQuests = Array.isArray(data.sideQuests) ? data.sideQuests.map(normalizeSideQuest) : [];
+      state.dailyActions = Array.isArray(data.dailyActions) ? data.dailyActions.map(normalizeDailyAction) : [];
+      state.dailyLogs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
+      state.questLineFilter = data.questLineFilter || "all";
+      state.taskFilter = data.taskFilter || "all";
+      migrateLegacySideProjects();
       state.projects = (data.projects || []).map(normalizeProject);
       state.tagFilterId = data.tagFilterId && tags.some((t) => t.id === data.tagFilterId) ? data.tagFilterId : null;
       state.activeProjectId = data.activeProjectId || null;
       state.taskSort = data.taskSort || "createdAt-desc";
       state.logSort = data.logSort || "createdAt-desc";
-      state.leftSidebarTab = data.leftSidebarTab === "daily" ? "daily" : data.dailyDigestOpen ? "daily" : "projects";
+      state.leftSidebarTab = ["daily", "routines"].includes(data.leftSidebarTab)
+        ? data.leftSidebarTab
+        : data.dailyDigestOpen ? "daily" : "projects";
+      state.activeSideQuestId = data.activeSideQuestId || null;
       state.rightSidebarTab = data.rightSidebarTab === "deadline" ? "deadline" : data.deadlineDigestOpen ? "deadline" : "priority";
       state.leftSidebarCollapsed = !!data.leftSidebarCollapsed;
       state.rightSidebarCollapsed = !!data.rightSidebarCollapsed;
@@ -5315,6 +6168,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       if (data.updatedAt) state.updatedAt = data.updatedAt;
       applyImportedPreferences(data.preferences);
       normalizeStateForPersistence();
+
+      (state.player.inventory || []).forEach((inv) => { if (inv?.itemId) markItemDiscovered(inv.itemId); });
       updateTopbarHint();
     }
 
@@ -5323,12 +6178,16 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && Array.isArray(parsed.projects)) applyStateFromData(parsed);
-          else initDailyDateState();
+          if (parsed && Array.isArray(parsed.projects)) {
+            const needWorldPos = (parsed.tags || []).some((t) => typeof t?.worldX !== "number");
+            applyStateFromData(parsed);
+            if (needWorldPos) save();
+          } else initDailyDateState();
         } else {
           initDailyDateState();
         }
         normalizeStateForPersistence();
+        taskFilter = state.taskFilter || "all";
       } catch (e) {
         console.warn("加载本地数据失败", e);
         initDailyDateState();
@@ -5392,6 +6251,19 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         task.completedAt = null;
       }
       if (task.xpAwarded != null) task.xpAwarded = Number(task.xpAwarded) || 0;
+      task.attrTags = Array.isArray(task.attrTags) ? task.attrTags.filter((t) => TASK_ATTR_TAGS.includes(t)) : [];
+      task.taskStory = task.taskStory || "";
+      task.attrDelta = task.attrDelta && typeof task.attrDelta === "object" ? task.attrDelta : null;
+      task.vitalOnComplete = task.vitalOnComplete && typeof task.vitalOnComplete === "object"
+        ? {
+            physical: typeof task.vitalOnComplete.physical === "number" ? task.vitalOnComplete.physical : undefined,
+            mental: typeof task.vitalOnComplete.mental === "number" ? task.vitalOnComplete.mental : undefined,
+          }
+        : null;
+      if (task.vitalOnComplete && task.vitalOnComplete.physical == null && task.vitalOnComplete.mental == null) {
+        task.vitalOnComplete = null;
+      }
+      task.llmEnriched = !!task.llmEnriched;
       return task;
     }
 
@@ -5439,6 +6311,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     function normalizeProject(p) {
       const tagIds = Array.isArray(p.tagIds) ? p.tagIds : [];
+      const now = new Date().toISOString();
       return {
         ...p,
         progress: typeof p.progress === "number" ? Math.min(100, Math.max(0, p.progress)) : 0,
@@ -5446,9 +6319,12 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         tasks: Array.isArray(p.tasks) ? p.tasks.map(normalizeTask) : [],
         status: p.status || "active",
         description: p.description || "",
-        questType: p.questType === "side" ? "side" : "main",
+        questType: "main",
         questStory: p.questStory || "",
+        loreGenerated: !!p.loreGenerated,
         tagIds: sanitizeTagIds(tagIds),
+        createdAt: p.createdAt || now,
+        updatedAt: p.updatedAt || p.createdAt || now,
       };
     }
 
@@ -5564,7 +6440,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             <p class="map-story-preview">${escapeHtml(tag.mapStory || "暂无背景故事")}</p>
             <span class="meta" style="font-size:0.68rem">${used} 条任务线 · ${escapeHtml(tag.regionName || "")}</span>
             <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem">
-              <button type="button" class="btn btn-ghost btn-sm btn-enrich-map" data-id="${tag.id}">✨ 生成设定</button>
+              <button type="button" class="btn btn-ghost btn-sm btn-enrich-map" data-id="${tag.id}">✨ AI 生成/重新生成</button>
               <button type="button" class="btn btn-ghost btn-sm btn-view-map" data-id="${tag.id}">查看地图</button>
               <button type="button" class="btn btn-danger btn-sm btn-del-tag" data-id="${tag.id}">删除</button>
             </div>
@@ -5601,6 +6477,10 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
       list.querySelectorAll(".btn-enrich-map").forEach((btn) => {
         btn.addEventListener("click", async () => {
+          if (!hasLlmApiKey()) {
+            toast("请先在「工具 → AI 总结」中配置大模型 API");
+            return;
+          }
           const tag = getTag(btn.dataset.id);
           if (!tag) return;
           btn.disabled = true;
@@ -5638,21 +6518,12 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         toast("大陆名称已存在");
         return;
       }
-      const statusEl = document.getElementById("mapGenStatus");
-      if (statusEl) statusEl.textContent = "正在编织大陆传说…";
-      const lore = await generateMapLore(trimmed);
-      if (statusEl) statusEl.textContent = "";
       state.tags.push(
         normalizeTag({
           id: uid(),
           name: trimmed,
           color: newTagColor,
-          regionName: lore.regionName,
-          terrain: lore.terrain,
-          mapStory: lore.mapStory,
-          mapEmoji: lore.mapEmoji || MAP_TERRAIN_EMOJI[lore.terrain] || "🗺️",
-          mapLayout: lore.mapLayout,
-          loreGenerated: true,
+          loreGenerated: false,
         })
       );
       document.getElementById("newTagNameInput").value = "";
@@ -5660,7 +6531,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       renderTagEditor();
       renderTagFilters();
       checkAchievements();
-      toast("新大陆已开辟");
+      toast("新大陆已开辟，可点击「AI 生成/重新生成」补充剧情");
     }
 
     function openTagsModal() {
@@ -5677,9 +6548,10 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const n = getFilteredProjects().length;
       const gh = loadGithubConfig();
       const ghHint = gh.enabled && gh.owner && gh.repo ? " · GitHub 同步已开" : "";
+      const sideN = getFilteredSideQuests().length;
       el.textContent = tag
-        ? `大陆：${tag.mapEmoji || "🗺️"} ${tag.name} · ${n} 条任务线${ghHint}`
-        : `Earth-Online · ${state.projects.length} 条任务线 · Lv.${getLevelFromXp(state.player?.xp || 0)}${ghHint}`;
+        ? `大陆：${tag.mapEmoji || "🗺️"} ${tag.name} · ${n} 张地图 · ${sideN} 条支线${ghHint}`
+        : `Earth-Online · ${getFilteredProjects().length} 张地图 · Lv.${getLevelFromXp(state.player?.xp || 0)} · 体${state.player?.vitals?.physicalHealth ?? "—"}/精${state.player?.vitals?.mentalHealth ?? "—"}${ghHint}`;
     }
 
     function isoToDatetimeLocal(iso) {
@@ -6296,6 +7168,7 @@ ${lines.join("\n\n")}`;
         btn.classList.toggle("active", btn.dataset.tab === state.leftSidebarTab);
       });
       document.getElementById("leftPanelProjects")?.classList.toggle("active", state.leftSidebarTab === "projects");
+      document.getElementById("leftPanelRoutines")?.classList.toggle("active", state.leftSidebarTab === "routines");
       document.getElementById("leftPanelDaily")?.classList.toggle("active", state.leftSidebarTab === "daily");
 
       document.querySelectorAll("#rightSidebarTabs .sidebar-tab").forEach((btn) => {
@@ -6622,6 +7495,14 @@ ${lines.join("\n\n")}`;
       return state.projects.find((p) => p.id === state.activeProjectId) || null;
     }
 
+    function findProjectInState(projectId) {
+      return state.projects.find((p) => p.id === projectId) || null;
+    }
+
+    function findTaskInState(projectId, taskId) {
+      return findProjectInState(projectId)?.tasks?.find((t) => t.id === taskId) || null;
+    }
+
     const SORT_OPTIONS = [
       { value: "dueDate-asc", label: "截止时间 · 最早优先" },
       { value: "dueDate-desc", label: "截止时间 · 最晚优先" },
@@ -6667,15 +7548,20 @@ ${lines.join("\n\n")}`;
     function closeModal(id) {
       document.getElementById(id).classList.remove("open");
       updateBodyScrollLock();
+      if (id === "modalLoot") requestAnimationFrame(() => pumpRewardModalQueue());
     }
 
     function renderProjectList() {
       const list = document.getElementById("projectList");
       list.innerHTML = "";
+      if (state.questLineFilter === "side") {
+        list.innerHTML = '<li class="meta" style="padding:0.5rem">当前筛选支线，请查看下方大陆支线列表</li>';
+        return;
+      }
       const projects = getFilteredProjects();
 
       if (!projects.length) {
-        list.innerHTML = `<li class="meta" style="padding:0.5rem">${state.tagFilterId ? "该大陆下暂无任务线" : "暂无任务线"}</li>`;
+        list.innerHTML = `<li class="meta" style="padding:0.5rem">${state.tagFilterId ? "该大陆下暂无地图" : "暂无地图，点击「+ 新建地图」"}</li>`;
         return;
       }
 
@@ -6695,6 +7581,7 @@ ${lines.join("\n\n")}`;
         `;
         li.addEventListener("click", () => {
           state.activeProjectId = project.id;
+          state.activeSideQuestId = null;
           taskFilter = "all";
           save();
           render();
@@ -6706,6 +7593,15 @@ ${lines.join("\n\n")}`;
 
     function renderMain() {
       const main = document.getElementById("main");
+
+      if (state.activeSideQuestId) {
+        const sq = (state.sideQuests || []).find((q) => q.id === state.activeSideQuestId);
+        if (sq) {
+          renderSideQuestMain(sq);
+          return;
+        }
+      }
+
       const project = getActiveProject();
 
       if (!project) {
@@ -6732,6 +7628,7 @@ ${lines.join("\n\n")}`;
 
       main.innerHTML = `
         <div class="main-project">
+        ${vitalWarnBannerHtml()}
         <header class="header">
           <div class="header-main">
             <div class="header-title-row">
@@ -6747,7 +7644,7 @@ ${lines.join("\n\n")}`;
               <option value="paused" ${project.status === "paused" ? "selected" : ""}>暂停</option>
               <option value="completed" ${project.status === "completed" ? "selected" : ""}>已完成</option>
             </select>
-            <button type="button" class="btn btn-ghost btn-sm" id="btnEditProject">任务线设定</button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnEditProject">地图设定</button>
             <button type="button" class="btn btn-danger btn-sm" id="btnDeleteProject">删除</button>
           </div>
         </header>
@@ -6819,6 +7716,94 @@ ${lines.join("\n\n")}`;
       bindMainEvents(project);
     }
 
+    function renderSideQuestMain(sq) {
+      const main = document.getElementById("main");
+      const map = getTag(sq.continentId);
+      main.innerHTML = `
+        <div class="main-project">
+        ${vitalWarnBannerHtml()}
+        <header class="header">
+          <div class="header-main">
+            <div class="header-title-row">
+              <h1>${questTypeBadgeHtml({ questType: "side" })}${escapeHtml(sq.title)}</h1>
+              ${map ? `<div class="header-tags">${renderProjectTagsHtml([map.id], "header")}</div>` : ""}
+            </div>
+            ${sq.questStory ? `<div class="quest-story-box">${escapeHtml(sq.questStory)}</div>` : ""}
+            <p class="meta">大陆支线 · 更新于 ${formatDate(sq.updatedAt)}</p>
+          </div>
+          <div class="header-actions">
+            <select class="status-select" id="sideQuestStatusSelect">
+              <option value="todo" ${sq.status === "todo" ? "selected" : ""}>待办</option>
+              <option value="doing" ${sq.status === "doing" ? "selected" : ""}>进行中</option>
+              <option value="done" ${sq.status === "done" ? "selected" : ""}>已完成</option>
+            </select>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnEditSideQuest">编辑</button>
+            <button type="button" class="btn btn-danger btn-sm" id="btnDeleteSideQuest">删除</button>
+          </div>
+        </header>
+        ${sq.description ? `<p class="meta" style="margin:0 0 0.75rem">${escapeHtml(sq.description)}</p>` : ""}
+        ${(sq.attrTags || []).length ? `<div class="task-attr-tags" style="margin-bottom:0.75rem">${sq.attrTags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+        ${sq.status === "done" && sq.completedAt ? `<p class="meta">完成于 ${formatDate(sq.completedAt)} · +${sq.xpAwarded || 0} XP</p>` : ""}
+        </div>`;
+      document.getElementById("sideQuestStatusSelect").addEventListener("change", async (e) => {
+        const prev = sq.status;
+        const next = e.target.value;
+        if (next === "done" && prev !== "done") {
+          if (!(await confirmIfLowMental())) { e.target.value = prev; return; }
+          sq.status = "done";
+          sq.completedAt = new Date().toISOString();
+          sq.updatedAt = sq.completedAt;
+          const xp = awardSideQuestCompletion(sq, prev);
+          save();
+          render();
+          if (xp) {
+            presentCompletionRewards(sq, { questType: "side", name: sq.title }, xp, map);
+          }
+          checkPhysicalHealthNotice();
+        } else {
+          sq.status = next;
+          if (next !== "done") sq.completedAt = null;
+          sq.updatedAt = new Date().toISOString();
+          save();
+          render();
+        }
+      });
+      document.getElementById("btnEditSideQuest").addEventListener("click", () => openSideQuestModal(sq.id));
+      document.getElementById("btnDeleteSideQuest").addEventListener("click", () => {
+        if (!confirm(`确定删除支线「${sq.title}」？`)) return;
+        state.sideQuests = state.sideQuests.filter((q) => q.id !== sq.id);
+        if (state.activeSideQuestId === sq.id) state.activeSideQuestId = null;
+        save();
+        render();
+        toast("支线已删除");
+      });
+    }
+
+    function awardSideQuestCompletion(sq, prevStatus) {
+      if (prevStatus === "done" || sq.status !== "done" || sq.xpAwarded) return null;
+      let base = 38;
+      const priMul = { high: 1.65, medium: 1, low: 0.75 };
+      base *= priMul[sq.priority] || 1;
+      const b = getTotalBonuses();
+      base *= 1 + b.xpBonus + b.sideXpBonus;
+      if (sq.priority === "high") base *= 1 + (b.urgentBonus || 0);
+      const xp = Math.max(8, Math.round(base));
+      const prevLevel = getLevelFromXp(state.player.xp);
+      state.player.xp += xp;
+      onSideQuestCompleteVitals(sq);
+      sq.xpAwarded = xp;
+      state.player.stats.tasksCompleted++;
+      state.player.stats.sideTasksCompleted++;
+      state.player.stats.sideQuestsCompleted = (state.player.stats.sideQuestsCompleted || 0) + 1;
+      if (sq.priority === "high") state.player.stats.highPriorityCompleted++;
+      const newLevel = getLevelFromXp(state.player.xp);
+      if (newLevel > prevLevel) {
+        grantLevelRewards(newLevel, prevLevel);
+      }
+      checkAchievements();
+      return xp;
+    }
+
     function renderTaskCard(task) {
       const statusClass = `badge-${task.status}`;
       const priClass = `badge-priority-${task.priority || "medium"}`;
@@ -6829,7 +7814,7 @@ ${lines.join("\n\n")}`;
           <div class="task-row">
             <input type="checkbox" class="task-check" data-id="${task.id}" ${task.status === "done" ? "checked" : ""} title="标记完成/未完成" />
             <div class="task-body">
-              <div class="task-title">${escapeHtml(task.title)}</div>
+              <div class="task-title">${escapeHtml(task.title)}</div>${task.taskStory ? `<p class="meta" style="margin-top:0.2rem;font-style:italic">${escapeHtml(task.taskStory.slice(0,60))}${task.taskStory.length>60?"…":""}</p>` : ""}${(task.attrTags||[]).length ? `<div class="task-attr-tags">${task.attrTags.map((t)=>`<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
               ${task.description ? `<div class="task-desc">${escapeHtml(task.description)}</div>` : ""}
               <div class="task-meta">
                 <span class="badge ${statusClass}">${TASK_STATUS_LABELS[task.status]}</span>
@@ -6848,10 +7833,29 @@ ${lines.join("\n\n")}`;
       `;
     }
 
+    function deleteTaskFromProject(projectId, taskId) {
+      const liveProject = findProjectInState(projectId);
+      if (!liveProject || !taskId) return false;
+      const tasks = liveProject.tasks || [];
+      const next = tasks.filter((t) => String(t.id) !== String(taskId));
+      if (next.length === tasks.length) return false;
+      liveProject.tasks = next;
+      liveProject.updatedAt = new Date().toISOString();
+      save();
+      render();
+      toast("任务已删除");
+      return true;
+    }
+
     function bindMainEvents(project) {
+      const projectId = project.id;
+      const liveProject = () => findProjectInState(projectId);
+
       document.getElementById("projectStatusSelect").addEventListener("change", (e) => {
-        project.status = e.target.value;
-        project.updatedAt = new Date().toISOString();
+        const p = liveProject();
+        if (!p) return;
+        p.status = e.target.value;
+        p.updatedAt = new Date().toISOString();
         save();
         renderProjectList();
       });
@@ -6861,8 +7865,10 @@ ${lines.join("\n\n")}`;
       const valEl = document.getElementById("progressValue");
 
       slider.addEventListener("input", () => {
+        const p = liveProject();
+        if (!p) return;
         const v = parseInt(slider.value, 10);
-        project.progress = v;
+        p.progress = v;
         fill.style.width = v + "%";
         valEl.textContent = v + "%";
         debouncedSave();
@@ -6870,20 +7876,24 @@ ${lines.join("\n\n")}`;
       });
 
       slider.addEventListener("change", () => {
-        project.updatedAt = new Date().toISOString();
+        const p = liveProject();
+        if (!p) return;
+        p.updatedAt = new Date().toISOString();
         save();
       });
 
       document.getElementById("btnAddProgressLog")?.addEventListener("click", () => {
+        const p = liveProject();
+        if (!p) return;
         const note = document.getElementById("progressNoteInput").value.trim();
-        if (!project.progressLogs) project.progressLogs = [];
-        project.progressLogs.push({
+        if (!p.progressLogs) p.progressLogs = [];
+        p.progressLogs.push({
           id: uid(),
-          progress: project.progress,
+          progress: p.progress,
           note: note || "进度更新",
           createdAt: new Date().toISOString(),
         });
-        project.updatedAt = new Date().toISOString();
+        p.updatedAt = new Date().toISOString();
         document.getElementById("progressNoteInput").value = "";
         save();
         render();
@@ -6891,24 +7901,30 @@ ${lines.join("\n\n")}`;
       });
 
       document.getElementById("btnSyncTaskProgress")?.addEventListener("click", () => {
-        const pct = calcTaskProgress(project.tasks);
+        const p = liveProject();
+        if (!p) return;
+        const pct = calcTaskProgress(p.tasks);
         if (pct === null) return;
-        project.progress = pct;
-        project.progressLogs.push({
+        p.progress = pct;
+        if (!p.progressLogs) p.progressLogs = [];
+        p.progressLogs.push({
           id: uid(),
           progress: pct,
           note: "按任务完成率自动同步",
           createdAt: new Date().toISOString(),
         });
-        project.updatedAt = new Date().toISOString();
+        p.updatedAt = new Date().toISOString();
         save();
         render();
         toast("已同步任务完成率到整体进度");
       });
 
-      document.getElementById("btnNewTask").addEventListener("click", () => openTaskModal(project.id));
-      document.getElementById("btnEditProject").addEventListener("click", () => editProjectInfo(project));
-      document.getElementById("btnDeleteProject").addEventListener("click", () => deleteProject(project.id));
+      document.getElementById("btnNewTask").addEventListener("click", () => openTaskModal(projectId));
+      document.getElementById("btnEditProject").addEventListener("click", () => {
+        const p = liveProject();
+        if (p) editProjectInfo(p);
+      });
+      document.getElementById("btnDeleteProject").addEventListener("click", () => deleteProject(projectId));
 
       document.getElementById("btnToggleProgress")?.addEventListener("click", () => {
         state.progressDetailOpen = !state.progressDetailOpen;
@@ -6938,17 +7954,28 @@ ${lines.join("\n\n")}`;
 
       document.querySelectorAll(".task-check").forEach((cb) => {
         cb.addEventListener("change", async () => {
-          const task = project.tasks.find((t) => t.id === cb.dataset.id);
-          if (!task) return;
+          const taskId = cb.dataset.id;
+          const liveProject = findProjectInState(projectId);
+          const task = findTaskInState(projectId, taskId);
+          if (!liveProject || !task) return;
           const prevStatus = task.status;
-          task.status = cb.checked ? "done" : "todo";
+          const wantDone = cb.checked;
+          if (wantDone && prevStatus !== "done") {
+            if (!(await confirmIfLowMental())) {
+              cb.checked = false;
+              return;
+            }
+          }
+          task.status = wantDone ? "done" : "todo";
           task.updatedAt = new Date().toISOString();
           syncTaskCompletedAt(task, prevStatus);
-          project.updatedAt = new Date().toISOString();
+          liveProject.updatedAt = task.updatedAt;
           if (task.status === "done" && prevStatus !== "done") {
             save();
             render();
-            await handleTaskCompletionRewards(task, project, prevStatus);
+            await handleTaskCompletionRewards(liveProject.id, taskId, prevStatus);
+            checkPhysicalHealthNotice();
+            render();
           } else {
             save();
             render();
@@ -6957,32 +7984,67 @@ ${lines.join("\n\n")}`;
       });
 
       document.querySelectorAll(".btn-edit-task").forEach((btn) => {
-        btn.addEventListener("click", () => openTaskModal(project.id, btn.dataset.id));
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openTaskModal(projectId, btn.dataset.id);
+        });
       });
 
       document.querySelectorAll(".btn-delete-task").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          if (confirm("确定删除该任务？")) {
-            project.tasks = project.tasks.filter((t) => t.id !== btn.dataset.id);
-            project.updatedAt = new Date().toISOString();
-            save();
-            render();
-            toast("任务已删除");
-          }
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!confirm("确定删除该任务？")) return;
+          deleteTaskFromProject(projectId, btn.dataset.id);
         });
       });
     }
 
+    function wireProjectLlmRegenButton(getProjectRef) {
+      const btn = document.getElementById("btnLlmRegenProjectStory");
+      if (!btn) return;
+      btn.onclick = async () => {
+        if (!hasLlmApiKey()) {
+          toast("请先在「工具 → AI 总结」中配置大模型 API");
+          return;
+        }
+        const name = document.getElementById("projectNameInput").value.trim();
+        const mapId = document.getElementById("projectMapSelect").value;
+        if (!name || !mapId) {
+          toast("请先填写地图名称并选择大陆");
+          return;
+        }
+        const desc = document.getElementById("projectDescInput").value.trim();
+        const map = getTag(mapId);
+        const statusEl = document.getElementById("questGenStatus");
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = "AI 撰写地图剧情中…";
+        const story = await generateQuestStory(name, map, "main", desc);
+        projectModalQuestStory = story || "";
+        renderProjectLlmPreviewInModal(projectModalQuestStory);
+        const live = typeof getProjectRef === "function" ? getProjectRef() : null;
+        if (live) {
+          live.questStory = projectModalQuestStory;
+          live.loreGenerated = !!projectModalQuestStory;
+          live.updatedAt = new Date().toISOString();
+          save();
+        }
+        if (statusEl) statusEl.textContent = "已生成，保存后写入 JSON";
+        btn.disabled = false;
+        toast("地图剧情已生成");
+      };
+    }
+
     function openNewProjectModal() {
       editingProjectId = null;
-      document.getElementById("modalProjectTitle").textContent = "新建任务线";
+      projectModalQuestStory = "";
+      document.getElementById("modalProjectTitle").textContent = "新建地图";
       document.getElementById("projectNameInput").value = "";
       document.getElementById("projectDescInput").value = "";
-      document.getElementById("projectQuestType").value = "main";
       fillProjectMapSelect(state.tagFilterId || "");
-      document.getElementById("projectQuestStoryBox").style.display = "none";
+      renderProjectLlmPreviewInModal("");
       document.getElementById("questGenStatus").textContent = "";
       document.getElementById("btnConfirmProject").onclick = confirmNewProject;
+      wireProjectLlmRegenButton(() => null);
       openModal("modalProject");
       setTimeout(() => document.getElementById("projectNameInput").focus(), 100);
     }
@@ -6990,7 +8052,7 @@ ${lines.join("\n\n")}`;
     async function confirmNewProject() {
       const name = document.getElementById("projectNameInput").value.trim();
       if (!name) {
-        toast("请输入任务线名称");
+        toast("请输入地图名称");
         return;
       }
       const mapId = document.getElementById("projectMapSelect").value;
@@ -6998,39 +8060,33 @@ ${lines.join("\n\n")}`;
         toast("请选择所属大陆");
         return;
       }
-      const questType = document.getElementById("projectQuestType").value;
       const desc = document.getElementById("projectDescInput").value.trim();
-      const map = getTag(mapId);
-      const statusEl = document.getElementById("questGenStatus");
-      if (statusEl) statusEl.textContent = "正在撰写任务线剧情…";
-      const questStory = await generateQuestStory(name, map, questType, desc);
-      if (statusEl) statusEl.textContent = "";
-      const project = defaultProject(name, desc, [mapId], questType, questStory);
+      const questStory = projectModalQuestStory || "";
+      const project = defaultProject(name, desc, [mapId], "main", questStory);
+      project.loreGenerated = !!questStory;
       state.projects.push(project);
       state.activeProjectId = project.id;
       save();
       closeModal("modalProject");
       render();
-      toast("任务线已创建");
+      toast("地图已创建");
     }
 
     function editProjectInfo(project) {
       editingProjectId = project.id;
-      document.getElementById("modalProjectTitle").textContent = "任务线设定";
+      projectModalQuestStory = project.questStory || "";
+      document.getElementById("modalProjectTitle").textContent = "地图设定";
       document.getElementById("projectNameInput").value = project.name;
       document.getElementById("projectDescInput").value = project.description || "";
-      document.getElementById("projectQuestType").value = project.questType || "main";
       fillProjectMapSelect((project.tagIds || [])[0] || "");
-      const storyBox = document.getElementById("projectQuestStoryBox");
-      if (project.questStory) {
-        storyBox.textContent = project.questStory;
-        storyBox.style.display = "";
-      } else storyBox.style.display = "none";
+      renderProjectLlmPreviewInModal(projectModalQuestStory);
       document.getElementById("questGenStatus").textContent = "";
       document.getElementById("btnConfirmProject").onclick = () => {
+        const live = findProjectInState(project.id);
+        if (!live) return;
         const name = document.getElementById("projectNameInput").value.trim();
         if (!name) {
-          toast("请输入任务线名称");
+          toast("请输入地图名称");
           return;
         }
         const mapId = document.getElementById("projectMapSelect").value;
@@ -7038,16 +8094,19 @@ ${lines.join("\n\n")}`;
           toast("请选择所属大陆");
           return;
         }
-        project.name = name;
-        project.description = document.getElementById("projectDescInput").value.trim();
-        project.questType = document.getElementById("projectQuestType").value === "side" ? "side" : "main";
-        project.tagIds = sanitizeTagIds([mapId]);
-        project.updatedAt = new Date().toISOString();
+        live.name = name;
+        live.description = document.getElementById("projectDescInput").value.trim();
+        live.questType = "main";
+        live.tagIds = sanitizeTagIds([mapId]);
+        live.questStory = projectModalQuestStory || live.questStory || "";
+        live.loreGenerated = !!live.questStory;
+        live.updatedAt = new Date().toISOString();
         save();
         closeModal("modalProject");
         render();
-        toast("任务线已保存");
+        toast("地图已保存");
       };
+      wireProjectLlmRegenButton(() => findProjectInState(project.id));
       openModal("modalProject");
       document.getElementById("projectNameInput").focus();
     }
@@ -7066,12 +8125,156 @@ ${lines.join("\n\n")}`;
       toast("项目已删除");
     }
 
+    function wireTaskLlmRegenButton(projectId, taskId) {
+      const btn = document.getElementById("btnLlmRegenTask");
+      if (!btn) return;
+      btn.onclick = async () => {
+        if (!hasLlmApiKey()) {
+          toast("请先在「工具 → AI 总结」中配置大模型 API");
+          return;
+        }
+        const liveProject = findProjectInState(projectId);
+        if (!liveProject) return;
+        const title = document.getElementById("taskTitleInput").value.trim();
+        if (!title) {
+          toast("请先填写任务标题");
+          return;
+        }
+        const statusEl = document.getElementById("taskGenStatus");
+        const draft = {
+          title,
+          description: document.getElementById("taskDescInput").value.trim(),
+        };
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = "AI 分析任务剧情与标签中…";
+        const analysis = await analyzeTaskWithLlm(draft, liveProject);
+        taskModalLlmDraft = analysis;
+        renderTaskLlmPreviewInModal({
+          taskStory: analysis.taskStory,
+          attrTags: analysis.attrTags,
+        });
+        const liveTask = taskId ? findTaskInState(projectId, taskId) : null;
+        if (liveTask) {
+          applyTaskAnalysis(liveTask, analysis);
+          liveTask.updatedAt = new Date().toISOString();
+          liveProject.updatedAt = liveTask.updatedAt;
+          save();
+          if (statusEl) statusEl.textContent = "已写入 JSON";
+        } else if (statusEl) {
+          statusEl.textContent = "已生成，保存任务后写入 JSON";
+        }
+        btn.disabled = false;
+        toast("任务剧情与标签已生成");
+      };
+    }
+
+    function wireSideQuestLlmRegenButton(editId) {
+      const btn = document.getElementById("btnLlmRegenSideQuest");
+      if (!btn) return;
+      btn.onclick = async () => {
+        if (!hasLlmApiKey()) {
+          toast("请先在「工具 → AI 总结」中配置大模型 API");
+          return;
+        }
+        const title = document.getElementById("sqTitleInput").value.trim();
+        const continentId = document.getElementById("sqContinentSelect").value;
+        if (!title || !continentId) {
+          toast("请先填写标题并选择大陆");
+          return;
+        }
+        const statusEl = document.getElementById("sqGenStatus");
+        const draft = {
+          title,
+          description: document.getElementById("sqDescInput").value.trim(),
+          continentId,
+        };
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = "AI 撰写支线剧情中…";
+        const analysis = await analyzeSideQuestWithLlm(draft);
+        sideQuestModalLlmDraft = {
+          questStory: analysis?.questStory || "",
+          attrTags: (analysis?.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t)),
+          attrDelta: analysis?.attributes || null,
+        };
+        renderSideQuestLlmPreviewInModal(sideQuestModalLlmDraft);
+        const live = editId ? state.sideQuests.find((x) => x.id === editId) : null;
+        if (live) {
+          live.questStory = sideQuestModalLlmDraft.questStory;
+          live.attrTags = sideQuestModalLlmDraft.attrTags;
+          live.attrDelta = sideQuestModalLlmDraft.attrDelta;
+          live.loreGenerated = !!live.questStory;
+          live.updatedAt = new Date().toISOString();
+          save();
+          if (statusEl) statusEl.textContent = "已写入 JSON";
+        } else if (statusEl) {
+          statusEl.textContent = "已生成，保存后写入 JSON";
+        }
+        btn.disabled = false;
+        toast("支线剧情与标签已生成");
+      };
+    }
+
+    function wireDailyLlmRegenButton(editId) {
+      const btn = document.getElementById("btnLlmRegenDaily");
+      if (!btn) return;
+      btn.onclick = async () => {
+        if (!hasLlmApiKey()) {
+          toast("请先在「工具 → AI 总结」中配置大模型 API");
+          return;
+        }
+        const name = document.getElementById("daNameInput").value.trim();
+        if (!name) {
+          toast("请先填写行动名称");
+          return;
+        }
+        const desc = document.getElementById("daDescInput").value.trim();
+        const category = document.getElementById("daCategoryInput").value;
+        const statusEl = document.getElementById("daGenStatus");
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = "AI 分析影响中…";
+        const analysis = await analyzeDailyActionWithLlm(name, desc, category);
+        dailyModalLlmDraft = {
+          physicalHealth: analysis.physicalHealth || 0,
+          mentalHealth: analysis.mentalHealth || 0,
+          attributes: analysis.attributes || {},
+          summary: analysis.summary || "",
+        };
+        renderDailyLlmPreviewInModal(dailyModalLlmDraft, dailyModalLlmDraft.summary);
+        const live = editId ? state.dailyActions.find((x) => x.id === editId) : null;
+        if (live) {
+          live.effects = { ...dailyModalLlmDraft };
+          live.llmGenerated = true;
+          live.updatedAt = new Date().toISOString();
+          save();
+          if (statusEl) statusEl.textContent = "已写入 JSON";
+        } else if (statusEl) {
+          statusEl.textContent = "已生成，保存后写入 JSON";
+        }
+        btn.disabled = false;
+        toast("日常行动影响已生成");
+      };
+    }
+
     function openTaskModal(projectId, taskId = null) {
       editingTaskId = taskId;
-      const project = state.projects.find((p) => p.id === projectId);
-      const task = taskId ? project?.tasks?.find((t) => t.id === taskId) : null;
+      taskModalSaving = false;
+      taskModalLlmDraft = null;
+      const project = findProjectInState(projectId);
+      const task = taskId ? findTaskInState(projectId, taskId) : null;
+      const statusEl = document.getElementById("taskGenStatus");
+      const confirmBtn = document.getElementById("btnConfirmTask");
+      const deleteBtn = document.getElementById("btnDeleteTask");
 
       document.getElementById("modalTaskTitle").textContent = task ? "编辑任务" : "新建任务";
+      renderTaskLlmPreviewInModal(task ? { taskStory: task.taskStory, attrTags: task.attrTags } : null);
+      wireTaskLlmRegenButton(projectId, taskId);
+      if (deleteBtn) {
+        deleteBtn.style.display = task ? "" : "none";
+        deleteBtn.onclick = () => {
+          if (!taskId || !confirm("确定删除该任务？")) return;
+          if (deleteTaskFromProject(projectId, taskId)) closeModal("modalTask");
+        };
+      }
       document.getElementById("taskTitleInput").value = task?.title || "";
       document.getElementById("taskDescInput").value = task?.description || "";
       document.getElementById("taskStatusInput").value = task?.status || "todo";
@@ -7080,6 +8283,8 @@ ${lines.join("\n\n")}`;
       document.getElementById("taskCompletedAtInput").value = task?.completedAt
         ? isoToDatetimeLocal(task.completedAt)
         : isoToDatetimeLocal(new Date().toISOString());
+      if (statusEl) statusEl.textContent = "";
+      if (confirmBtn) confirmBtn.disabled = false;
 
       document.getElementById("btnClearDueDate").onclick = () => {
         document.getElementById("taskDueDateInput").value = "";
@@ -7089,6 +8294,9 @@ ${lines.join("\n\n")}`;
       syncTaskCompletedAtFieldVisibility();
 
       document.getElementById("btnConfirmTask").onclick = async () => {
+        if (taskModalSaving) return;
+        const liveProject = findProjectInState(projectId);
+        if (!liveProject) return;
         const title = document.getElementById("taskTitleInput").value.trim();
         if (!title) {
           toast("请输入任务标题");
@@ -7097,7 +8305,8 @@ ${lines.join("\n\n")}`;
         const now = new Date().toISOString();
         const newStatus = document.getElementById("taskStatusInput").value;
         const dueRaw = document.getElementById("taskDueDateInput").value;
-        const prevStatus = task?.status || "todo";
+        const existingTask = editingTaskId ? findTaskInState(projectId, editingTaskId) : null;
+        const prevStatus = existingTask?.status || "todo";
         const payload = {
           title,
           description: document.getElementById("taskDescInput").value.trim(),
@@ -7108,31 +8317,53 @@ ${lines.join("\n\n")}`;
         };
 
         if (newStatus === "done") {
-          payload.completedAt = readTaskCompletedAtFromForm(task?.completedAt || now);
+          payload.completedAt = readTaskCompletedAtFromForm(existingTask?.completedAt || now);
         } else {
           payload.completedAt = null;
         }
 
-        if (!project.tasks) project.tasks = [];
-
-        let targetTask;
-        if (task) {
-          Object.assign(task, payload);
-          targetTask = task;
-        } else {
-          targetTask = { id: uid(), ...payload, createdAt: now };
-          project.tasks.push(targetTask);
-        }
-        project.updatedAt = now;
-        closeModal("modalTask");
         if (newStatus === "done" && prevStatus !== "done") {
-          save();
-          render();
-          await handleTaskCompletionRewards(targetTask, project, prevStatus);
-        } else {
-          save();
-          render();
-          toast(task ? "任务已更新" : "任务已添加");
+          if (!(await confirmIfLowMental())) return;
+        }
+
+        taskModalSaving = true;
+        if (confirmBtn) confirmBtn.disabled = true;
+
+        let targetTaskId;
+        try {
+          if (!liveProject.tasks) liveProject.tasks = [];
+
+          if (existingTask) {
+            Object.assign(existingTask, payload);
+            targetTaskId = existingTask.id;
+          } else {
+            const draft = { id: uid(), ...payload, createdAt: now, attrTags: [], taskStory: "" };
+            if (taskModalLlmDraft) applyTaskAnalysis(draft, taskModalLlmDraft);
+            liveProject.tasks.push(draft);
+            targetTaskId = draft.id;
+          }
+          if (existingTask && taskModalLlmDraft) {
+            applyTaskAnalysis(existingTask, taskModalLlmDraft);
+          }
+          liveProject.updatedAt = now;
+
+          if (newStatus === "done" && prevStatus !== "done") {
+            save();
+            closeModal("modalTask");
+            render();
+            await handleTaskCompletionRewards(projectId, targetTaskId, prevStatus);
+            checkPhysicalHealthNotice();
+            render();
+          } else {
+            save();
+            closeModal("modalTask");
+            render();
+            toast(existingTask ? "任务已更新" : "任务已添加");
+          }
+        } finally {
+          taskModalSaving = false;
+          if (confirmBtn) confirmBtn.disabled = false;
+          if (statusEl) statusEl.textContent = "";
         }
       };
 
@@ -7161,7 +8392,7 @@ ${lines.join("\n\n")}`;
       a.click();
       URL.revokeObjectURL(a.href);
       const lv = getLevelFromXp(state.player?.xp || 0);
-      toast(`已导出 JSON（含 Lv.${lv} · 装备 · 技能 · 成就）`);
+      toast(`已导出完整世界 JSON（大陆 · 地图 · 任务剧情 · Lv.${lv} · 装备 · 成就）`);
     }
 
     function importData(file) {
@@ -7190,9 +8421,26 @@ ${lines.join("\n\n")}`;
                 const existing = state.projects.find((x) => x.id === norm.id);
                 const taskIds = new Set((existing.tasks || []).map((t) => t.id));
                 const logIds = new Set((existing.progressLogs || []).map((l) => l.id));
-                (norm.tasks || []).forEach((t) => { if (!taskIds.has(t.id)) existing.tasks.push(t); });
+                (norm.tasks || []).forEach((t) => {
+                  if (!taskIds.has(t.id)) {
+                    existing.tasks.push(t);
+                    return;
+                  }
+                  const et = (existing.tasks || []).find((x) => x.id === t.id);
+                  if (et && t.llmEnriched && !et.llmEnriched) {
+                    et.attrTags = t.attrTags || [];
+                    et.taskStory = t.taskStory || "";
+                    et.attrDelta = t.attrDelta || null;
+                    et.vitalOnComplete = t.vitalOnComplete || null;
+                    et.llmEnriched = true;
+                  }
+                });
                 (norm.progressLogs || []).forEach((l) => { if (!logIds.has(l.id)) existing.progressLogs.push(l); });
                 if (norm.progress > existing.progress) existing.progress = norm.progress;
+                if (norm.questStory && (!existing.questStory || existing.questStory.length < norm.questStory.length)) {
+                  existing.questStory = norm.questStory;
+                  existing.loreGenerated = !!norm.loreGenerated;
+                }
               } else {
                 state.projects.push(norm);
               }
@@ -7205,12 +8453,17 @@ ${lines.join("\n\n")}`;
                 else state.tags.push(norm);
               });
             }
+            if (data.sideQuests) state.sideQuests = data.sideQuests.map(normalizeSideQuest);
+            if (data.dailyActions) state.dailyActions = data.dailyActions.map(normalizeDailyAction);
+            if (data.dailyLogs) state.dailyLogs = data.dailyLogs;
             if (data.player) state.player = mergePlayerData(state.player, data.player);
             applyImportedPreferences(data.preferences);
             if (data.tagFilterId) state.tagFilterId = data.tagFilterId;
             if (data.activeProjectId) state.activeProjectId = data.activeProjectId;
+            if (data.taskFilter) state.taskFilter = data.taskFilter;
             state.projects = state.projects.map(normalizeProject);
             normalizeStateForPersistence();
+            taskFilter = state.taskFilter || "all";
           } else {
             applyStateFromData(data);
           }
@@ -7244,9 +8497,14 @@ ${lines.join("\n\n")}`;
     }
 
     function render() {
+      tickDailyVitals();
       updateAppLayout();
       updateXpBar();
+      renderTopbarVitals();
       renderTagFilters();
+      renderQuestLineFilter();
+      renderSideQuestList();
+      renderDailyRoutinesPanel();
       renderProjectList();
       renderDailyDigest();
       renderPriorityPanel();
@@ -7312,23 +8570,19 @@ ${lines.join("\n\n")}`;
     });
 
     document.getElementById("btnNewProject").addEventListener("click", openNewProjectModal);
-    document.getElementById("btnExport").addEventListener("click", exportData);
-    document.getElementById("btnImport").addEventListener("click", () => document.getElementById("importFile").click());
-    document.getElementById("importFile").addEventListener("change", (e) => {
-      const file = e.target.files?.[0];
-      if (file) importData(file);
-      e.target.value = "";
-    });
 
     document.getElementById("btnOpenSkins").addEventListener("click", openSkinsModal);
     document.getElementById("btnWorldMap").addEventListener("click", openWorldMapModal);
-    document.getElementById("btnOpenHero").addEventListener("click", openHeroModal);
+    document.getElementById("btnOpenHero").addEventListener("click", () => { setTopbarNavOpen(false); openHeroModal("bag"); });
     document.querySelectorAll(".hero-panel-tab").forEach((tab) => {
       tab.addEventListener("click", () => renderHeroPanel(tab.dataset.heroTab));
     });
 
-    document.getElementById("btnEnrichAllMaps")?.addEventListener("click", () => enrichAllExistingMaps(false));
     document.getElementById("btnRegenMapDetail")?.addEventListener("click", async () => {
+      if (!hasLlmApiKey()) {
+        toast("请先在「工具 → AI 总结」中配置大模型 API");
+        return;
+      }
       if (!mapDetailTagId) return;
       const tag = getTag(mapDetailTagId);
       if (!tag) return;
@@ -7344,7 +8598,7 @@ ${lines.join("\n\n")}`;
       if (file) importData(file);
       e.target.value = "";
     });
-    document.getElementById("btnNewProjectTop").addEventListener("click", openNewProjectModal);
+    document.getElementById("btnOpenHeroTop")?.addEventListener("click", () => { setTopbarNavOpen(false); openHeroModal("attrs"); });
     document.getElementById("btnAddTag").addEventListener("click", () => {
       addTag(document.getElementById("newTagNameInput").value);
     });
@@ -7394,7 +8648,7 @@ ${lines.join("\n\n")}`;
 
     bindDailyFilterEvents();
 
-    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins"].forEach((id) => {
+    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins", "modalSideQuest", "modalDailyAction", "modalVitalWarn"].forEach((id) => {
       document.getElementById(id).addEventListener("click", (e) => {
         if (e.target.id === id) closeModal(id);
       });
@@ -7405,7 +8659,7 @@ ${lines.join("\n\n")}`;
     });
 
     document.getElementById("taskTitleInput").addEventListener("keydown", (e) => {
-      if (e.key === "Enter") document.getElementById("btnConfirmTask").click();
+      if (e.key === "Enter" && !taskModalSaving) document.getElementById("btnConfirmTask").click();
     });
 
     document.querySelectorAll(".mobile-tab").forEach((tab) => {
@@ -7514,6 +8768,7 @@ ${lines.join("\n\n")}`;
         export: UI_ICON_SET.export,
         import: UI_ICON_SET.import,
         github: UI_ICON_SET.github,
+        questSide: UI_ICON_SET.questSide,
       };
       document.querySelectorAll("[data-ui-icon], [data-adv-icon]").forEach((el) => {
         const key = el.dataset.uiIcon || el.dataset.advIcon;
@@ -7522,17 +8777,433 @@ ${lines.join("\n\n")}`;
       });
     }
 
+
+    function normalizeSideQuest(q) {
+      const now = new Date().toISOString();
+      return {
+        id: q.id || uid(),
+        continentId: q.continentId || null,
+        title: (q.title || "").trim() || "未命名支线",
+        description: q.description || "",
+        status: q.status || "todo",
+        priority: q.priority || "medium",
+        dueDate: normalizeDueDateString(q.dueDate),
+        completedAt: q.status === "done" ? (q.completedAt || now) : null,
+        questStory: q.questStory || "",
+        attrTags: Array.isArray(q.attrTags) ? q.attrTags.filter((t) => TASK_ATTR_TAGS.includes(t)) : [],
+        attrDelta: q.attrDelta && typeof q.attrDelta === "object" ? q.attrDelta : null,
+        loreGenerated: !!q.loreGenerated,
+        xpAwarded: q.xpAwarded || 0,
+        createdAt: q.createdAt || now,
+        updatedAt: q.updatedAt || now,
+      };
+    }
+    function normalizeDailyAction(a) {
+      const effects = a.effects && typeof a.effects === "object" ? a.effects : { physicalHealth: 0, mentalHealth: 0, attributes: {} };
+      return {
+        id: a.id || uid(),
+        name: (a.name || "").trim() || "日常行动",
+        description: a.description || "",
+        category: a.category || "other",
+        effects: {
+          physicalHealth: effects.physicalHealth || 0,
+          mentalHealth: effects.mentalHealth || 0,
+          attributes: effects.attributes && typeof effects.attributes === "object" ? effects.attributes : {},
+          summary: effects.summary || "",
+        },
+        llmGenerated: !!a.llmGenerated,
+        createdAt: a.createdAt || new Date().toISOString(),
+        updatedAt: a.updatedAt || a.createdAt || new Date().toISOString(),
+      };
+    }
+    function migrateLegacySideProjects() {
+      if (state._migratedSideV3) return;
+      const moved = [];
+      state.projects = (state.projects || []).filter((p) => {
+        if (p.questType === "side") { moved.push(p); return false; }
+        return true;
+      });
+      if (!state.sideQuests) state.sideQuests = [];
+      moved.forEach((p) => {
+        const cid = (p.tagIds || [])[0] || null;
+        (p.tasks || []).forEach((t) => {
+          state.sideQuests.push(normalizeSideQuest({
+            id: t.id, continentId: cid, title: t.title, description: t.description,
+            status: t.status, priority: t.priority, dueDate: t.dueDate, completedAt: t.completedAt,
+            questStory: p.questStory, attrTags: t.attrTags,
+          }));
+        });
+        if (!(p.tasks || []).length) {
+          state.sideQuests.push(normalizeSideQuest({
+            id: p.id, continentId: cid, title: p.name, description: p.description,
+            status: p.status, questStory: p.questStory,
+          }));
+        }
+      });
+      state.sideQuests = state.sideQuests.map(normalizeSideQuest);
+      state._migratedSideV3 = true;
+    }
+    async function callLlmJson(systemPrompt, userPrompt) {
+      const text = await callLlmNarrative(systemPrompt, userPrompt);
+      if (!text) return null;
+      try {
+        const m = text.match(/\{[\s\S]*\}/);
+        return m ? JSON.parse(m[0]) : null;
+      } catch { return null; }
+    }
+    function applyAttributeDelta(delta) {
+      if (!delta || typeof delta !== "object") return;
+      const p = state.player;
+      PLAYER_ATTR_KEYS.forEach((k) => {
+        if (typeof delta[k] === "number") p.attributes[k] = Math.max(0, (p.attributes[k] || 0) + delta[k]);
+      });
+    }
+    function applyAttrTagsToPlayer(tags, scale) {
+      const s = scale || 1;
+      (tags || []).forEach((tag) => {
+        const key = TASK_ATTR_TO_PLAYER[tag];
+        if (key) state.player.attributes[key] = (state.player.attributes[key] || 0) + s;
+      });
+    }
+    function applyVitalDelta(physical, mental) {
+      const v = state.player.vitals;
+      if (typeof physical === "number") v.physicalHealth = clamp100(v.physicalHealth + physical);
+      if (typeof mental === "number") v.mentalHealth = clamp100(v.mentalHealth + mental);
+    }
+    function tickVitals() {
+      const now = Date.now();
+      const v = state.player.vitals;
+      if (!v.lastVitalTickAt) v.lastVitalTickAt = new Date(now).toISOString();
+      const lastTick = new Date(v.lastVitalTickAt).getTime();
+      const hours = Math.max(0, (now - lastTick) / 3600000);
+      if (hours >= 0.05) {
+        const decay = hours * PHYSICAL_DECAY_PER_HOUR;
+        if (decay > 0) v.physicalHealth = clamp100(v.physicalHealth - decay);
+        v.lastVitalTickAt = new Date(now).toISOString();
+      }
+      const day = todayLogicalDayKey();
+      if (v.lastMentalDayKey !== day) {
+        v.mentalHealth = MENTAL_RESET_VALUE;
+        v.lastMentalDayKey = day;
+      }
+    }
+    const tickDailyVitals = tickVitals;
+    function onMainTaskCompleteVitals(task) {
+      const vo = task.vitalOnComplete || {};
+      applyVitalDelta(typeof vo.physical === "number" ? vo.physical : -1, typeof vo.mental === "number" ? vo.mental : -MENTAL_COST_PER_TASK);
+      if (task.attrDelta) applyAttributeDelta(task.attrDelta);
+      else applyAttrTagsToPlayer(task.attrTags, 1);
+    }
+    function onSideQuestCompleteVitals(sq) {
+      applyVitalDelta(-1, -MENTAL_COST_PER_TASK);
+      if (sq.attrDelta) applyAttributeDelta(sq.attrDelta);
+      else applyAttrTagsToPlayer(sq.attrTags, 1);
+    }
+    function checkPhysicalHealthNotice() {
+      const ph = state.player.vitals.physicalHealth;
+      if (ph < PHYSICAL_WARN_BELOW) toast(`身体健康 ${ph} 分，低于 ${PHYSICAL_WARN_BELOW}，请注意休息与锻炼`);
+    }
+    function mentalHealthBlocksNewWork() {
+      return state.player.vitals.mentalHealth < MENTAL_WARN_BELOW;
+    }
+    function confirmIfLowMental() {
+      return new Promise((resolve) => {
+        if (!mentalHealthBlocksNewWork()) { resolve(true); return; }
+        document.getElementById("vitalWarnText").textContent =
+          `精神健康仅 ${state.player.vitals.mentalHealth} 分（低于 ${MENTAL_WARN_BELOW}）。继续可能加剧疲劳，建议先完成娱乐/休息类日常行动。是否仍要继续？`;
+        const proceed = document.getElementById("btnVitalWarnProceed");
+        const cancel = document.getElementById("btnVitalWarnCancel");
+        const modal = "modalVitalWarn";
+        const onYes = () => { cleanup(); resolve(true); };
+        const onNo = () => { cleanup(); resolve(false); };
+        const cleanup = () => {
+          proceed.removeEventListener("click", onYes);
+          cancel?.removeEventListener("click", onNo);
+          closeModal(modal);
+        };
+        proceed.addEventListener("click", onYes);
+        cancel?.addEventListener("click", onNo);
+        openModal(modal);
+      });
+    }
+    async function analyzeTaskWithLlm(task, project) {
+      const map = getTag((project.tagIds || [])[0]);
+      const fallback = {
+        attrTags: task.title.match(/会议|社交|客户/) ? ["社交能力"] : task.title.match(/代码|开发|技术/) ? ["科技"] : ["精神力"],
+        taskStory: `${task.title}：在大陆「${map?.name || "未知"}」的地图「${project.name}」中推进的一步。`,
+        attributes: {}, physicalHealth: -1, mentalHealth: -MENTAL_COST_PER_TASK,
+      };
+      const j = await callLlmJson(LLM_SYSTEM_GAME, `分析主线任务并输出 JSON：
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"60字内任务剧情","attributes":{},"physicalHealth":-5~5,"mentalHealth":-10~0}
+大陆：${map?.name || ""}；地图：${project.name}；地图背景：${(project.questStory || "").slice(0,120)}
+任务标题：${task.title}；描述：${task.description || "无"}`);
+      return { ...fallback, ...(j || {}) };
+    }
+    async function analyzeSideQuestWithLlm(sq) {
+      const map = getTag(sq.continentId);
+      const j = await callLlmJson(LLM_SYSTEM_GAME, `分析大陆支线任务 JSON：
+{"attrTags":[],"questStory":"60字","attributes":{},"physicalHealth":0,"mentalHealth":-8}
+大陆：${map?.name || ""}；标题：${sq.title}；描述：${sq.description || ""}`);
+      return j || { attrTags: ["精神力"], questStory: `${sq.title}：${map?.name || "大陆"}上的支线。`, mentalHealth: -6 };
+    }
+    async function analyzeDailyActionWithLlm(name, desc, category) {
+      const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON：
+{"physicalHealth":-10~15,"mentalHealth":-10~15,"attributes":{},"summary":"20字"}
+名称：${name}；描述：${desc}；类别：${DAILY_CATEGORY_LABELS[category] || category}`);
+      const fb = { physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
+      if (category === "exercise" || category === "medicine" || category === "supplement") fb.physicalHealth = 5;
+      if (category === "entertainment" || category === "rest") fb.mentalHealth = 8;
+      return { ...fb, ...(j || {}) };
+    }
+    function vitalWarnBannerHtml() {
+      const v = state.player?.vitals;
+      if (!v) return "";
+      const parts = [];
+      if (v.physicalHealth < PHYSICAL_WARN_BELOW) parts.push(`身体健康 ${v.physicalHealth} 分偏低，建议锻炼、用药或休息`);
+      if (v.mentalHealth < MENTAL_WARN_BELOW) parts.push(`精神健康 ${v.mentalHealth} 分偏低，完成新事项前建议娱乐/休息类日常行动`);
+      if (!parts.length) return "";
+      return `<div class="vital-alert-box">${parts.map((p) => `<p>⚠️ ${escapeHtml(p)}</p>`).join("")}</div>`;
+    }
+    function renderTopbarVitals() {
+      const el = document.getElementById("topbarVitals");
+      if (!el) return;
+      tickDailyVitals();
+      const v = state.player.vitals;
+      const pc = v.physicalHealth < PHYSICAL_WARN_BELOW ? " warn" : "";
+      const mc = v.mentalHealth < MENTAL_WARN_BELOW ? " danger" : "";
+      el.innerHTML = `<span class="vital-chip${pc}" title="身体健康">体 ${v.physicalHealth}</span><span class="vital-chip${mc}" title="精神健康">精 ${v.mentalHealth}</span>`;
+    }
+    function renderQuestLineFilter() {
+      const el = document.getElementById("questLineFilter");
+      if (!el) return;
+      const cur = state.questLineFilter || "all";
+      el.innerHTML = ["all","main","side"].map((k) => {
+        const labels = { all:"全部", main:"主线·地图", side:"支线" };
+        return `<button type="button" class="quest-filter-chip ${cur === k ? "active" : ""}" data-qf="${k}">${labels[k]}</button>`;
+      }).join("");
+      el.querySelectorAll(".quest-filter-chip").forEach((btn) => {
+        btn.addEventListener("click", () => { state.questLineFilter = btn.dataset.qf; save(); render(); });
+      });
+    }
+    function getFilteredSideQuests() {
+      let list = (state.sideQuests || []).map(normalizeSideQuest);
+      if (state.tagFilterId) list = list.filter((q) => q.continentId === state.tagFilterId);
+      if (state.questLineFilter === "main") return [];
+      return list;
+    }
+    function renderSideQuestList() {
+      const wrap = document.getElementById("sideQuestListScroll");
+      const label = document.getElementById("sideQuestLabel");
+      const list = getFilteredSideQuests();
+      const show = list.length && state.questLineFilter !== "main";
+      if (label) label.style.display = show ? "" : "none";
+      if (wrap) {
+        wrap.style.display = show ? "" : "none";
+        wrap.innerHTML = list.length ? list.map((sq) => `
+          <div class="side-quest-item ${sq.id === state.activeSideQuestId ? "active" : ""}" data-sq-id="${sq.id}">
+            <div class="sq-title">${questTypeBadgeHtml({ questType:"side" })}${escapeHtml(sq.title)}</div>
+            <div class="sq-sub">${TASK_STATUS_LABELS[sq.status] || sq.status}</div>
+          </div>`).join("") : "";
+        wrap.querySelectorAll(".side-quest-item").forEach((el) => {
+          el.addEventListener("click", () => { state.activeSideQuestId = el.dataset.sqId; save(); render(); });
+        });
+      }
+    }
+    function renderDailyRoutinesPanel() {
+      const panel = document.getElementById("dailyRoutinesPanel");
+      if (!panel) return;
+      const acts = state.dailyActions || [];
+      if (!acts.length) { panel.innerHTML = '<p class="meta">记录健身、喝酒、吃药等日常，会影响身体与精神状态。</p>'; return; }
+      panel.innerHTML = acts.map((a) => `
+        <div class="daily-action-item" data-da-id="${a.id}">
+          <div class="sq-title">${escapeHtml(a.name)} <span class="meta">(${DAILY_CATEGORY_LABELS[a.category] || a.category})</span></div>
+          <div class="sq-sub">体${a.effects?.physicalHealth >= 0 ? "+" : ""}${a.effects?.physicalHealth || 0} / 精${a.effects?.mentalHealth >= 0 ? "+" : ""}${a.effects?.mentalHealth || 0}${a.effects?.summary ? ` · ${escapeHtml(a.effects.summary)}` : ""}</div>
+          <div style="display:flex;gap:0.35rem;margin-top:0.35rem;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost btn-xs btn-edit-daily" data-id="${a.id}">编辑</button>
+            <button type="button" class="btn btn-primary btn-xs btn-exec-daily" data-id="${a.id}">执行一次</button>
+          </div>
+        </div>`).join("");
+      panel.querySelectorAll(".btn-exec-daily").forEach((btn) => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); executeDailyAction(btn.dataset.id); });
+      });
+      panel.querySelectorAll(".btn-edit-daily").forEach((btn) => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); openDailyActionModal(btn.dataset.id); });
+      });
+    }
+    async function executeDailyAction(id) {
+      const a = (state.dailyActions || []).find((x) => x.id === id);
+      if (!a) return;
+      tickDailyVitals();
+      const eff = a.effects || {};
+      applyVitalDelta(eff.physicalHealth || 0, eff.mentalHealth || 0);
+      applyAttributeDelta(eff.attributes);
+      state.dailyLogs = state.dailyLogs || [];
+      state.dailyLogs.push({ id: uid(), actionId: id, completedAt: new Date().toISOString() });
+      state.player.stats.dailyActionsCompleted = (state.player.stats.dailyActionsCompleted || 0) + 1;
+      save();
+      renderTopbarVitals();
+      renderDailyRoutinesPanel();
+      checkPhysicalHealthNotice();
+      checkAchievements();
+      toast(`已记录：${a.name}`);
+    }
+    function renderHeroAttributes() {
+      const p = state.player;
+      tickDailyVitals();
+      const v = p.vitals;
+      document.getElementById("heroPanelAttrs").innerHTML = `
+        <div class="vital-meter"><label><span>身体健康</span><span>${v.physicalHealth}/100</span></label>
+          <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.physicalHealth}%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div></div>
+        <div class="vital-meter"><label><span>精神健康</span><span>${v.mentalHealth}/100</span></label>
+          <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.mentalHealth}%;background:linear-gradient(90deg,#6366f1,#a78bfa)"></div></div></div>
+        <p class="field-hint">体：自然按小时缓慢下降，完成任务/日常可增减；低于 ${PHYSICAL_WARN_BELOW} 提醒。精：每日 6:00 重置 ${MENTAL_RESET_VALUE}；完成任务消耗；娱乐/休息类日常可恢复。</p>
+        <h4 style="font-size:0.82rem;margin:0.65rem 0 0.35rem">成长属性</h4>
+        <div class="attr-grid">${PLAYER_ATTR_KEYS.map((k) => `
+          <div class="attr-card"><h5>${PLAYER_ATTR_LABELS[k]}</h5><div class="attr-val">${p.attributes[k] || 0}</div></div>`).join("")}</div>`;
+    }
+    function renderHeroStatus() {
+      const hp = state.player.healthProfile || defaultHealthProfile();
+      const v = state.player.vitals;
+      const alerts = [];
+      if (v.physicalHealth < PHYSICAL_WARN_BELOW) alerts.push(`⚠️ 身体健康 ${v.physicalHealth} 分，低于 ${PHYSICAL_WARN_BELOW}，建议锻炼、休息或用药。`);
+      if (v.mentalHealth < MENTAL_WARN_BELOW) alerts.push(`⚠️ 精神健康 ${v.mentalHealth} 分，低于 ${MENTAL_WARN_BELOW}，建议娱乐、休息或睡眠类日常行动。`);
+      document.getElementById("heroPanelStatus").innerHTML = `
+        ${alerts.length ? `<div class="vital-alert-box">${alerts.map((a) => `<p>${escapeHtml(a)}</p>`).join("")}</div>` : ""}
+        <p class="meta" style="margin-bottom:0.5rem">登记疾病、慢性病等，便于自我追踪（仅本地保存）。</p>
+        <div id="healthConditionsList">${(hp.conditions || []).map((c) => `
+          <div class="health-condition-row" data-cid="${c.id}">
+            <input type="text" class="hc-name" value="${escapeHtml(c.name)}" placeholder="病况名称" />
+            <input type="text" class="hc-note" value="${escapeHtml(c.note)}" placeholder="备注" />
+            <button type="button" class="btn btn-ghost btn-xs btn-del-hc">删</button>
+          </div>`).join("")}</div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnAddHealthCondition" style="margin:0.35rem 0">+ 添加病况</button>
+        <div class="field"><label>健康备忘</label><textarea id="healthProfileNotes" placeholder="过敏、用药提醒等">${escapeHtml(hp.notes || "")}</textarea></div>`;
+      document.getElementById("btnAddHealthCondition")?.addEventListener("click", () => {
+        state.player.healthProfile.conditions.push({ id: uid(), name: "", note: "", since: new Date().toISOString().slice(0, 10) });
+        save(); renderHeroPanel("status");
+      });
+      document.getElementById("heroPanelStatus").querySelectorAll(".btn-del-hc").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".health-condition-row");
+          state.player.healthProfile.conditions = state.player.healthProfile.conditions.filter((c) => c.id !== row.dataset.cid);
+          save(); renderHeroPanel("status");
+        });
+      });
+      document.getElementById("healthProfileNotes")?.addEventListener("change", (e) => {
+        state.player.healthProfile.notes = e.target.value; save();
+      });
+      document.getElementById("heroPanelStatus").querySelectorAll(".hc-name, .hc-note").forEach((inp) => {
+        inp.addEventListener("change", () => {
+          const row = inp.closest(".health-condition-row");
+          const c = state.player.healthProfile.conditions.find((x) => x.id === row.dataset.cid);
+          if (c) { c.name = row.querySelector(".hc-name").value; c.note = row.querySelector(".hc-note").value; save(); }
+        });
+      });
+    }
+    function openDailyActionModal(editId) {
+      const a = editId ? state.dailyActions.find((x) => x.id === editId) : null;
+      dailyModalLlmDraft = a?.effects
+        ? {
+            physicalHealth: a.effects.physicalHealth || 0,
+            mentalHealth: a.effects.mentalHealth || 0,
+            attributes: a.effects.attributes || {},
+            summary: a.effects.summary || "",
+          }
+        : null;
+      document.getElementById("modalDailyActionTitle").textContent = a ? "编辑日常行动" : "新建日常行动";
+      document.getElementById("daNameInput").value = a?.name || "";
+      document.getElementById("daDescInput").value = a?.description || "";
+      document.getElementById("daCategoryInput").value = a?.category || "other";
+      renderDailyLlmPreviewInModal(dailyModalLlmDraft, dailyModalLlmDraft?.summary);
+      document.getElementById("daGenStatus").textContent = a?.llmGenerated ? "已生成内容保存在 JSON 中，可重新生成。" : "点击上方按钮生成；结果写入 JSON。";
+      wireDailyLlmRegenButton(editId);
+      document.getElementById("btnConfirmDailyAction").onclick = () => {
+        const name = document.getElementById("daNameInput").value.trim();
+        if (!name) { toast("请输入行动名称"); return; }
+        const desc = document.getElementById("daDescInput").value.trim();
+        const category = document.getElementById("daCategoryInput").value;
+        const eff = dailyModalLlmDraft || { physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
+        const item = normalizeDailyAction({
+          id: a?.id || uid(),
+          name,
+          description: desc,
+          category,
+          effects: eff,
+          llmGenerated: !!dailyModalLlmDraft || !!a?.llmGenerated,
+          updatedAt: new Date().toISOString(),
+        });
+        if (a) Object.assign(a, item);
+        else state.dailyActions.push(item);
+        save();
+        closeModal("modalDailyAction");
+        render();
+        toast("日常行动已保存");
+      };
+      openModal("modalDailyAction");
+    }
+    function openSideQuestModal(editId) {
+      const sq = editId ? state.sideQuests.find((x) => x.id === editId) : null;
+      sideQuestModalLlmDraft = sq
+        ? { questStory: sq.questStory || "", attrTags: sq.attrTags || [], attrDelta: sq.attrDelta || null }
+        : null;
+      document.getElementById("modalSideQuestTitle").textContent = sq ? "编辑支线" : "新建支线";
+      fillSideQuestContinentSelect(sq?.continentId || state.tagFilterId || "");
+      document.getElementById("sqTitleInput").value = sq?.title || "";
+      document.getElementById("sqDescInput").value = sq?.description || "";
+      renderSideQuestLlmPreviewInModal(sideQuestModalLlmDraft);
+      document.getElementById("sqGenStatus").textContent = sq?.loreGenerated ? "已生成内容保存在 JSON 中，可重新生成。" : "点击上方按钮生成；结果写入 JSON。";
+      wireSideQuestLlmRegenButton(editId);
+      document.getElementById("btnConfirmSideQuest").onclick = () => {
+        const title = document.getElementById("sqTitleInput").value.trim();
+        const continentId = document.getElementById("sqContinentSelect").value;
+        if (!title || !continentId) { toast("请填写标题并选择大陆"); return; }
+        const desc = document.getElementById("sqDescInput").value.trim();
+        const story = sideQuestModalLlmDraft?.questStory || sq?.questStory || "";
+        const tags = sideQuestModalLlmDraft?.attrTags || sq?.attrTags || [];
+        const item = normalizeSideQuest({
+          ...sq,
+          id: sq?.id || uid(),
+          title,
+          description: desc,
+          continentId,
+          questStory: story,
+          attrTags: tags,
+          attrDelta: sideQuestModalLlmDraft?.attrDelta || sq?.attrDelta || null,
+          loreGenerated: !!story,
+          updatedAt: new Date().toISOString(),
+        });
+        if (sq) Object.assign(sq, item);
+        else state.sideQuests.push(item);
+        save();
+        closeModal("modalSideQuest");
+        render();
+        toast("支线已保存");
+      };
+      openModal("modalSideQuest");
+    }
+    function fillSideQuestContinentSelect(selectedId) {
+      const sel = document.getElementById("sqContinentSelect");
+      sel.innerHTML = '<option value="">— 大陆 —</option>' + (state.tags || []).map((t) =>
+        `<option value="${t.id}" ${t.id === selectedId ? "selected" : ""}>${escapeHtml(t.name)}</option>`).join("");
+    }
+    function bindLifeSystemUi() {
+      document.getElementById("btnNewDailyAction")?.addEventListener("click", () => openDailyActionModal());
+      document.getElementById("btnNewSideQuest")?.addEventListener("click", () => openSideQuestModal());
+    }
+
     async function initApp() {
-      applyUiSkin(loadUiSkin());
       wireUiIcons();
       load();
+      if (!state.preferences?.uiSkin || !UI_SKINS[state.preferences.uiSkin]) {
+        applyUiSkin(loadUiSkin());
+      }
+      bindLifeSystemUi();
       if (isMobileLayout()) {
         mobilePanel = "work";
         state.leftSidebarCollapsed = true;
         state.rightSidebarCollapsed = true;
       }
       await maybeSyncFromGitHubOnLoad();
-      await maybeEnrichExistingMapsOnLoad();
       render();
       applyMobileLayout();
     }
