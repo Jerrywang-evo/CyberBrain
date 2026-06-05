@@ -353,6 +353,8 @@
 
     .mobile-tabbar,
     .mobile-backdrop,
+    .mobile-context-bar,
+    .mobile-page-title,
     .topbar-menu-btn,
     .topbar-nav-backdrop,
     .mobile-adventure-sheet { display: none; }
@@ -843,30 +845,265 @@
         bottom: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom) + 0.65rem);
       }
 
-      .shell {
-        min-height: 100dvh;
-        height: auto;
-        overflow: visible;
+      .mobile-context-bar {
+        display: none;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.4rem 0.75rem;
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        min-height: 0;
+        overflow: hidden;
       }
 
-      .app {
+      .mobile-context-bar .ctx-label {
+        flex-shrink: 0;
+        font-weight: 600;
+        color: var(--accent);
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .mobile-context-bar .ctx-text {
+        flex: 1;
+        min-width: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      .mobile-page-title {
+        flex-shrink: 0;
+        padding: 0.55rem 0.15rem 0.35rem;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 0.35rem;
+      }
+
+      .mobile-page-title h2 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.3;
+      }
+
+      .mobile-page-title p {
+        margin: 0.15rem 0 0;
+        font-size: 0.68rem;
+        color: var(--text-muted);
+      }
+
+      body.mobile-layout {
+        overflow: hidden;
+        height: 100dvh;
+      }
+
+      body.mobile-layout .shell {
+        height: 100dvh;
+        min-height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      body.mobile-layout .mobile-context-bar {
+        display: flex;
+      }
+
+      body.mobile-layout .mobile-page-title {
         display: block;
+      }
+
+      body.mobile-layout .app {
+        display: block;
+        flex: 1;
+        min-height: 0;
         height: auto;
         position: relative;
-        min-height: calc(100dvh - var(--topbar-h) - var(--mobile-tabbar-h));
+        overflow: hidden;
         grid-template-columns: 1fr !important;
       }
 
-      .main {
-        display: block;
-        max-height: none;
-        min-height: calc(100dvh - var(--topbar-h) - var(--mobile-tabbar-h));
-        padding: 0.55rem 0.65rem;
-        padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+      body.mobile-layout .main,
+      body.mobile-layout .sidebar,
+      body.mobile-layout .priority-panel {
+        position: absolute;
+        inset: 0;
+        width: 100% !important;
+        max-width: none !important;
+        height: 100% !important;
+        max-height: 100% !important;
+        transform: none !important;
+        display: none;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 1;
+        border: none;
+        box-shadow: none;
+        padding: 0;
+        background: var(--bg);
       }
 
-      .main-project {
-        gap: 0.4rem;
+      body.mobile-layout .app.mobile-panel-work .main {
+        display: flex;
+        z-index: 2;
+      }
+
+      body.mobile-layout .app.mobile-panel-projects .sidebar {
+        display: flex;
+        z-index: 2;
+      }
+
+      body.mobile-layout .app.mobile-panel-tasks .priority-panel {
+        display: flex;
+        z-index: 2;
+      }
+
+      body.mobile-layout .mobile-backdrop {
+        display: none !important;
+      }
+
+      body.mobile-layout .sidebar-rail,
+      body.mobile-layout .priority-panel-rail,
+      body.mobile-layout .priority-panel-header,
+      body.mobile-layout .sidebar-tabs-row .sidebar-collapse-btn {
+        display: none !important;
+      }
+
+      body.mobile-layout .sidebar-content,
+      body.mobile-layout .priority-panel-body {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        padding: 0 0.65rem 0.5rem;
+      }
+
+      body.mobile-layout .sidebar-main,
+      body.mobile-layout .priority-panel-body > .sidebar-tabs {
+        flex-shrink: 0;
+      }
+
+      body.mobile-layout .sidebar-scroll-panel,
+      body.mobile-layout .priority-panel-body .sidebar-scroll-panel {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+
+      body.mobile-layout .main {
+        padding: 0;
+        background: var(--bg);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+      }
+
+      body.mobile-layout .main .main-project,
+      body.mobile-layout .main .empty-state {
+        padding: 0.55rem 0.65rem max(0.75rem, env(safe-area-inset-bottom));
+      }
+
+      body.mobile-layout .main-project {
+        gap: 0.45rem;
+      }
+
+      body.mobile-layout .sidebar-filters {
+        flex-shrink: 0;
+        padding: 0.35rem 0 0.15rem;
+      }
+
+      body.mobile-layout .sidebar-quick-actions {
+        flex-shrink: 0;
+        display: flex;
+        gap: 0.35rem;
+        padding: 0.25rem 0 0.35rem;
+      }
+
+      body.mobile-layout .sidebar-quick-actions .btn {
+        flex: 1;
+        min-height: 40px;
+      }
+
+      body.mobile-layout .sidebar-save-hint {
+        flex-shrink: 0;
+        text-align: center;
+        padding: 0.35rem 0;
+        font-size: 0.58rem;
+      }
+
+      body.mobile-layout .vitals-bar {
+        display: flex !important;
+        gap: 0.25rem;
+        margin-right: 0.15rem;
+        flex-shrink: 0;
+      }
+
+      body.mobile-layout .vitals-bar .vital-chip {
+        font-size: 0.58rem;
+        padding: 0.12rem 0.32rem;
+      }
+
+      body.mobile-layout #sideQuestListScroll {
+        max-height: none !important;
+        margin-bottom: 0.35rem !important;
+      }
+
+      body.mobile-layout .project-item {
+        padding: 0.65rem 0.7rem;
+        min-height: 52px;
+      }
+
+      body.mobile-layout .side-quest-item,
+      body.mobile-layout .daily-action-item {
+        padding: 0.65rem 0.7rem;
+      }
+
+      body.mobile-layout .sidebar-tab {
+        min-height: 40px;
+        font-size: 0.72rem;
+      }
+
+      body.mobile-layout .empty-state {
+        min-height: 50vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        gap: 0.75rem;
+      }
+
+      body.mobile-layout .empty-state .btn {
+        min-height: 44px;
+        padding: 0.55rem 1.25rem;
+      }
+
+      body.mobile-layout .task-card {
+        border-radius: 12px;
+      }
+
+      body.mobile-layout .header-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem;
+      }
+
+      body.mobile-layout .header-actions .status-select {
+        grid-column: 1 / -1;
+        max-width: none;
+      }
+
+      body.mobile-layout .header-actions .btn-danger {
+        grid-column: 1 / -1;
       }
 
       .header {
@@ -1080,91 +1317,27 @@
         font-size: 0.62rem;
       }
 
-      .sidebar,
-      .priority-panel {
-        position: fixed;
-        z-index: 90;
-        top: var(--topbar-h);
-        left: 0;
-        right: 0;
-        bottom: var(--mobile-tabbar-h);
-        width: 100% !important;
-        max-width: none;
-        height: auto !important;
-        max-height: none !important;
-        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-        transform: translateX(-110%);
-        transition: transform 0.25s ease;
-        box-shadow: var(--shadow);
-        border: none;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-
-      .priority-panel {
-        transform: translateX(110%);
-        border-left: none;
-      }
-
-      .sidebar.collapsed,
-      .priority-panel.collapsed {
-        padding: 0.75rem;
-        align-items: stretch;
-      }
-
-      .sidebar.collapsed .sidebar-content,
-      .sidebar.collapsed .sidebar-actions,
-      .priority-panel.collapsed .priority-panel-body {
-        display: flex !important;
-      }
-
-      .sidebar.collapsed .sidebar-rail,
-      .priority-panel.collapsed .priority-panel-rail,
-      .sidebar-tabs-row .sidebar-collapse-btn,
-      .priority-panel-header { display: none !important; }
-
-      .sidebar-main,
-      .priority-panel-body { min-height: 0; flex: 1; }
-
-      .app.mobile-panel-projects .sidebar { transform: translateX(0); }
-
-      .app.mobile-panel-tasks .priority-panel { transform: translateX(0); }
-
-      .mobile-backdrop {
-        display: block;
-        position: fixed;
-        z-index: 80;
-        top: var(--topbar-h);
-        left: 0;
-        right: 0;
-        bottom: var(--mobile-tabbar-h);
-        background: var(--overlay);
-        border: none;
-        padding: 0;
-        cursor: pointer;
-      }
-
-      .mobile-backdrop[hidden] { display: none; }
-
       .mobile-tabbar {
         display: flex;
-        position: fixed;
+        flex-shrink: 0;
+        position: relative;
         z-index: 100;
         left: 0;
         right: 0;
         bottom: 0;
         height: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom));
         padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
         background: var(--surface);
         border-top: 1px solid var(--border);
-        box-shadow: 0 -2px 12px rgba(15, 23, 42, 0.06);
+        box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.08);
       }
 
       .mobile-tab {
         flex: 1;
         font-family: inherit;
-        font-size: 0.72rem;
+        font-size: 0.62rem;
         font-weight: 500;
         border: none;
         background: transparent;
@@ -1173,27 +1346,46 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 0.15rem;
-        padding: 0.35rem 0.25rem;
+        gap: 0.2rem;
+        padding: 0.3rem 0.2rem;
         cursor: pointer;
         -webkit-tap-highlight-color: transparent;
-      }
-
-      .mobile-tab::before {
-        font-size: 1.05rem;
-        line-height: 1;
-      }
-
-      .mobile-tab[data-mobile-panel="projects"]::before { content: "📁"; }
-      .mobile-tab[data-mobile-panel="work"]::before { content: "✓"; }
-      .mobile-tab[data-mobile-panel="tasks"]::before { content: "⚡"; }
-      .mobile-tab[data-mobile-panel="adventure"]::before { content: "⚔"; }
-
-      .mobile-tab {
         min-height: 44px;
+        position: relative;
       }
 
-      .mobile-tab.active { color: var(--accent); font-weight: 600; }
+      .mobile-tab .mob-tab-icon {
+        font-size: 1.15rem;
+        line-height: 1;
+        opacity: 0.72;
+        transition: opacity 0.15s, transform 0.15s;
+      }
+
+      .mobile-tab .mob-tab-label {
+        line-height: 1.1;
+        letter-spacing: 0.01em;
+      }
+
+      .mobile-tab.active {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .mobile-tab.active .mob-tab-icon {
+        opacity: 1;
+        transform: scale(1.06);
+      }
+
+      .mobile-tab.active::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 22%;
+        right: 22%;
+        height: 2px;
+        border-radius: 0 0 2px 2px;
+        background: var(--accent);
+      }
 
       .project-list { max-height: none; }
 
@@ -1229,14 +1421,6 @@
       .task-desc { font-size: 0.74rem; }
 
       .task-actions button { min-height: 36px; padding: 0.35rem 0.55rem; }
-
-      .modal {
-        max-width: calc(100vw - 1.5rem);
-        max-height: calc(100dvh - 2rem);
-        margin: 0.75rem;
-      }
-
-      .modal-calendar { max-width: calc(100vw - 1rem); }
 
       .progress-compact { flex-wrap: wrap; }
 
@@ -3714,7 +3898,7 @@
     .health-condition-row input { flex:1; font-size:0.8rem; padding:0.35rem 0.5rem; border:1px solid var(--border); border-radius:6px; background:var(--input-bg); }
     .task-attr-tags { display:flex; flex-wrap:wrap; gap:0.2rem; margin-top:0.25rem; }
     .task-attr-tag { font-size:0.58rem; padding:0.1rem 0.35rem; border-radius:4px; background:var(--rpg-purple-dim); color:var(--rpg-purple); border:1px solid rgba(124,58,237,0.25); }
-    @media (max-width:768px) { .vitals-bar { display:none; } .attr-grid { grid-template-columns:1fr; } }
+    @media (max-width:768px) { .attr-grid { grid-template-columns:1fr; } }
 
   </style>
 </head>
@@ -3760,6 +3944,10 @@
     <input type="file" id="importFileTop" accept=".json,application/json,text/json,text/plain" style="display:none" />
   </header>
   <button type="button" class="topbar-nav-backdrop" id="topbarNavBackdrop" hidden aria-label="关闭菜单"></button>
+  <div class="mobile-context-bar" id="mobileContextBar" aria-live="polite">
+    <span class="ctx-label">当前</span>
+    <span class="ctx-text" id="mobileContextText">选择地图开始任务</span>
+  </div>
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-rail">
@@ -3767,6 +3955,10 @@
         <button type="button" class="rail-btn rail-btn-vertical" id="btnNewProjectRail" title="新建地图">新建</button>
       </div>
       <div class="sidebar-content">
+        <div class="mobile-page-title">
+          <h2>探索</h2>
+          <p>地图、支线、日常与战报</p>
+        </div>
         <div class="sidebar-main">
           <div class="sidebar-tabs-row">
             <div class="sidebar-tabs" id="leftSidebarTabs">
@@ -3851,6 +4043,10 @@
         <button type="button" class="rail-btn" id="btnExpandRight" title="展开右侧栏">◀</button>
       </div>
       <div class="priority-panel-body">
+        <div class="mobile-page-title">
+          <h2>情报</h2>
+          <p>高优先级任务与截止提醒</p>
+        </div>
         <div class="sidebar-tabs" id="rightSidebarTabs">
           <button type="button" class="sidebar-tab active" data-tab="priority">
             高优先级<span class="sidebar-tab-badge accent" id="priorityTabBadge">0</span>
@@ -3891,10 +4087,22 @@
     </div>
   </div>
   <nav class="mobile-tabbar" id="mobileTabbar" aria-label="手机导航">
-    <button type="button" class="mobile-tab" data-mobile-panel="projects">地图</button>
-    <button type="button" class="mobile-tab active" data-mobile-panel="work">工作区</button>
-    <button type="button" class="mobile-tab" data-mobile-panel="tasks">侧栏</button>
-    <button type="button" class="mobile-tab" data-mobile-panel="adventure">冒险</button>
+    <button type="button" class="mobile-tab" data-mobile-panel="projects" aria-label="探索">
+      <span class="mob-tab-icon" aria-hidden="true">🗺️</span>
+      <span class="mob-tab-label">探索</span>
+    </button>
+    <button type="button" class="mobile-tab active" data-mobile-panel="work" aria-label="任务">
+      <span class="mob-tab-icon" aria-hidden="true">⚔️</span>
+      <span class="mob-tab-label">任务</span>
+    </button>
+    <button type="button" class="mobile-tab" data-mobile-panel="tasks" aria-label="情报">
+      <span class="mob-tab-icon" aria-hidden="true">📋</span>
+      <span class="mob-tab-label">情报</span>
+    </button>
+    <button type="button" class="mobile-tab" data-mobile-panel="adventure" aria-label="角色">
+      <span class="mob-tab-icon" aria-hidden="true">🎒</span>
+      <span class="mob-tab-label">角色</span>
+    </button>
   </nav>
   </div>
 
@@ -7096,43 +7304,75 @@ ${lines.join("\n\n")}`;
       closeMobileAdventureSheet();
     }
 
+    function updateMobileContextBar() {
+      const bar = document.getElementById("mobileContextBar");
+      const text = document.getElementById("mobileContextText");
+      if (!bar || !text) return;
+      if (!isMobileLayout() || mobilePanel !== "work") {
+        bar.style.display = "none";
+        return;
+      }
+      bar.style.display = "flex";
+      const sq = state.activeSideQuestId
+        ? (state.sideQuests || []).find((q) => q.id === state.activeSideQuestId)
+        : null;
+      const project = state.activeProjectId
+        ? state.projects.find((p) => p.id === state.activeProjectId)
+        : null;
+      if (sq) {
+        text.textContent = `支线 · ${sq.title}`;
+        return;
+      }
+      if (project) {
+        const tag = (project.tagIds || [])[0] ? getTag(project.tagIds[0]) : null;
+        text.textContent = tag ? `${tag.name} · ${project.name}` : project.name;
+        return;
+      }
+      text.textContent = "选择地图开始任务";
+    }
+
     function setMobilePanel(panel) {
       if (panel === "adventure") {
         mobilePanel = "adventure";
         openMobileAdventureSheet();
+        updateMobileContextBar();
         return;
       }
       closeMobileAdventureSheet();
       mobilePanel = panel;
       const app = document.getElementById("app");
       const backdrop = document.getElementById("mobileBackdrop");
-      app.classList.remove("mobile-panel-projects", "mobile-panel-tasks");
+      app?.classList.remove("mobile-panel-projects", "mobile-panel-tasks", "mobile-panel-work");
       document.querySelectorAll(".mobile-tab").forEach((tab) => {
         tab.classList.toggle("active", tab.dataset.mobilePanel === panel);
       });
       if (!isMobileLayout()) {
         if (backdrop) backdrop.hidden = true;
+        updateMobileContextBar();
         return;
       }
-      if (panel === "projects") {
-        app.classList.add("mobile-panel-projects");
-        if (backdrop) backdrop.hidden = false;
-      } else if (panel === "tasks") {
-        app.classList.add("mobile-panel-tasks");
-        if (backdrop) backdrop.hidden = false;
-      } else if (backdrop) {
-        backdrop.hidden = true;
-      }
+      if (panel === "projects") app?.classList.add("mobile-panel-projects");
+      else if (panel === "tasks") app?.classList.add("mobile-panel-tasks");
+      else app?.classList.add("mobile-panel-work");
+      if (backdrop) backdrop.hidden = true;
+      updateMobileContextBar();
     }
 
     function applyMobileLayout() {
       const tabbar = document.getElementById("mobileTabbar");
       const isM = isMobileLayout();
+      document.body.classList.toggle("mobile-layout", isM);
       if (tabbar) tabbar.style.display = isM ? "flex" : "none";
+      const ctxBar = document.getElementById("mobileContextBar");
+      if (ctxBar && !isM) ctxBar.style.display = "none";
       if (isM) {
         setMobilePanel(mobilePanel || "work");
       } else {
-        document.getElementById("app")?.classList.remove("mobile-panel-projects", "mobile-panel-tasks");
+        document.getElementById("app")?.classList.remove(
+          "mobile-panel-projects",
+          "mobile-panel-tasks",
+          "mobile-panel-work"
+        );
         const backdrop = document.getElementById("mobileBackdrop");
         if (backdrop) backdrop.hidden = true;
         setTopbarNavOpen(false);
@@ -8512,6 +8752,7 @@ ${lines.join("\n\n")}`;
       updateSidebarTabs();
       renderMain();
       updateTopbarHint();
+      updateMobileContextBar();
       if (document.getElementById("modalCalendar")?.classList.contains("open")) renderCalendar();
     }
 
@@ -9005,7 +9246,13 @@ ${lines.join("\n\n")}`;
             <div class="sq-sub">${TASK_STATUS_LABELS[sq.status] || sq.status}</div>
           </div>`).join("") : "";
         wrap.querySelectorAll(".side-quest-item").forEach((el) => {
-          el.addEventListener("click", () => { state.activeSideQuestId = el.dataset.sqId; save(); render(); });
+          el.addEventListener("click", () => {
+            state.activeSideQuestId = el.dataset.sqId;
+            state.activeProjectId = null;
+            save();
+            render();
+            focusWorkOnMobile();
+          });
         });
       }
     }
