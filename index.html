@@ -911,10 +911,6 @@
         flex-direction: column;
       }
 
-      body.mobile-layout .mobile-context-bar {
-        display: flex;
-      }
-
       body.mobile-layout .mobile-page-title {
         display: block;
       }
@@ -3899,6 +3895,81 @@
     .task-attr-tags { display:flex; flex-wrap:wrap; gap:0.2rem; margin-top:0.25rem; }
     .task-attr-tag { font-size:0.58rem; padding:0.1rem 0.35rem; border-radius:4px; background:var(--rpg-purple-dim); color:var(--rpg-purple); border:1px solid rgba(124,58,237,0.25); }
     @media (max-width:768px) { .attr-grid { grid-template-columns:1fr; } }
+
+    /* 移动版布局修正：须写在桌面基础样式之后，避免被 .header 等规则覆盖 */
+    body.mobile-layout .header {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+
+    body.mobile-layout .header-main {
+      width: 100%;
+      flex: none;
+      min-width: 0;
+    }
+
+    body.mobile-layout .header-title-row {
+      width: 100%;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.3rem;
+    }
+
+    body.mobile-layout .header-title-row h1 {
+      width: 100%;
+      flex: none;
+      font-size: 1.05rem;
+      line-height: 1.35;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.35rem;
+      word-break: break-word;
+    }
+
+    body.mobile-layout .header-title-row .header-tags {
+      width: 100%;
+      margin-top: 0;
+    }
+
+    body.mobile-layout .header-actions {
+      width: 100%;
+    }
+
+    body.mobile-layout .app.mobile-panel-work .main {
+      display: block;
+    }
+
+    body.mobile-layout .main-project {
+      display: block;
+      min-height: auto;
+    }
+
+    body.mobile-layout .panel-tasks {
+      flex: none;
+      min-height: auto;
+      display: block;
+    }
+
+    body.mobile-layout .task-list {
+      flex: none;
+      min-height: auto;
+      overflow: visible;
+    }
+
+    body.mobile-layout .overview-bar {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 2.25rem;
+      padding: 0.35rem 0;
+      width: 100%;
+    }
+
+    body.mobile-layout .overview-chip {
+      flex-shrink: 0;
+    }
 
   </style>
 </head>
