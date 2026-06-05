@@ -916,7 +916,8 @@
       }
 
       body.mobile-layout .app {
-        display: block;
+        display: flex;
+        flex-direction: column;
         flex: 1;
         min-height: 0;
         height: auto;
@@ -928,17 +929,21 @@
       body.mobile-layout .main,
       body.mobile-layout .sidebar,
       body.mobile-layout .priority-panel {
-        position: absolute;
-        inset: 0;
+        position: relative;
+        flex: 1 1 auto;
         width: 100% !important;
-        max-width: none !important;
-        height: 100% !important;
-        max-height: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
         transform: none !important;
         display: none;
         flex-direction: column;
-        overflow: hidden;
-        z-index: 1;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior-y: contain;
+        touch-action: pan-y;
+        z-index: auto;
         border: none;
         box-shadow: none;
         padding: 0;
@@ -946,18 +951,15 @@
       }
 
       body.mobile-layout .app.mobile-panel-work .main {
-        display: flex;
-        z-index: 2;
+        display: block;
       }
 
       body.mobile-layout .app.mobile-panel-projects .sidebar {
         display: flex;
-        z-index: 2;
       }
 
       body.mobile-layout .app.mobile-panel-tasks .priority-panel {
         display: flex;
-        z-index: 2;
       }
 
       body.mobile-layout .mobile-backdrop {
@@ -3897,28 +3899,71 @@
     @media (max-width:768px) { .attr-grid { grid-template-columns:1fr; } }
 
     /* 移动版布局修正：须写在桌面基础样式之后，避免被 .header 等规则覆盖 */
-    body.mobile-layout .header {
+    body.mobile-layout .app {
+      display: flex !important;
       flex-direction: column;
-      align-items: stretch;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden !important;
+    }
+
+    body.mobile-layout .main,
+    body.mobile-layout .sidebar,
+    body.mobile-layout .priority-panel {
+      position: relative !important;
+      inset: auto !important;
+      flex: 1 1 auto;
+      min-height: 0 !important;
+      width: 100% !important;
+      height: auto !important;
+      max-height: none !important;
+      display: none !important;
+      overflow-x: hidden !important;
+      overflow-y: scroll !important;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior-y: contain;
+      touch-action: pan-y;
+      z-index: auto !important;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    body.mobile-layout .app.mobile-panel-work .main,
+    body.mobile-layout .app.mobile-panel-projects .sidebar,
+    body.mobile-layout .app.mobile-panel-tasks .priority-panel {
+      display: block !important;
+      pointer-events: auto;
+      visibility: visible;
+    }
+
+    body.mobile-layout .app.mobile-panel-projects .sidebar,
+    body.mobile-layout .app.mobile-panel-tasks .priority-panel {
+      display: flex !important;
+      flex-direction: column;
+    }
+
+    body.mobile-layout .header {
+      flex-direction: column !important;
+      align-items: stretch !important;
       width: 100%;
     }
 
     body.mobile-layout .header-main {
-      width: 100%;
-      flex: none;
+      width: 100% !important;
+      flex: none !important;
       min-width: 0;
     }
 
     body.mobile-layout .header-title-row {
-      width: 100%;
+      width: 100% !important;
       flex-direction: column;
       align-items: stretch;
       gap: 0.3rem;
     }
 
     body.mobile-layout .header-title-row h1 {
-      width: 100%;
-      flex: none;
+      width: 100% !important;
+      flex: none !important;
       font-size: 1.05rem;
       line-height: 1.35;
       display: flex;
@@ -3934,28 +3979,29 @@
     }
 
     body.mobile-layout .header-actions {
-      width: 100%;
-    }
-
-    body.mobile-layout .app.mobile-panel-work .main {
-      display: block;
+      width: 100% !important;
     }
 
     body.mobile-layout .main-project {
-      display: block;
-      min-height: auto;
+      display: block !important;
+      min-height: auto !important;
+      height: auto !important;
+      overflow: visible !important;
     }
 
-    body.mobile-layout .panel-tasks {
-      flex: none;
-      min-height: auto;
-      display: block;
+    body.mobile-layout .panel,
+    body.mobile-layout .panel-tasks,
+    body.mobile-layout .panel-slim {
+      flex: none !important;
+      min-height: auto !important;
+      display: block !important;
+      overflow: visible !important;
     }
 
     body.mobile-layout .task-list {
-      flex: none;
-      min-height: auto;
-      overflow: visible;
+      flex: none !important;
+      min-height: auto !important;
+      overflow: visible !important;
     }
 
     body.mobile-layout .overview-bar {
@@ -3969,6 +4015,19 @@
 
     body.mobile-layout .overview-chip {
       flex-shrink: 0;
+    }
+
+    body.mobile-layout .sidebar.collapsed,
+    body.mobile-layout .priority-panel.collapsed {
+      padding: 0.45rem 0.55rem !important;
+      align-items: stretch !important;
+    }
+
+    body.mobile-layout .sidebar.collapsed .sidebar-content,
+    body.mobile-layout .sidebar.collapsed .sidebar-rail,
+    body.mobile-layout .priority-panel.collapsed .priority-panel-body,
+    body.mobile-layout .priority-panel.collapsed .priority-panel-rail {
+      display: flex !important;
     }
 
   </style>
@@ -5296,6 +5355,104 @@
       return true;
     }
 
+    function revokeInventoryItem(itemId) {
+      if (!itemId) return false;
+      const p = state.player;
+      Object.keys(p.equipment || {}).forEach((slot) => {
+        if (p.equipment[slot] === itemId) p.equipment[slot] = null;
+      });
+      const idx = (p.inventory || []).findIndex((i) => i.itemId === itemId);
+      if (idx < 0) return false;
+      p.inventory.splice(idx, 1);
+      return true;
+    }
+
+    function adjustXpAndSkillPoints(deltaXp) {
+      if (!deltaXp) return;
+      const prevLevel = getLevelFromXp(state.player.xp);
+      state.player.xp = Math.max(0, (state.player.xp || 0) + deltaXp);
+      const newLevel = getLevelFromXp(state.player.xp);
+      if (newLevel < prevLevel) {
+        state.player.skillPoints = Math.max(0, (state.player.skillPoints || 0) - (prevLevel - newLevel));
+      }
+    }
+
+    function reverseAttributeDelta(delta) {
+      if (!delta || typeof delta !== "object") return;
+      const rev = {};
+      PLAYER_ATTR_KEYS.forEach((k) => {
+        if (typeof delta[k] === "number") rev[k] = -delta[k];
+      });
+      applyAttributeDelta(rev);
+    }
+
+    function reverseAttrTagsFromPlayer(tags, scale) {
+      applyAttrTagsToPlayer(tags, -(scale || 1));
+    }
+
+    function reverseMainTaskCompleteVitals(task) {
+      const vo = task.vitalOnComplete || {};
+      applyVitalDelta(
+        typeof vo.physical === "number" ? -vo.physical : 1,
+        typeof vo.mental === "number" ? -vo.mental : MENTAL_COST_PER_TASK
+      );
+      if (task.attrDelta) reverseAttributeDelta(task.attrDelta);
+      else reverseAttrTagsFromPlayer(task.attrTags, 1);
+    }
+
+    function reverseSideQuestCompleteVitals(sq) {
+      applyVitalDelta(1, MENTAL_COST_PER_TASK);
+      if (sq.attrDelta) reverseAttributeDelta(sq.attrDelta);
+      else reverseAttrTagsFromPlayer(sq.attrTags, 1);
+    }
+
+    function revertTaskCompletion(task, project) {
+      if (!task || task.status === "done") return false;
+      if (!task.xpAwarded && !task.completionLootItemId) return false;
+
+      if (task.xpAwarded) {
+        adjustXpAndSkillPoints(-task.xpAwarded);
+        const isMain = (project?.questType || "main") === "main";
+        const st = state.player.stats;
+        if (st.tasksCompleted > 0) st.tasksCompleted--;
+        if (isMain) { if (st.mainTasksCompleted > 0) st.mainTasksCompleted--; }
+        else if (st.sideTasksCompleted > 0) st.sideTasksCompleted--;
+        if (task.priority === "high" && st.highPriorityCompleted > 0) st.highPriorityCompleted--;
+        const hour = new Date(task.completedAt || Date.now()).getHours();
+        if (hour >= 0 && hour < DAY_START_HOUR && st.nightCompletions > 0) st.nightCompletions--;
+        task.xpAwarded = 0;
+      }
+
+      reverseMainTaskCompleteVitals(task);
+      if (task.completionLootItemId) {
+        revokeInventoryItem(task.completionLootItemId);
+        task.completionLootItemId = null;
+      }
+      return true;
+    }
+
+    function revertSideQuestCompletion(sq) {
+      if (!sq || sq.status === "done") return false;
+      if (!sq.xpAwarded && !sq.completionLootItemId) return false;
+
+      if (sq.xpAwarded) {
+        adjustXpAndSkillPoints(-sq.xpAwarded);
+        const st = state.player.stats;
+        if (st.tasksCompleted > 0) st.tasksCompleted--;
+        if (st.sideTasksCompleted > 0) st.sideTasksCompleted--;
+        if (st.sideQuestsCompleted > 0) st.sideQuestsCompleted--;
+        if (sq.priority === "high" && st.highPriorityCompleted > 0) st.highPriorityCompleted--;
+        sq.xpAwarded = 0;
+      }
+
+      reverseSideQuestCompleteVitals(sq);
+      if (sq.completionLootItemId) {
+        revokeInventoryItem(sq.completionLootItemId);
+        sq.completionLootItemId = null;
+      }
+      return true;
+    }
+
 
     function markItemDiscovered(itemId) {
       if (!itemId || !ITEM_CATALOG[itemId]) return;
@@ -5846,8 +6003,10 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     function presentCompletionRewards(task, project, xp, map) {
       const loot = buildCompletionLootFallback(task, project, xp);
-      if (loot.itemId) addInventoryItem(loot.itemId);
-      showLootModal(xp, loot);
+      let grantedItemId = null;
+      if (loot.itemId && addInventoryItem(loot.itemId)) grantedItemId = loot.itemId;
+      task.completionLootItemId = grantedItemId;
+      showLootModal(xp, { ...loot, itemId: grantedItemId });
       save();
       void enrichLootModalNarrative(task, project, map, xp);
     }
@@ -6543,6 +6702,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         task.vitalOnComplete = null;
       }
       task.llmEnriched = !!task.llmEnriched;
+      task.completionLootItemId = task.completionLootItemId || null;
       return task;
     }
 
@@ -7437,6 +7597,8 @@ ${lines.join("\n\n")}`;
       const ctxBar = document.getElementById("mobileContextBar");
       if (ctxBar && !isM) ctxBar.style.display = "none";
       if (isM) {
+        document.getElementById("sidebar")?.classList.remove("collapsed");
+        document.getElementById("priorityPanel")?.classList.remove("collapsed");
         setMobilePanel(mobilePanel || "work");
       } else {
         document.getElementById("app")?.classList.remove(
@@ -8071,6 +8233,17 @@ ${lines.join("\n\n")}`;
             presentCompletionRewards(sq, { questType: "side", name: sq.title }, xp, map);
           }
           checkPhysicalHealthNotice();
+        } else if (prev === "done" && next !== "done") {
+          sq.status = next;
+          sq.completedAt = null;
+          sq.updatedAt = new Date().toISOString();
+          if (revertSideQuestCompletion(sq)) {
+            updateXpBar();
+            renderTopbarVitals();
+            toast("已回退支线完成：经验、体/精、属性与掉落装备已收回");
+          }
+          save();
+          render();
         } else {
           sq.status = next;
           if (next !== "done") sq.completedAt = null;
@@ -8286,6 +8459,14 @@ ${lines.join("\n\n")}`;
             render();
             await handleTaskCompletionRewards(liveProject.id, taskId, prevStatus);
             checkPhysicalHealthNotice();
+            render();
+          } else if (prevStatus === "done" && task.status !== "done") {
+            if (revertTaskCompletion(task, liveProject)) {
+              updateXpBar();
+              renderTopbarVitals();
+              toast("已回退完成状态：经验、体/精、属性与掉落装备已收回");
+            }
+            save();
             render();
           } else {
             save();
@@ -8664,6 +8845,15 @@ ${lines.join("\n\n")}`;
             render();
             await handleTaskCompletionRewards(projectId, targetTaskId, prevStatus);
             checkPhysicalHealthNotice();
+            render();
+          } else if (prevStatus === "done" && newStatus !== "done" && existingTask) {
+            if (revertTaskCompletion(existingTask, liveProject)) {
+              updateXpBar();
+              renderTopbarVitals();
+              toast("已回退完成状态：经验、体/精、属性与掉落装备已收回");
+            }
+            save();
+            closeModal("modalTask");
             render();
           } else {
             save();
@@ -9106,6 +9296,7 @@ ${lines.join("\n\n")}`;
         attrDelta: q.attrDelta && typeof q.attrDelta === "object" ? q.attrDelta : null,
         loreGenerated: !!q.loreGenerated,
         xpAwarded: q.xpAwarded || 0,
+        completionLootItemId: q.completionLootItemId || null,
         createdAt: q.createdAt || now,
         updatedAt: q.updatedAt || now,
       };
@@ -9327,43 +9518,105 @@ ${lines.join("\n\n")}`;
         });
       }
     }
+    function countDailyLogsForAction(actionId) {
+      return (state.dailyLogs || []).filter((l) => l.actionId === actionId).length;
+    }
+
     function renderDailyRoutinesPanel() {
       const panel = document.getElementById("dailyRoutinesPanel");
       if (!panel) return;
       const acts = state.dailyActions || [];
       if (!acts.length) { panel.innerHTML = '<p class="meta">记录健身、喝酒、吃药等日常，会影响身体与精神状态。</p>'; return; }
-      panel.innerHTML = acts.map((a) => `
+      panel.innerHTML = acts.map((a) => {
+        const execCount = countDailyLogsForAction(a.id);
+        return `
         <div class="daily-action-item" data-da-id="${a.id}">
           <div class="sq-title">${escapeHtml(a.name)} <span class="meta">(${DAILY_CATEGORY_LABELS[a.category] || a.category})</span></div>
-          <div class="sq-sub">体${a.effects?.physicalHealth >= 0 ? "+" : ""}${a.effects?.physicalHealth || 0} / 精${a.effects?.mentalHealth >= 0 ? "+" : ""}${a.effects?.mentalHealth || 0}${a.effects?.summary ? ` · ${escapeHtml(a.effects.summary)}` : ""}</div>
+          <div class="sq-sub">体${a.effects?.physicalHealth >= 0 ? "+" : ""}${a.effects?.physicalHealth || 0} / 精${a.effects?.mentalHealth >= 0 ? "+" : ""}${a.effects?.mentalHealth || 0}${a.effects?.summary ? ` · ${escapeHtml(a.effects.summary)}` : ""}${execCount ? ` · 已执行 ${execCount} 次` : ""}</div>
           <div style="display:flex;gap:0.35rem;margin-top:0.35rem;flex-wrap:wrap">
             <button type="button" class="btn btn-ghost btn-xs btn-edit-daily" data-id="${a.id}">编辑</button>
-            <button type="button" class="btn btn-primary btn-xs btn-exec-daily" data-id="${a.id}">执行一次</button>
+            <button type="button" class="btn btn-primary btn-xs btn-exec-daily" data-id="${a.id}">再执行</button>
+            ${execCount ? `<button type="button" class="btn btn-ghost btn-xs btn-undo-daily" data-id="${a.id}">回退</button>` : ""}
           </div>
-        </div>`).join("");
+        </div>`;
+      }).join("");
       panel.querySelectorAll(".btn-exec-daily").forEach((btn) => {
         btn.addEventListener("click", (e) => { e.stopPropagation(); executeDailyAction(btn.dataset.id); });
+      });
+      panel.querySelectorAll(".btn-undo-daily").forEach((btn) => {
+        btn.addEventListener("click", (e) => { e.stopPropagation(); undoDailyActionExecution(btn.dataset.id); });
       });
       panel.querySelectorAll(".btn-edit-daily").forEach((btn) => {
         btn.addEventListener("click", (e) => { e.stopPropagation(); openDailyActionModal(btn.dataset.id); });
       });
     }
-    async function executeDailyAction(id) {
+
+    function applyDailyActionEffects(eff) {
+      const effects = eff || {};
+      applyVitalDelta(effects.physicalHealth || 0, effects.mentalHealth || 0);
+      applyAttributeDelta(effects.attributes);
+    }
+
+    function reverseDailyActionEffects(eff) {
+      const effects = eff || {};
+      applyVitalDelta(-(effects.physicalHealth || 0), -(effects.mentalHealth || 0));
+      reverseAttributeDelta(effects.attributes);
+    }
+
+    async function executeDailyAction(id, { silent = false } = {}) {
       const a = (state.dailyActions || []).find((x) => x.id === id);
-      if (!a) return;
+      if (!a) return false;
       tickDailyVitals();
-      const eff = a.effects || {};
-      applyVitalDelta(eff.physicalHealth || 0, eff.mentalHealth || 0);
-      applyAttributeDelta(eff.attributes);
+      const eff = {
+        physicalHealth: a.effects?.physicalHealth || 0,
+        mentalHealth: a.effects?.mentalHealth || 0,
+        attributes: a.effects?.attributes ? { ...a.effects.attributes } : {},
+      };
+      applyDailyActionEffects(eff);
       state.dailyLogs = state.dailyLogs || [];
-      state.dailyLogs.push({ id: uid(), actionId: id, completedAt: new Date().toISOString() });
+      state.dailyLogs.push({
+        id: uid(),
+        actionId: id,
+        completedAt: new Date().toISOString(),
+        effects: eff,
+      });
       state.player.stats.dailyActionsCompleted = (state.player.stats.dailyActionsCompleted || 0) + 1;
       save();
       renderTopbarVitals();
       renderDailyRoutinesPanel();
       checkPhysicalHealthNotice();
       checkAchievements();
-      toast(`已记录：${a.name}`);
+      if (!silent) toast(`已记录：${a.name}`);
+      return true;
+    }
+
+    function undoDailyActionExecution(id) {
+      const logs = state.dailyLogs || [];
+      let lastIdx = -1;
+      for (let i = logs.length - 1; i >= 0; i--) {
+        if (logs[i].actionId === id) { lastIdx = i; break; }
+      }
+      if (lastIdx < 0) {
+        toast("没有可回退的执行记录");
+        return false;
+      }
+      const a = (state.dailyActions || []).find((x) => x.id === id);
+      const log = logs[lastIdx];
+      const eff = log.effects || (a ? {
+        physicalHealth: a.effects?.physicalHealth || 0,
+        mentalHealth: a.effects?.mentalHealth || 0,
+        attributes: a.effects?.attributes || {},
+      } : null);
+      if (eff) reverseDailyActionEffects(eff);
+      logs.splice(lastIdx, 1);
+      if (state.player.stats.dailyActionsCompleted > 0) {
+        state.player.stats.dailyActionsCompleted--;
+      }
+      save();
+      renderTopbarVitals();
+      renderDailyRoutinesPanel();
+      toast(a ? `已回退：${a.name}` : "已回退日常执行");
+      return true;
     }
     function renderHeroAttributes() {
       const p = state.player;
@@ -9450,12 +9703,18 @@ ${lines.join("\n\n")}`;
           llmGenerated: !!dailyModalLlmDraft || !!a?.llmGenerated,
           updatedAt: new Date().toISOString(),
         });
+        const isNew = !a;
         if (a) Object.assign(a, item);
         else state.dailyActions.push(item);
         save();
         closeModal("modalDailyAction");
-        render();
-        toast("日常行动已保存");
+        if (isNew) {
+          executeDailyAction(item.id, { silent: false });
+          render();
+        } else {
+          render();
+          toast("日常行动已保存");
+        }
       };
       openModal("modalDailyAction");
     }
