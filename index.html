@@ -1050,11 +1050,6 @@
         padding: 0.12rem 0.32rem;
       }
 
-      body.mobile-layout #sideQuestListScroll {
-        max-height: none !important;
-        margin-bottom: 0.35rem !important;
-      }
-
       body.mobile-layout .project-item {
         padding: 0.65rem 0.7rem;
         min-height: 52px;
@@ -3879,6 +3874,9 @@
     .quest-filter-bar { display:flex; gap:0.18rem; flex-wrap:wrap; margin-bottom:0; }
     .quest-filter-chip { font-family:inherit; font-size:0.58rem; padding:0.1rem 0.3rem; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-muted); cursor:pointer; }
     .quest-filter-chip.active { background:var(--accent-dim); border-color:var(--accent-border); color:var(--accent); font-weight:600; }
+    .project-item.side-quest-board-item { border-style:dashed; border-color:var(--silver-border); }
+    .project-item.side-quest-board-item.active { border-color:var(--accent-border); background:var(--accent-dim); }
+    .task-card.side-quest-card.focused { border-color:var(--accent-border); box-shadow:0 0 0 2px var(--accent-dim); }
     .side-quest-item, .daily-action-item { border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem 0.65rem; margin-bottom:0.35rem; background:var(--input-bg); cursor:pointer; }
     .side-quest-item.active, .daily-action-item:hover { border-color:var(--accent-border); background:var(--surface-hover); }
     .side-quest-item .sq-title { font-size:0.82rem; font-weight:600; }
@@ -4114,8 +4112,6 @@
             <button type="button" class="btn btn-primary btn-xs" id="btnNewProject">+ 地图</button>
             <button type="button" class="btn btn-ghost btn-xs" id="btnNewSideQuest">+ 支线</button>
           </div>
-          <p class="section-label section-label-compact" id="sideQuestLabel" style="display:none">大陆支线</p>
-          <div class="sidebar-scroll-panel" id="sideQuestListScroll" style="display:none;max-height:100px;margin-bottom:0.15rem"></div>
           <div class="sidebar-tab-panel active" id="leftPanelProjects">
             <div class="sidebar-scroll-panel" id="projectListScroll">
               <ul class="project-list" id="projectList"></ul>
@@ -4175,11 +4171,11 @@
       <div class="priority-panel-body">
         <div class="mobile-page-title">
           <h2>情报</h2>
-          <p>高优先级任务与截止提醒</p>
+          <p>待办事项与截止提醒</p>
         </div>
         <div class="sidebar-tabs" id="rightSidebarTabs">
           <button type="button" class="sidebar-tab active" data-tab="priority">
-            高优先级<span class="sidebar-tab-badge accent" id="priorityTabBadge">0</span>
+            待办<span class="sidebar-tab-badge accent" id="priorityTabBadge">0</span>
           </button>
           <button type="button" class="sidebar-tab" data-tab="deadline">
             截止排序<span class="sidebar-tab-badge danger" id="deadlineTabBadge">0</span>
@@ -4188,6 +4184,10 @@
         <p class="section-label">大陆筛选</p>
         <div class="tag-filter-bar" id="rightTagFilter"></div>
         <div class="sidebar-tab-panel active" id="rightPanelPriority">
+          <div class="sidebar-filter-row" style="margin-bottom:0.35rem">
+            <span class="sidebar-filter-label">优先级</span>
+            <div class="quest-filter-bar sidebar-filter-chips" id="todoPriorityFilter"></div>
+          </div>
           <div class="sidebar-scroll-panel">
             <div class="priority-list" id="priorityList"></div>
           </div>
@@ -4636,6 +4636,7 @@
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
     const STATE_SCHEMA_VERSION = 4;
+    const SIDE_QUEST_BOARD_ID = "__side_quest_board__";
     // schema 4: 全量 JSON 持久化 + 大陆/地图/任务/支线 LLM 剧情与标签
     const PHYSICAL_DECAY_PER_HOUR = 2 / 24;
     const MENTAL_RESET_VALUE = 80;
@@ -5775,7 +5776,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     }
 
     function getMapQuestPins(mapId) {
-      const quests = state.projects.filter((p) => (p.tagIds || []).includes(mapId));
+      const quests = state.projects.filter((p) => (p.tagIds || []).includes(mapId) && (p.questType || "main") !== "side");
       const positions = [
         [35, 62], [55, 55], [70, 42], [28, 38], [48, 28], [62, 68], [40, 22], [75, 58],
       ];
@@ -5841,13 +5842,25 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             </button>`;
           }).join("")}</div>
           ${regionSides.length ? `<h4 class="collection-section-title" style="margin-top:0.65rem">大陆支线 <span class="meta">${regionSides.length}</span></h4>
-          <div class="continent-region-list">${regionSides.map((sq) => `<div class="continent-region-item static">${questTypeBadgeHtml({ questType: "side" })}${escapeHtml(sq.title)}</div>`).join("")}</div>` : ""}
+          <div class="continent-region-list">${regionSides.map((sq) => `<button type="button" class="continent-region-item" data-sq-id="${sq.id}">${questTypeBadgeHtml({ questType: "side" })}${escapeHtml(sq.title)}</button>`).join("")}</div>` : ""}
         </div>` : '<p class="meta">该大陆尚无区域地图，请新建地图并归属此大陆。</p>';
       document.getElementById("mapDetailCanvas").innerHTML = regionHtml + renderContinentMapCanvas(tag);
       document.getElementById("mapDetailCanvas").querySelectorAll(".continent-region-item[data-project-id]").forEach((btn) => {
         btn.addEventListener("click", () => {
           state.activeProjectId = btn.dataset.projectId;
           state.activeSideQuestId = null;
+          taskFilter = "all";
+          save();
+          closeModal("modalMapDetail");
+          closeModal("modalWorldMap");
+          render();
+          focusWorkOnMobile();
+        });
+      });
+      document.getElementById("mapDetailCanvas").querySelectorAll(".continent-region-item[data-sq-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.activeProjectId = SIDE_QUEST_BOARD_ID;
+          state.activeSideQuestId = btn.dataset.sqId;
           taskFilter = "all";
           save();
           closeModal("modalMapDetail");
@@ -6243,6 +6256,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       player: defaultPlayer(),
       tagFilterId: null,
       questLineFilter: "all",
+      todoPriorityFilter: "all",
       activeProjectId: null,
       activeSideQuestId: null,
       taskSort: "createdAt-desc",
@@ -6577,17 +6591,21 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       state.dailyActions = Array.isArray(data.dailyActions) ? data.dailyActions.map(normalizeDailyAction) : [];
       state.dailyLogs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
       state.questLineFilter = data.questLineFilter || "all";
+      state.todoPriorityFilter = data.todoPriorityFilter || "all";
       state.taskFilter = data.taskFilter || "all";
       migrateLegacySideProjects();
       state.projects = (data.projects || []).map(normalizeProject);
       state.tagFilterId = data.tagFilterId && tags.some((t) => t.id === data.tagFilterId) ? data.tagFilterId : null;
       state.activeProjectId = data.activeProjectId || null;
+      state.activeSideQuestId = data.activeSideQuestId || null;
+      if (state.activeSideQuestId && state.activeProjectId !== SIDE_QUEST_BOARD_ID) {
+        state.activeProjectId = SIDE_QUEST_BOARD_ID;
+      }
       state.taskSort = data.taskSort || "createdAt-desc";
       state.logSort = data.logSort || "createdAt-desc";
       state.leftSidebarTab = ["daily", "routines"].includes(data.leftSidebarTab)
         ? data.leftSidebarTab
         : data.dailyDigestOpen ? "daily" : "projects";
-      state.activeSideQuestId = data.activeSideQuestId || null;
       state.rightSidebarTab = data.rightSidebarTab === "deadline" ? "deadline" : data.deadlineDigestOpen ? "deadline" : "priority";
       state.leftSidebarCollapsed = !!data.leftSidebarCollapsed;
       state.rightSidebarCollapsed = !!data.rightSidebarCollapsed;
@@ -6626,6 +6644,10 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         }
         normalizeStateForPersistence();
         taskFilter = state.taskFilter || "all";
+        if (state.activeSideQuestId && !isSideQuestBoardActive()) {
+          state.activeProjectId = SIDE_QUEST_BOARD_ID;
+          save();
+        }
       } catch (e) {
         console.warn("加载本地数据失败", e);
         initDailyDateState();
@@ -6712,6 +6734,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         (project.tasks || []).forEach((task) => {
           if (!task.dueDate) return;
           items.push({
+            kind: "task",
             projectId: project.id,
             projectName: project.name,
             taskId: task.id,
@@ -6720,6 +6743,19 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             dueDate: task.dueDate,
             priority: task.priority,
           });
+        });
+      });
+      getFilteredSideQuests().forEach((sq) => {
+        if (!sq.dueDate) return;
+        const map = getTag(sq.continentId);
+        items.push({
+          kind: "side",
+          sideQuestId: sq.id,
+          projectName: map ? map.name : "未归属大陆",
+          taskTitle: sq.title,
+          status: sq.status,
+          dueDate: sq.dueDate,
+          priority: sq.priority,
         });
       });
       return items;
@@ -6742,7 +6778,23 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     function navigateToTask(projectId, taskId, status) {
       state.activeProjectId = projectId;
+      state.activeSideQuestId = null;
       taskFilter = status === "doing" ? "doing" : status === "todo" ? "todo" : status === "done" ? "done" : "all";
+      save();
+      render();
+      focusWorkOnMobile();
+    }
+
+    function navigateToTodoItem(item) {
+      if (item.kind === "side") {
+        state.activeProjectId = SIDE_QUEST_BOARD_ID;
+        state.activeSideQuestId = item.sideQuestId;
+        taskFilter = item.status === "doing" ? "doing" : item.status === "todo" ? "todo" : "all";
+      } else {
+        state.activeProjectId = item.projectId;
+        state.activeSideQuestId = null;
+        taskFilter = item.status === "doing" ? "doing" : item.status === "todo" ? "todo" : "all";
+      }
       save();
       render();
       focusWorkOnMobile();
@@ -7440,27 +7492,52 @@ ${lines.join("\n\n")}`;
     }
 
     const PRIORITY_STATUS_ORDER = { doing: 0, todo: 1 };
+    const TODO_PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
 
-    function collectHighPriorityTasks() {
+    function collectTodoItems(priorityFilter) {
+      const pf = priorityFilter || state.todoPriorityFilter || "all";
       const items = [];
       getFilteredProjects().forEach((project) => {
         (project.tasks || []).forEach((task) => {
-          if (task.priority === "high" && task.status !== "done") {
-            items.push({
-              projectId: project.id,
-              projectName: project.name,
-              taskId: task.id,
-              taskTitle: task.title,
-              status: task.status,
-              updatedAt: task.updatedAt,
-            });
-          }
+          if (task.status === "done") return;
+          const pri = task.priority || "medium";
+          if (pf !== "all" && pri !== pf) return;
+          items.push({
+            kind: "task",
+            projectId: project.id,
+            projectName: project.name,
+            taskId: task.id,
+            taskTitle: task.title,
+            status: task.status,
+            priority: pri,
+            updatedAt: task.updatedAt,
+            dueDate: task.dueDate,
+          });
+        });
+      });
+      getFilteredSideQuests().forEach((sq) => {
+        if (sq.status === "done") return;
+        const pri = sq.priority || "medium";
+        if (pf !== "all" && pri !== pf) return;
+        const map = getTag(sq.continentId);
+        items.push({
+          kind: "side",
+          sideQuestId: sq.id,
+          projectName: map ? map.name : "未归属大陆",
+          taskTitle: sq.title,
+          status: sq.status,
+          priority: pri,
+          updatedAt: sq.updatedAt,
+          dueDate: sq.dueDate,
         });
       });
       return items.sort((a, b) => {
         const sa = PRIORITY_STATUS_ORDER[a.status] ?? 2;
         const sb = PRIORITY_STATUS_ORDER[b.status] ?? 2;
         if (sa !== sb) return sa - sb;
+        const pra = TODO_PRIORITY_ORDER[a.priority] ?? 1;
+        const prb = TODO_PRIORITY_ORDER[b.priority] ?? 1;
+        if (pra !== prb) return pra - prb;
         return new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0);
       });
     }
@@ -7544,16 +7621,14 @@ ${lines.join("\n\n")}`;
         return;
       }
       bar.style.display = "flex";
-      const sq = state.activeSideQuestId
-        ? (state.sideQuests || []).find((q) => q.id === state.activeSideQuestId)
-        : null;
+      if (isSideQuestBoardActive()) {
+        const tag = state.tagFilterId ? getTag(state.tagFilterId) : null;
+        text.textContent = tag ? `支线任务 · ${tag.name}` : "支线任务";
+        return;
+      }
       const project = state.activeProjectId
         ? state.projects.find((p) => p.id === state.activeProjectId)
         : null;
-      if (sq) {
-        text.textContent = `支线 · ${sq.title}`;
-        return;
-      }
       if (project) {
         const tag = (project.tagIds || [])[0] ? getTag(project.tagIds[0]) : null;
         text.textContent = tag ? `${tag.name} · ${project.name}` : project.name;
@@ -7651,38 +7726,73 @@ ${lines.join("\n\n")}`;
       document.getElementById("rightPanelDeadline")?.classList.toggle("active", state.rightSidebarTab === "deadline");
     }
 
+    function renderTodoPriorityFilter() {
+      const el = document.getElementById("todoPriorityFilter");
+      if (!el) return;
+      const cur = state.todoPriorityFilter || "all";
+      const labels = { all: "全部", high: "高", medium: "中", low: "低" };
+      el.innerHTML = ["all", "high", "medium", "low"]
+        .map((k) => `<button type="button" class="quest-filter-chip ${cur === k ? "active" : ""}" data-tpf="${k}">${labels[k]}</button>`)
+        .join("");
+      el.querySelectorAll(".quest-filter-chip").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.todoPriorityFilter = btn.dataset.tpf;
+          save();
+          renderPriorityPanel();
+        });
+      });
+    }
+
     function renderPriorityPanel() {
+      renderTodoPriorityFilter();
       const list = document.getElementById("priorityList");
       const badge = document.getElementById("priorityTabBadge");
-      const tasks = collectHighPriorityTasks();
-      if (badge) badge.textContent = String(tasks.length);
+      const allTodos = collectTodoItems("all");
+      const tasks = collectTodoItems();
+      if (badge) badge.textContent = String(allTodos.length);
 
       if (!tasks.length) {
+        const pf = state.todoPriorityFilter || "all";
+        const pfLabel = { all: "", high: "高优先级", medium: "中优先级", low: "低优先级" }[pf] || "";
         list.innerHTML = state.tagFilterId
-          ? '<p class="priority-empty">当前标签下暂无高优先级任务</p>'
-          : '<p class="priority-empty">暂无高优先级待办<br />将任务优先级设为「高」后会显示在这里</p>';
+          ? `<p class="priority-empty">当前大陆下暂无${pfLabel}待办</p>`
+          : `<p class="priority-empty">暂无${pfLabel || ""}待办<br />主线任务与大陆支线会显示在这里</p>`;
         return;
       }
 
       list.innerHTML = tasks
         .map(
-          (item) => `
-        <button type="button" class="priority-item" data-project-id="${item.projectId}" data-task-id="${item.taskId}" title="${escapeHtml(item.projectName)} · ${escapeHtml(item.taskTitle)}">
+          (item) => {
+            const priClass = `badge-priority-${item.priority || "medium"}`;
+            const kindBadge = item.kind === "side"
+              ? `<span class="badge" style="background:var(--silver-dim);color:var(--silver)">支线</span>`
+              : `<span class="badge" style="background:var(--gold-dim);color:var(--gold)">主线</span>`;
+            const dataAttrs = item.kind === "side"
+              ? `data-kind="side" data-side-id="${item.sideQuestId}"`
+              : `data-kind="task" data-project-id="${item.projectId}" data-task-id="${item.taskId}"`;
+            return `
+        <button type="button" class="priority-item" ${dataAttrs} data-status="${item.status}" title="${escapeHtml(item.projectName)} · ${escapeHtml(item.taskTitle)}">
           <span class="task-title">${escapeHtml(item.taskTitle)}</span>
           <span class="proj-name">${escapeHtml(item.projectName)}</span>
           <div class="priority-item-meta">
+            ${kindBadge}
             <span class="badge badge-${item.status}">${TASK_STATUS_LABELS[item.status]}</span>
-            <span class="badge badge-priority-high">高优先级</span>
+            <span class="badge ${priClass}">${PRIORITY_LABELS[item.priority] || "中"} 优先级</span>
           </div>
         </button>
-      `
+      `;
+          }
         )
         .join("");
 
       list.querySelectorAll(".priority-item").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const item = tasks.find((t) => t.taskId === btn.dataset.taskId);
-          navigateToTask(btn.dataset.projectId, btn.dataset.taskId, item?.status);
+          const item = tasks.find((t) =>
+            t.kind === "side"
+              ? t.sideQuestId === btn.dataset.sideId
+              : t.taskId === btn.dataset.taskId
+          );
+          if (item) navigateToTodoItem(item);
         });
       });
     }
@@ -7757,10 +7867,13 @@ ${lines.join("\n\n")}`;
       panel.innerHTML = tasks
         .map((item) => {
           const urg = getDueUrgencyClass(item.dueDate, item.status);
+          const dataAttrs = item.kind === "side"
+            ? `data-kind="side" data-side-id="${item.sideQuestId}"`
+            : `data-kind="task" data-project-id="${item.projectId}" data-task-id="${item.taskId}"`;
           return `
-          <button type="button" class="deadline-item ${urg}" data-project-id="${item.projectId}" data-task-id="${item.taskId}" data-status="${item.status}">
+          <button type="button" class="deadline-item ${urg}" ${dataAttrs} data-status="${item.status}">
             <span class="task-line">${escapeHtml(item.taskTitle)}</span>
-            <span class="proj-line">${escapeHtml(item.projectName)}</span>
+            <span class="proj-line">${escapeHtml(item.projectName)}${item.kind === "side" ? " · 支线" : ""}</span>
             <span class="due-line">${escapeHtml(formatDueLabel(item.dueDate, item.status))}</span>
           </button>
         `;
@@ -7768,7 +7881,14 @@ ${lines.join("\n\n")}`;
         .join("");
 
       panel.querySelectorAll(".deadline-item").forEach((btn) => {
-        btn.addEventListener("click", () => navigateToTask(btn.dataset.projectId, btn.dataset.taskId, btn.dataset.status));
+        btn.addEventListener("click", () => {
+          const item = tasks.find((t) =>
+            t.kind === "side"
+              ? t.sideQuestId === btn.dataset.sideId
+              : t.taskId === btn.dataset.taskId
+          );
+          if (item) navigateToTodoItem(item);
+        });
       });
     }
 
@@ -7964,7 +8084,20 @@ ${lines.join("\n\n")}`;
       setTimeout(() => el.classList.remove("show"), 2500);
     }
 
+    function isSideQuestBoardActive() {
+      return state.activeProjectId === SIDE_QUEST_BOARD_ID;
+    }
+
+    function openSideQuestBoardView() {
+      state.activeProjectId = SIDE_QUEST_BOARD_ID;
+      taskFilter = taskFilter || "all";
+      save();
+      render();
+      focusWorkOnMobile();
+    }
+
     function getActiveProject() {
+      if (isSideQuestBoardActive()) return null;
       return state.projects.find((p) => p.id === state.activeProjectId) || null;
     }
 
@@ -8024,17 +8157,54 @@ ${lines.join("\n\n")}`;
       if (id === "modalLoot") requestAnimationFrame(() => pumpRewardModalQueue());
     }
 
+    function appendSideQuestBoardListItem(list) {
+      const sideQuests = getFilteredSideQuests();
+      const sqDone = sideQuests.filter((s) => s.status === "done").length;
+      const sqTotal = sideQuests.length;
+      const tag = state.tagFilterId ? getTag(state.tagFilterId) : null;
+      const li = document.createElement("li");
+      li.className = "project-item quest-side side-quest-board-item" + (isSideQuestBoardActive() ? " active" : "");
+      li.innerHTML = `
+        <div class="info">
+          <span class="name">${questTypeBadgeHtml({ questType: "side" })}支线任务</span>
+          <span class="sub">${tag ? escapeHtml(tag.name) + " · " : ""}${sqTotal ? `${sqDone}/${sqTotal} 事项` : "暂无支线"}</span>
+        </div>
+        <span class="progress-pill">${sqTotal ? Math.round((sqDone / sqTotal) * 100) : 0}%</span>
+      `;
+      li.addEventListener("click", () => {
+        state.activeProjectId = SIDE_QUEST_BOARD_ID;
+        state.activeSideQuestId = null;
+        taskFilter = "all";
+        save();
+        render();
+        focusWorkOnMobile();
+      });
+      list.appendChild(li);
+    }
+
     function renderProjectList() {
       const list = document.getElementById("projectList");
       list.innerHTML = "";
+      const showBoard = state.questLineFilter !== "main";
+      if (showBoard) appendSideQuestBoardListItem(list);
       if (state.questLineFilter === "side") {
-        list.innerHTML = '<li class="meta" style="padding:0.5rem">当前筛选支线，请查看下方大陆支线列表</li>';
+        if (!getFilteredSideQuests().length) {
+          const hint = document.createElement("li");
+          hint.className = "meta";
+          hint.style.padding = "0.5rem";
+          hint.textContent = state.tagFilterId ? "该大陆下暂无支线" : "暂无支线，点击「+ 支线」添加";
+          list.appendChild(hint);
+        }
         return;
       }
       const projects = getFilteredProjects();
 
       if (!projects.length) {
-        list.innerHTML = `<li class="meta" style="padding:0.5rem">${state.tagFilterId ? "该大陆下暂无地图" : "暂无地图，点击「+ 新建地图」"}</li>`;
+        const hint = document.createElement("li");
+        hint.className = "meta";
+        hint.style.padding = "0.5rem";
+        hint.textContent = state.tagFilterId ? "该大陆下暂无地图" : "暂无地图，点击「+ 新建地图」";
+        list.appendChild(hint);
         return;
       }
 
@@ -8067,12 +8237,9 @@ ${lines.join("\n\n")}`;
     function renderMain() {
       const main = document.getElementById("main");
 
-      if (state.activeSideQuestId) {
-        const sq = (state.sideQuests || []).find((q) => q.id === state.activeSideQuestId);
-        if (sq) {
-          renderSideQuestMain(sq);
-          return;
-        }
+      if (isSideQuestBoardActive()) {
+        renderSideQuestBoardMain();
+        return;
       }
 
       const project = getActiveProject();
@@ -8189,78 +8356,181 @@ ${lines.join("\n\n")}`;
       bindMainEvents(project);
     }
 
-    function renderSideQuestMain(sq) {
-      const main = document.getElementById("main");
+    async function handleSideQuestStatusChange(sq, prevStatus, nextStatus) {
       const map = getTag(sq.continentId);
+      if (nextStatus === "done" && prevStatus !== "done") {
+        if (!(await confirmIfLowMental())) return false;
+        sq.status = "done";
+        sq.completedAt = new Date().toISOString();
+        sq.updatedAt = sq.completedAt;
+        save();
+        render();
+        const xp = awardSideQuestCompletion(sq, prevStatus);
+        if (xp) presentCompletionRewards(sq, { questType: "side", name: sq.title }, xp, map);
+        checkPhysicalHealthNotice();
+        render();
+        return true;
+      }
+      if (prevStatus === "done" && nextStatus !== "done") {
+        sq.status = nextStatus;
+        sq.completedAt = null;
+        sq.updatedAt = new Date().toISOString();
+        if (revertSideQuestCompletion(sq)) {
+          updateXpBar();
+          renderTopbarVitals();
+          toast("已回退支线完成：经验、体/精、属性与掉落装备已收回");
+        }
+        save();
+        render();
+        return true;
+      }
+      sq.status = nextStatus;
+      if (nextStatus !== "done") sq.completedAt = null;
+      sq.updatedAt = new Date().toISOString();
+      save();
+      render();
+      return true;
+    }
+
+    function renderSideQuestCard(sq) {
+      const statusClass = `badge-${sq.status}`;
+      const priClass = `badge-priority-${sq.priority || "medium"}`;
+      const dueClass = getDueUrgencyClass(sq.dueDate, sq.status);
+      const dueLabel = formatDueLabel(sq.dueDate, sq.status);
+      const map = getTag(sq.continentId);
+      const focused = sq.id === state.activeSideQuestId ? " focused" : "";
+      return `
+        <article class="task-card side-quest-card ${sq.status === "done" ? "done" : ""}${focused}" data-sq-id="${sq.id}">
+          <div class="task-row">
+            <input type="checkbox" class="sq-check" data-id="${sq.id}" ${sq.status === "done" ? "checked" : ""} title="标记完成/未完成" />
+            <div class="task-body">
+              <div class="task-title">${questTypeBadgeHtml({ questType: "side" })}${escapeHtml(sq.title)}</div>
+              ${sq.questStory ? `<p class="meta" style="margin-top:0.2rem;font-style:italic">${escapeHtml(sq.questStory.slice(0, 60))}${sq.questStory.length > 60 ? "…" : ""}</p>` : ""}
+              ${(sq.attrTags || []).length ? `<div class="task-attr-tags">${sq.attrTags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
+              ${sq.description ? `<div class="task-desc">${escapeHtml(sq.description)}</div>` : ""}
+              <div class="task-meta">
+                <span class="badge ${statusClass}">${TASK_STATUS_LABELS[sq.status]}</span>
+                <span class="badge ${priClass}">${PRIORITY_LABELS[sq.priority] || "中"} 优先级</span>
+                ${map ? `<span class="badge" style="background:var(--accent-dim);color:var(--accent)">${escapeHtml(map.name)}</span>` : ""}
+                ${dueLabel ? `<span class="due-meta ${dueClass}">${escapeHtml(dueLabel)}</span>` : ""}
+                ${sq.status === "done" && sq.completedAt ? `<span class="time-meta">完成 ${formatDate(sq.completedAt)}</span>` : ""}
+                <span class="time-meta">更新 ${formatDate(sq.updatedAt)}</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button type="button" class="btn-edit-sq" data-id="${sq.id}">编辑</button>
+              <button type="button" class="btn-delete-sq" data-id="${sq.id}">删除</button>
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderSideQuestBoardMain() {
+      const main = document.getElementById("main");
+      const sideQuests = getFilteredSideQuests();
+      const todoCount = sideQuests.filter((s) => s.status === "todo").length;
+      const doingCount = sideQuests.filter((s) => s.status === "doing").length;
+      const doneCount = sideQuests.filter((s) => s.status === "done").length;
+      const tag = state.tagFilterId ? getTag(state.tagFilterId) : null;
+      const filtered = sideQuests.filter((s) => taskFilter === "all" || s.status === taskFilter);
+      const sorted = sortByTime(filtered, state.taskSort);
+      const pct = sideQuests.length ? Math.round((doneCount / sideQuests.length) * 100) : 0;
+
       main.innerHTML = `
         <div class="main-project">
         ${vitalWarnBannerHtml()}
         <header class="header">
           <div class="header-main">
             <div class="header-title-row">
-              <h1>${questTypeBadgeHtml({ questType: "side" })}${escapeHtml(sq.title)}</h1>
-              ${map ? `<div class="header-tags">${renderProjectTagsHtml([map.id], "header")}</div>` : ""}
+              <h1>${questTypeBadgeHtml({ questType: "side" })}支线任务</h1>
+              ${tag ? `<div class="header-tags">${renderProjectTagsHtml([tag.id], "header")}</div>` : ""}
             </div>
-            ${sq.questStory ? `<div class="quest-story-box">${escapeHtml(sq.questStory)}</div>` : ""}
-            <p class="meta">大陆支线 · 更新于 ${formatDate(sq.updatedAt)}</p>
+            <p class="meta">不归属具体地图，按大陆归类的支线事项 · ${sideQuests.length} 条</p>
           </div>
           <div class="header-actions">
-            <select class="status-select" id="sideQuestStatusSelect">
-              <option value="todo" ${sq.status === "todo" ? "selected" : ""}>待办</option>
-              <option value="doing" ${sq.status === "doing" ? "selected" : ""}>进行中</option>
-              <option value="done" ${sq.status === "done" ? "selected" : ""}>已完成</option>
-            </select>
-            <button type="button" class="btn btn-ghost btn-sm" id="btnEditSideQuest">编辑</button>
-            <button type="button" class="btn btn-danger btn-sm" id="btnDeleteSideQuest">删除</button>
+            <button type="button" class="btn btn-primary btn-sm" id="btnNewSideQuestMain">+ 新建支线</button>
           </div>
         </header>
-        ${sq.description ? `<p class="meta" style="margin:0 0 0.75rem">${escapeHtml(sq.description)}</p>` : ""}
-        ${(sq.attrTags || []).length ? `<div class="task-attr-tags" style="margin-bottom:0.75rem">${sq.attrTags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
-        ${sq.status === "done" && sq.completedAt ? `<p class="meta">完成于 ${formatDate(sq.completedAt)} · +${sq.xpAwarded || 0} XP</p>` : ""}
-        </div>`;
-      document.getElementById("sideQuestStatusSelect").addEventListener("change", async (e) => {
-        const prev = sq.status;
-        const next = e.target.value;
-        if (next === "done" && prev !== "done") {
-          if (!(await confirmIfLowMental())) { e.target.value = prev; return; }
-          sq.status = "done";
-          sq.completedAt = new Date().toISOString();
-          sq.updatedAt = sq.completedAt;
-          const xp = awardSideQuestCompletion(sq, prev);
-          save();
-          render();
-          if (xp) {
-            presentCompletionRewards(sq, { questType: "side", name: sq.title }, xp, map);
-          }
-          checkPhysicalHealthNotice();
-        } else if (prev === "done" && next !== "done") {
-          sq.status = next;
-          sq.completedAt = null;
-          sq.updatedAt = new Date().toISOString();
-          if (revertSideQuestCompletion(sq)) {
-            updateXpBar();
-            renderTopbarVitals();
-            toast("已回退支线完成：经验、体/精、属性与掉落装备已收回");
-          }
-          save();
-          render();
-        } else {
-          sq.status = next;
-          if (next !== "done") sq.completedAt = null;
-          sq.updatedAt = new Date().toISOString();
-          save();
-          render();
-        }
-      });
-      document.getElementById("btnEditSideQuest").addEventListener("click", () => openSideQuestModal(sq.id));
-      document.getElementById("btnDeleteSideQuest").addEventListener("click", () => {
-        if (!confirm(`确定删除支线「${sq.title}」？`)) return;
-        state.sideQuests = state.sideQuests.filter((q) => q.id !== sq.id);
-        if (state.activeSideQuestId === sq.id) state.activeSideQuestId = null;
+
+        <div class="overview-bar" id="sideOverviewBar">
+          <button type="button" class="overview-chip ${taskFilter === "all" ? "active" : ""}" data-filter="all">全部<b>${sideQuests.length}</b></button>
+          <button type="button" class="overview-chip ${taskFilter === "todo" ? "active" : ""}" data-filter="todo">待办<b>${todoCount}</b></button>
+          <button type="button" class="overview-chip ${taskFilter === "doing" ? "active" : ""}" data-filter="doing">进行中<b>${doingCount}</b></button>
+          <button type="button" class="overview-chip ${taskFilter === "done" ? "active" : ""}" data-filter="done">已完成<b>${doneCount}</b></button>
+          <span class="overview-divider"></span>
+          <span class="overview-chip overview-stat"><b>${pct}%</b> 完成率</span>
+        </div>
+
+        <section class="panel panel-tasks">
+          <div class="task-toolbar">
+            <span class="panel-title-inline">支线列表</span>
+          </div>
+          <div class="task-toolbar-row">
+            <div class="sort-bar">
+              <label for="sideQuestSortSelect">排序</label>
+              ${renderSortSelect("sideQuestSortSelect", state.taskSort)}
+            </div>
+          </div>
+          <div class="task-list" id="sideQuestTaskList">
+            ${sorted.length === 0
+              ? '<p class="meta">暂无支线，点击「+ 新建支线」添加。</p>'
+              : sorted.map((sq) => renderSideQuestCard(sq)).join("")}
+          </div>
+        </section>
+        </div>
+      `;
+
+      document.getElementById("btnNewSideQuestMain")?.addEventListener("click", () => openSideQuestModal());
+      document.getElementById("sideQuestSortSelect")?.addEventListener("change", (e) => {
+        state.taskSort = e.target.value;
         save();
-        render();
-        toast("支线已删除");
+        renderMain();
       });
+      document.querySelectorAll("#sideOverviewBar .overview-chip[data-filter]").forEach((chip) => {
+        chip.addEventListener("click", () => {
+          taskFilter = chip.dataset.filter;
+          save();
+          renderMain();
+        });
+      });
+      document.querySelectorAll(".sq-check").forEach((cb) => {
+        cb.addEventListener("change", async () => {
+          const sq = (state.sideQuests || []).find((q) => q.id === cb.dataset.id);
+          if (!sq) return;
+          const prevStatus = sq.status;
+          const wantDone = cb.checked;
+          const nextStatus = wantDone ? "done" : "todo";
+          if (!(await handleSideQuestStatusChange(sq, prevStatus, nextStatus))) {
+            cb.checked = !wantDone;
+          }
+        });
+      });
+      document.querySelectorAll(".btn-edit-sq").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openSideQuestModal(btn.dataset.id);
+        });
+      });
+      document.querySelectorAll(".btn-delete-sq").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const sq = (state.sideQuests || []).find((q) => q.id === btn.dataset.id);
+          if (!sq || !confirm(`确定删除支线「${sq.title}」？`)) return;
+          state.sideQuests = state.sideQuests.filter((q) => q.id !== sq.id);
+          if (state.activeSideQuestId === sq.id) state.activeSideQuestId = null;
+          save();
+          render();
+          toast("支线已删除");
+        });
+      });
+
+      if (state.activeSideQuestId) {
+        requestAnimationFrame(() => {
+          document.querySelector(`.side-quest-card[data-sq-id="${state.activeSideQuestId}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          state.activeSideQuestId = null;
+        });
+      }
     }
 
     function awardSideQuestCompletion(sq, prevStatus) {
@@ -9004,7 +9274,6 @@ ${lines.join("\n\n")}`;
       renderTopbarVitals();
       renderTagFilters();
       renderQuestLineFilter();
-      renderSideQuestList();
       renderDailyRoutinesPanel();
       renderProjectList();
       renderDailyDigest();
@@ -9481,7 +9750,7 @@ ${lines.join("\n\n")}`;
       if (!el) return;
       const cur = state.questLineFilter || "all";
       el.innerHTML = ["all","main","side"].map((k) => {
-        const labels = { all:"全部", main:"主线·地图", side:"支线" };
+        const labels = { all:"全部", main:"主线·地图", side:"支线任务" };
         return `<button type="button" class="quest-filter-chip ${cur === k ? "active" : ""}" data-qf="${k}">${labels[k]}</button>`;
       }).join("");
       el.querySelectorAll(".quest-filter-chip").forEach((btn) => {
@@ -9493,30 +9762,6 @@ ${lines.join("\n\n")}`;
       if (state.tagFilterId) list = list.filter((q) => q.continentId === state.tagFilterId);
       if (state.questLineFilter === "main") return [];
       return list;
-    }
-    function renderSideQuestList() {
-      const wrap = document.getElementById("sideQuestListScroll");
-      const label = document.getElementById("sideQuestLabel");
-      const list = getFilteredSideQuests();
-      const show = list.length && state.questLineFilter !== "main";
-      if (label) label.style.display = show ? "" : "none";
-      if (wrap) {
-        wrap.style.display = show ? "" : "none";
-        wrap.innerHTML = list.length ? list.map((sq) => `
-          <div class="side-quest-item ${sq.id === state.activeSideQuestId ? "active" : ""}" data-sq-id="${sq.id}">
-            <div class="sq-title">${questTypeBadgeHtml({ questType:"side" })}${escapeHtml(sq.title)}</div>
-            <div class="sq-sub">${TASK_STATUS_LABELS[sq.status] || sq.status}</div>
-          </div>`).join("") : "";
-        wrap.querySelectorAll(".side-quest-item").forEach((el) => {
-          el.addEventListener("click", () => {
-            state.activeSideQuestId = el.dataset.sqId;
-            state.activeProjectId = null;
-            save();
-            render();
-            focusWorkOnMobile();
-          });
-        });
-      }
     }
     function countDailyLogsForAction(actionId) {
       return (state.dailyLogs || []).filter((l) => l.actionId === actionId).length;
@@ -9751,6 +9996,7 @@ ${lines.join("\n\n")}`;
         });
         if (sq) Object.assign(sq, item);
         else state.sideQuests.push(item);
+        state.activeProjectId = SIDE_QUEST_BOARD_ID;
         save();
         closeModal("modalSideQuest");
         render();
