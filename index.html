@@ -136,12 +136,53 @@
       margin-right: 0.25rem;
     }
 
-    .topbar-brand span {
+    .topbar-brand .brand-name {
       background: linear-gradient(135deg, var(--accent), #6366f1);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
     }
+
+    .topbar-brand .brand-version {
+      background: none;
+      -webkit-text-fill-color: initial;
+      background-clip: border-box;
+      color: var(--text-muted);
+      font-size: 0.62rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      opacity: 0.85;
+      margin-left: 0.15rem;
+    }
+
+    .sidebar .logo .brand-version {
+      font-size: 0.58rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-left: 0.2rem;
+    }
+
+    .brand-logo {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .ui-icon {
+      display: inline-block;
+      vertical-align: middle;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+
+    .ui-icon-lg { width: 28px; height: 28px; }
+
+    .tag-icon { width: 14px; height: 14px; margin-right: 0.15rem; }
+
+    .item-icon-img { width: 1.25rem; height: 1.25rem; }
+
+    .adv-icon-img { width: 1.35rem; height: 1.35rem; }
 
     #topbarBrandIcon,
     #sidebarBrandIcon {
@@ -360,9 +401,24 @@
       .topbar-brand {
         margin-right: auto;
         min-width: 0;
+        gap: 0.28rem;
+        font-size: 0.78rem;
       }
 
-      .topbar-brand span { display: none; }
+      .topbar-brand .brand-name,
+      .topbar-brand .brand-version {
+        display: inline;
+      }
+
+      .topbar-brand .brand-version {
+        font-size: 0.55rem;
+        margin-left: 0.1rem;
+      }
+
+      .brand-logo {
+        width: 18px;
+        height: 18px;
+      }
 
       .topbar-hint { display: none; }
 
@@ -505,14 +561,17 @@
         position: absolute;
         left: 0;
         right: 0;
-        bottom: 0;
+        bottom: var(--mobile-tabbar-h);
         background: var(--surface);
         border-top: 1px solid var(--border);
         border-radius: 16px 16px 0 0;
-        padding: 0.85rem max(1rem, env(safe-area-inset-right)) calc(0.85rem + env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+        padding: 0.75rem max(1rem, env(safe-area-inset-right)) max(0.85rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
         box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.12);
-        transform: translateY(105%);
+        transform: translateY(calc(100% + 8px));
         transition: transform 0.28s ease;
+        max-height: calc(100dvh - var(--topbar-h) - var(--mobile-tabbar-h) - 12px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
 
       .mobile-adventure-sheet.open .mobile-adventure-panel {
@@ -602,6 +661,21 @@
 
       .world-map-grid {
         grid-template-columns: 1fr;
+        gap: 0.65rem;
+      }
+
+      .map-card-visual {
+        height: 56px;
+        font-size: 1.5rem;
+      }
+
+      .map-card-mini-canvas {
+        display: none;
+      }
+
+      .continent-map-canvas {
+        min-height: 160px;
+        aspect-ratio: 4 / 3;
       }
 
       .equip-slots {
@@ -744,10 +818,37 @@
       }
 
       .header .quest-type-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         font-size: 0.52rem;
-        padding: 0.08rem 0.28rem;
-        margin-right: 0.2rem;
-        vertical-align: 0.05em;
+        line-height: 1;
+        padding: 0.15rem 0.32rem;
+        margin-right: 0.25rem;
+        vertical-align: middle;
+        white-space: nowrap;
+        height: auto;
+        max-height: none;
+        flex: 0 0 auto;
+        align-self: auto;
+      }
+
+      .header-title-row h1 {
+        display: block;
+      }
+
+      .header-title-row h1 .quest-type-badge {
+        vertical-align: middle;
+        margin-bottom: 0;
+      }
+
+      .project-item .quest-type-badge {
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+        vertical-align: middle;
+        margin-right: 0.25rem;
+        flex-shrink: 0;
       }
 
       .header .meta {
@@ -2669,13 +2770,24 @@
     .quest-side.active { background: var(--silver-dim) !important; }
 
     .quest-type-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.15rem;
       font-size: 0.62rem;
       font-weight: 700;
-      padding: 0.12rem 0.4rem;
+      line-height: 1;
+      padding: 0.15rem 0.4rem;
       border-radius: 4px;
       margin-right: 0.35rem;
       vertical-align: middle;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .quest-type-badge .quest-badge-icon {
+      width: 11px;
+      height: 11px;
     }
 
     .quest-type-badge.main { background: var(--gold-dim); color: var(--gold); border: 1px solid var(--gold-border); }
@@ -2711,6 +2823,12 @@
       position: relative;
     }
 
+    .map-card-visual .ui-icon-terrain {
+      width: 40px;
+      height: 40px;
+      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
+    }
+
     .map-card-visual.terrain-forest { background: linear-gradient(135deg, #166534, #4ade80); }
     .map-card-visual.terrain-desert { background: linear-gradient(135deg, #b45309, #fcd34d); }
     .map-card-visual.terrain-ocean { background: linear-gradient(135deg, #0369a1, #38bdf8); }
@@ -2726,6 +2844,59 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
       gap: 0.75rem;
+    }
+
+    @media (min-width: 769px) {
+      .world-map-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 1rem;
+      }
+
+      .map-card-wrap {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+      }
+
+      .map-card {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+      }
+
+      .map-card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .map-card-mini-canvas {
+        height: 88px;
+        margin-top: auto;
+      }
+
+      .map-card-visual {
+        height: 88px;
+      }
+
+      .map-card-visual .ui-icon-terrain {
+        width: 44px;
+        height: 44px;
+      }
+
+      .continent-map-canvas {
+        min-height: 260px;
+        max-height: 420px;
+        aspect-ratio: 16 / 10;
+      }
+
+      #modalMapDetail .continent-map-canvas {
+        min-height: 300px;
+      }
+
+      #modalWorldMap .modal {
+        max-width: 920px;
+      }
     }
 
     .map-editor-item {
@@ -2871,14 +3042,19 @@
     .map-landmark .pin-label { color: var(--text); font-weight: 600; text-shadow: 0 0 4px var(--surface); }
 
     .map-quest-pin .pin-icon {
-      font-size: 1.1rem;
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       width: 28px;
       height: 28px;
-      line-height: 28px;
       border-radius: 50%;
       margin: 0 auto 0.15rem;
       box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    .map-quest-pin .pin-icon .ui-icon {
+      width: 14px;
+      height: 14px;
     }
 
     .map-quest-pin.main .pin-icon { background: linear-gradient(135deg, var(--gold), #b45309); }
@@ -3002,7 +3178,7 @@
       background: linear-gradient(180deg, #14101f, #0d0a14);
     }
 
-    [data-skin="eva"] .topbar-brand span {
+    [data-skin="eva"] .topbar-brand .brand-name {
       background: linear-gradient(90deg, var(--accent), var(--rpg-purple));
       -webkit-background-clip: text;
       background-clip: text;
@@ -3066,7 +3242,7 @@
       box-shadow: 0 4px 20px rgba(196, 30, 30, 0.12);
     }
 
-    [data-skin="diablo"] .topbar-brand span {
+    [data-skin="diablo"] .topbar-brand .brand-name {
       background: linear-gradient(180deg, #f0d890, #c41e1e);
       -webkit-background-clip: text;
       background-clip: text;
@@ -3136,7 +3312,7 @@
       clip-path: polygon(0 0, 100% 0, 100% calc(100% - 4px), calc(100% - 12px) 100%, 12px 100%, 0 calc(100% - 4px));
     }
 
-    [data-skin="starcraft"] .topbar-brand span {
+    [data-skin="starcraft"] .topbar-brand .brand-name {
       background: linear-gradient(90deg, var(--accent), #88d0ff);
       -webkit-background-clip: text;
       background-clip: text;
@@ -3198,7 +3374,7 @@
       background: linear-gradient(90deg, rgba(255, 42, 109, 0.08), transparent 30%, rgba(0, 240, 255, 0.06));
     }
 
-    [data-skin="cyberpunk"] .topbar-brand span {
+    [data-skin="cyberpunk"] .topbar-brand .brand-name {
       background: linear-gradient(90deg, var(--accent), var(--rpg-purple), var(--silver));
       -webkit-background-clip: text;
       background-clip: text;
@@ -3250,7 +3426,7 @@
       border-bottom: 2px solid var(--accent-border);
     }
 
-    [data-skin="zelda"] .topbar-brand span {
+    [data-skin="zelda"] .topbar-brand .brand-name {
       background: linear-gradient(135deg, var(--accent), var(--gold));
       -webkit-background-clip: text;
       background-clip: text;
@@ -3273,31 +3449,31 @@
   <div class="shell">
   <header class="topbar">
     <button type="button" class="topbar-menu-btn" id="btnTopbarMenu" aria-label="菜单">☰</button>
-    <div class="topbar-brand"><span id="topbarBrandIcon">🌍</span> <span>Earth-Online</span></div>
+    <div class="topbar-brand"><img id="topbarBrandIcon" class="brand-logo" src="" alt="" width="20" height="20" /><span class="brand-name">Earth-Online</span><span class="brand-version">V.0.10</span></div>
     <nav class="topbar-nav" id="topbarNav">
       <button type="button" class="topbar-btn topbar-btn-primary" id="btnNewProjectTop">＋ 新建任务线</button>
       <div class="topbar-dropdown" data-dropdown>
         <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">世界</button>
         <div class="topbar-dropdown-menu" role="menu">
-          <button type="button" class="topbar-dropdown-item" id="btnWorldMap" role="menuitem"><span class="item-icon">🗺</span>世界地图</button>
-          <button type="button" class="topbar-dropdown-item" id="btnManageTags" role="menuitem"><span class="item-icon">🏔</span>大陆管理</button>
-          <button type="button" class="topbar-dropdown-item" id="btnOpenHero" role="menuitem"><span class="item-icon">🎒</span>角色 · 背包</button>
+          <button type="button" class="topbar-dropdown-item" id="btnWorldMap" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="map" alt="" width="16" height="16" />世界地图</button>
+          <button type="button" class="topbar-dropdown-item" id="btnManageTags" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="mountain" alt="" width="16" height="16" />大陆管理</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenHero" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="hero" alt="" width="16" height="16" />角色 · 背包</button>
         </div>
       </div>
       <div class="topbar-dropdown" data-dropdown>
         <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">工具</button>
         <div class="topbar-dropdown-menu" role="menu">
-          <button type="button" class="topbar-dropdown-item" id="btnOpenCalendar" role="menuitem"><span class="item-icon">📅</span>任务日历</button>
-          <button type="button" class="topbar-dropdown-item" id="btnOpenSummary" role="menuitem"><span class="item-icon">✨</span>AI 总结</button>
-          <button type="button" class="topbar-dropdown-item" id="btnOpenSkins" role="menuitem"><span class="item-icon">🎨</span>界面皮肤</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenCalendar" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="calendar" alt="" width="16" height="16" />任务日历</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenSummary" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="summary" alt="" width="16" height="16" />AI 总结</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenSkins" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="skins" alt="" width="16" height="16" />界面皮肤</button>
         </div>
       </div>
       <div class="topbar-dropdown" data-dropdown>
         <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">数据</button>
         <div class="topbar-dropdown-menu" role="menu">
-          <button type="button" class="topbar-dropdown-item" id="btnExportTop" role="menuitem"><span class="item-icon">📤</span>导出数据</button>
-          <button type="button" class="topbar-dropdown-item" id="btnImportTop" role="menuitem"><span class="item-icon">📥</span>导入数据</button>
-          <button type="button" class="topbar-dropdown-item" id="btnOpenGithub" role="menuitem"><span class="item-icon">☁</span>GitHub 同步</button>
+          <button type="button" class="topbar-dropdown-item" id="btnExportTop" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="export" alt="" width="16" height="16" />导出数据</button>
+          <button type="button" class="topbar-dropdown-item" id="btnImportTop" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="import" alt="" width="16" height="16" />导入数据</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenGithub" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="github" alt="" width="16" height="16" />GitHub 同步</button>
         </div>
       </div>
     </nav>
@@ -3313,7 +3489,7 @@
   <div class="app" id="app">
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-top">
-        <div class="logo"><span id="sidebarBrandIcon">🌍</span> <span>Earth-Online</span></div>
+        <div class="logo"><img id="sidebarBrandIcon" class="brand-logo" src="" alt="" width="20" height="20" /><span class="brand-name">Earth-Online</span><span class="brand-version">V.0.10</span></div>
         <button type="button" class="rail-btn" id="btnCollapseLeft" title="收起左侧栏">◀</button>
       </div>
       <div class="sidebar-rail">
@@ -3423,10 +3599,10 @@
         <span class="xp-text" id="mobileXpText">0 XP</span>
       </div>
       <div class="mobile-adventure-grid">
-        <button type="button" class="mobile-adventure-btn" data-adv-action="world"><span class="adv-icon">🗺</span>世界地图</button>
-        <button type="button" class="mobile-adventure-btn" data-adv-action="hero"><span class="adv-icon">🎒</span>角色 · 背包</button>
-        <button type="button" class="mobile-adventure-btn" data-adv-action="maps"><span class="adv-icon">🏔</span>大陆管理</button>
-        <button type="button" class="mobile-adventure-btn" data-adv-action="skins"><span class="adv-icon">🎨</span>界面皮肤</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="world"><img class="ui-icon adv-icon-img" data-adv-icon="map" alt="" width="22" height="22" />世界地图</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="hero"><img class="ui-icon adv-icon-img" data-adv-icon="hero" alt="" width="22" height="22" />角色 · 背包</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="maps"><img class="ui-icon adv-icon-img" data-adv-icon="mountain" alt="" width="22" height="22" />大陆管理</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="skins"><img class="ui-icon adv-icon-img" data-adv-icon="skins" alt="" width="22" height="22" />界面皮肤</button>
       </div>
     </div>
   </div>
@@ -3762,6 +3938,8 @@
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
     const STATE_SCHEMA_VERSION = 2;
+    const APP_VERSION = "0.10";
+    const APP_VERSION_LABEL = "V.0.10";
     const UI_SKIN_KEY = "earth-online-ui-skin";
 
     const UI_SKINS = {
@@ -3849,10 +4027,7 @@
         localStorage.setItem(UI_SKIN_KEY, id);
       } catch { /* ignore */ }
       const skin = UI_SKINS[id];
-      const iconEl = document.getElementById("topbarBrandIcon");
-      const sidebarIconEl = document.getElementById("sidebarBrandIcon");
-      if (iconEl) iconEl.textContent = skin.icon;
-      if (sidebarIconEl) sidebarIconEl.textContent = skin.icon;
+      updateBrandIcons(id);
       const themeMeta = document.getElementById("metaThemeColor");
       if (themeMeta && skin.themeColor) themeMeta.setAttribute("content", skin.themeColor);
       const barMeta = document.getElementById("metaAppleStatusBar");
@@ -3935,6 +4110,108 @@
 
     const MAP_TERRAINS = ["forest", "desert", "ocean", "mountain", "volcanic", "tundra"];
     const MAP_TERRAIN_EMOJI = { forest: "🌲", desert: "🏜️", ocean: "🌊", mountain: "🏔️", volcanic: "🌋", tundra: "❄️" };
+
+    const UI_ICON_SET = {
+      brand: "game-icons/earth-america",
+      map: "game-icons/treasure-map",
+      hero: "game-icons/backpack",
+      skins: "game-icons/palette",
+      calendar: "game-icons/calendar",
+      summary: "game-icons/sparkles",
+      export: "game-icons/upload",
+      import: "game-icons/download",
+      github: "game-icons/cloud-upload",
+      palette: "game-icons/palette",
+      questMain: "game-icons/upgrade",
+      questSide: "game-icons/arrow-dunk",
+      marker: "game-icons/position-marker",
+      terrains: {
+        forest: "game-icons/forest",
+        desert: "game-icons/desert",
+        ocean: "game-icons/waves",
+        mountain: "game-icons/mountaintop",
+        volcanic: "game-icons/volcano",
+        tundra: "game-icons/snowflake-1",
+      },
+      items: {
+        focus_crystal: "game-icons/crystal-shine",
+        momentum_boots: "game-icons/boots",
+        main_blade: "game-icons/broadhead-arrow",
+        side_dagger: "game-icons/stiletto",
+        deadline_amulet: "game-icons/sands-of-time",
+        night_cloak: "game-icons/cloak",
+        map_compass: "game-icons/compass",
+      },
+      skills: {
+        deep_focus: "game-icons/brain",
+        urgency_sense: "game-icons/lightning-bolt",
+        iron_will: "game-icons/shield",
+        pathfinder: "game-icons/treasure-map",
+        night_walker: "game-icons/night-sky",
+        momentum_flow: "game-icons/fire",
+      },
+      skins: {
+        default: "game-icons/earth-america",
+        eva: "game-icons/shield",
+        diablo: "game-icons/skull-crossed-bones",
+        starcraft: "game-icons/rocket-flight",
+        cyberpunk: "game-icons/circuitry",
+        zelda: "game-icons/sword-brandish",
+      },
+    };
+
+    function uiIconUrl(iconKey, color = "0891b2") {
+      const hex = String(color).replace("#", "");
+      return `https://api.iconify.design/${iconKey}.svg?color=%23${hex}`;
+    }
+
+    function uiIconHtml(iconKey, opts = {}) {
+      const size = opts.size || 16;
+      const color = opts.color || "0891b2";
+      const cls = opts.className || "ui-icon";
+      const url = uiIconUrl(iconKey, color);
+      return `<img class="${cls}" src="${url}" width="${size}" height="${size}" alt="" loading="lazy" decoding="async" aria-hidden="true" />`;
+    }
+
+    function terrainIconHtml(terrain, size = 24, color = "ffffff") {
+      const key = UI_ICON_SET.terrains[terrain] || UI_ICON_SET.map;
+      return uiIconHtml(key, { size, color, className: "ui-icon ui-icon-terrain" });
+    }
+
+    function getTagIconHtml(tag, size = 14) {
+      if (!tag) return uiIconHtml(UI_ICON_SET.map, { size, color: "0891b2", className: "ui-icon tag-icon" });
+      if (tag.mapIconUrl) {
+        return `<img class="ui-icon tag-icon" src="${escapeHtml(tag.mapIconUrl)}" width="${size}" height="${size}" alt="" loading="lazy" />`;
+      }
+      const terrain = tag.terrain || "forest";
+      const color = (tag.color || "#0891b2").replace("#", "");
+      const key = UI_ICON_SET.terrains[terrain] || UI_ICON_SET.map;
+      return uiIconHtml(key, { size, color, className: "ui-icon tag-icon" });
+    }
+
+    function getItemIconHtml(itemId, size = 20) {
+      const def = ITEM_CATALOG[itemId];
+      const key = UI_ICON_SET.items[itemId] || UI_ICON_SET.map;
+      const colors = { common: "64748b", rare: "6366f1", epic: "7c3aed" };
+      const color = colors[def?.rarity] || "0891b2";
+      return uiIconHtml(key, { size, color, className: "ui-icon item-icon-img" });
+    }
+
+    function getSkillIconHtml(skillId, size = 18) {
+      const key = UI_ICON_SET.skills[skillId] || UI_ICON_SET.map;
+      return uiIconHtml(key, { size, color: "0891b2", className: "ui-icon item-icon-img" });
+    }
+
+    function updateBrandIcons(skinId) {
+      const url = uiIconUrl(UI_ICON_SET.skins[skinId] || UI_ICON_SET.brand, "0891b2");
+      ["topbarBrandIcon", "sidebarBrandIcon"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.src = url;
+      });
+      document.querySelectorAll(".brand-version").forEach((el) => {
+        el.textContent = APP_VERSION_LABEL;
+      });
+    }
 
     const ITEM_CATALOG = {
       focus_crystal: { id: "focus_crystal", name: "专注水晶", icon: "💎", type: "equipment", slot: "accessory", rarity: "rare", xpBonus: 0.12, desc: "思绪凝聚，所有任务经验 +12%" },
@@ -4370,12 +4647,12 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           <div class="continent-map-bg terrain-${terrain}"></div>
           ${landmarks.map((lm) => `
             <div class="map-landmark" style="left:${lm.x}%;top:${lm.y}%" title="${escapeHtml(lm.name)}">
-              <span class="pin-icon">${lm.icon || "📍"}</span>
+              <span class="pin-icon">${uiIconHtml(UI_ICON_SET.marker, { size: compact ? 14 : 18, color: "ffffff", className: "ui-icon" })}</span>
               ${compact ? "" : `<span class="pin-label">${escapeHtml(lm.name)}</span>`}
             </div>`).join("")}
           ${pins.map((p) => `
             <button type="button" class="map-quest-pin ${p.questType}" data-project-id="${p.projectId}" style="left:${p.x}%;top:${p.y}%" title="${escapeHtml(p.name)}">
-              <span class="pin-icon">${p.questType === "main" ? "⭐" : "◆"}</span>
+              <span class="pin-icon">${uiIconHtml(p.questType === "main" ? UI_ICON_SET.questMain : UI_ICON_SET.questSide, { size: compact ? 12 : 14, color: p.questType === "main" ? "ffffff" : "ffffff", className: "ui-icon" })}</span>
               ${compact ? "" : `<span class="pin-label">${escapeHtml(p.name.slice(0, 8))}${p.name.length > 8 ? "…" : ""}</span>`}
             </button>`).join("")}
         </div>`;
@@ -4387,7 +4664,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const tag = getTag(tagId);
       if (!tag) return;
       mapDetailTagId = tagId;
-      document.getElementById("mapDetailTitle").textContent = `${tag.mapEmoji || "🗺️"} ${tag.name}`;
+      document.getElementById("mapDetailTitle").innerHTML = `${getTagIconHtml(tag, 16)} ${escapeHtml(tag.name)}`;
       document.getElementById("mapDetailRegion").textContent = tag.regionName || "";
       const storyEl = document.getElementById("mapDetailStory");
       if (tag.mapStory) {
@@ -4519,7 +4796,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       body.innerHTML = `
         <div class="loot-xp">+${xp} XP</div>
         <div class="loot-narrative">${escapeHtml(loot.narrative)}</div>
-        ${itemDef ? `<div class="loot-items"><div class="inv-item rarity-${itemDef.rarity || "common"}"><span class="item-icon">${itemDef.icon}</span>${escapeHtml(itemDef.name)}</div></div>` : ""}
+        ${itemDef ? `<div class="loot-items"><div class="inv-item rarity-${itemDef.rarity || "common"}">${getItemIconHtml(loot.itemId, 24)}${escapeHtml(itemDef.name)}</div></div>` : ""}
       `;
       openModal("modalLoot");
     }
@@ -4559,21 +4836,23 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         grid.innerHTML = '<p class="meta">尚无大陆，请先在「大陆管理」中开辟。</p>';
         return;
       }
+      const showMiniMap = !isMobileLayout();
       grid.innerHTML = state.tags
         .map((t) => {
           const quests = state.projects.filter((p) => (p.tagIds || []).includes(t.id));
           const main = quests.filter((p) => p.questType !== "side").length;
           const side = quests.filter((p) => p.questType === "side").length;
           const needs = mapNeedsEnrichment(t);
+          const terrain = t.terrain || "forest";
           return `
             <div class="map-card-wrap">
               <button type="button" class="map-card" data-map-id="${t.id}" style="text-align:left;width:100%;cursor:pointer;font-family:inherit">
-                <div class="map-card-visual terrain-${t.terrain || "forest"}">${t.mapEmoji || MAP_TERRAIN_EMOJI[t.terrain] || "🗺️"}</div>
+                <div class="map-card-visual terrain-${terrain}">${terrainIconHtml(terrain, 40)}</div>
                 <div class="map-card-body">
-                  <h4>${escapeHtml(t.name)}${needs ? " <span class='meta'>待生成</span>" : ""}</h4>
+                  <h4>${getTagIconHtml(t, 14)} ${escapeHtml(t.name)}${needs ? " <span class='meta'>待生成</span>" : ""}</h4>
                   <p>${escapeHtml(t.regionName || t.name)} · 主线 ${main} / 支线 ${side}</p>
                   <p class="map-story-preview">${escapeHtml((t.mapStory || "暂无背景故事").slice(0, 80))}${(t.mapStory || "").length > 80 ? "…" : ""}</p>
-                  ${t.mapLayout?.landmarks?.length ? `<div class="map-card-mini-canvas">${renderContinentMapCanvas(t, { compact: true })}</div>` : ""}
+                  ${showMiniMap && t.mapLayout?.landmarks?.length ? `<div class="map-card-mini-canvas">${renderContinentMapCanvas(t, { compact: true })}</div>` : ""}
                 </div>
               </button>
               <button type="button" class="btn btn-ghost btn-xs btn-map-view" data-map-id="${t.id}" style="width:100%;margin-top:0.35rem">查看完整地图</button>
@@ -4618,7 +4897,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             const itemId = p.equipment[slot];
             const def = itemId ? getItemDef(itemId) : null;
             return `<div class="equip-slot ${def ? "filled" : ""}" data-slot="${slot}">
-              ${def ? `<span class="item-icon">${def.icon}</span><span class="item-name">${escapeHtml(def.name)}</span>` : label}
+              ${def ? `${getItemIconHtml(itemId, 22)}<span class="item-name">${escapeHtml(def.name)}</span>` : label}
             </div>`;
           }).join("")}</div>
           <p class="field-hint">装备与技能加成叠加，已自动计入经验。</p>`;
@@ -4635,7 +4914,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             const maxed = lv >= sk.maxLevel;
             const canUp = p.skillPoints > 0 && !maxed;
             return `<div class="skill-row">
-              <span class="skill-icon">${sk.icon}</span>
+              <span class="skill-icon">${getSkillIconHtml(sk.id, 20)}</span>
               <div style="flex:1;min-width:0">
                 <h5>${escapeHtml(sk.name)} <span class="meta">Lv.${lv}/${sk.maxLevel}</span></h5>
                 <div class="skill-lv-bar">${Array.from({ length: sk.maxLevel }, (_, i) => `<span class="skill-lv-dot ${i < lv ? "on" : ""}"></span>`).join("")}</div>
@@ -4658,7 +4937,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             const def = getItemDef(inv.itemId);
             if (!def) return "";
             return `<button type="button" class="inv-item rarity-${def.rarity || "common"}" data-inv="${inv.id}" data-item="${inv.itemId}">
-              <span class="item-icon">${def.icon}</span>${escapeHtml(def.name)}<br/><span style="opacity:0.7">${escapeHtml(def.desc || "")}</span>
+              ${getItemIconHtml(inv.itemId, 22)}${escapeHtml(def.name)}<br/><span style="opacity:0.7">${escapeHtml(def.desc || "")}</span>
             </button>`;
           }).join("")}</div>`;
           bag.querySelectorAll(".inv-item").forEach((btn) => {
@@ -4713,7 +4992,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     function questTypeBadgeHtml(project) {
       const isMain = (project.questType || "main") === "main";
-      return `<span class="quest-type-badge ${isMain ? "main" : "side"}">${isMain ? "⭐ 主线" : "◆ 支线"}</span>`;
+      return `<span class="quest-type-badge ${isMain ? "main" : "side"}">${uiIconHtml(isMain ? UI_ICON_SET.questMain : UI_ICON_SET.questSide, { size: 11, color: isMain ? "d97706" : "64748b", className: "ui-icon quest-badge-icon" })}${isMain ? "主线" : "支线"}</span>`;
     }
 
     let newTagColor = TAG_COLORS[0];
@@ -5177,16 +5456,16 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const tags = (tagIds || []).map(getTag).filter(Boolean);
       if (!tags.length) return "";
       const renderOne = (t) => {
-        const emoji = t.mapEmoji || "🗺️";
         const name = escapeHtml(t.name);
         const title = escapeHtml(t.regionName || t.name);
+        const icon = getTagIconHtml(t, mode === "header" ? 12 : 14);
         if (mode === "header") {
-          return `<span class="project-tag-dot project-tag-header" style="--tag-color:${t.color}" title="${title}"><span class="tag-emoji">${emoji}</span><span class="tag-label">${name}</span></span>`;
+          return `<span class="project-tag-dot project-tag-header" style="--tag-color:${t.color}" title="${title}">${icon}<span class="tag-label">${name}</span></span>`;
         }
         if (mode === "icon") {
-          return `<span class="project-tag-dot project-tag-icon" style="--tag-color:${t.color}" title="${title}"><span class="tag-emoji">${emoji}</span></span>`;
+          return `<span class="project-tag-dot project-tag-icon" style="--tag-color:${t.color}" title="${title}">${icon}</span>`;
         }
-        return `<span class="project-tag-dot" style="--tag-color:${t.color}" title="${title}"><span class="tag-emoji">${emoji}</span><span class="tag-label">${name}</span></span>`;
+        return `<span class="project-tag-dot" style="--tag-color:${t.color}" title="${title}">${icon}<span class="tag-label">${name}</span></span>`;
       };
       const inner = tags.map(renderOne).join("");
       if (mode === "header" || mode === "icon") return inner;
@@ -5200,7 +5479,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         `<button type="button" class="tag-filter-chip ${!state.tagFilterId ? "active" : ""}" data-id="">全部</button>`,
         ...(state.tags || []).map(
           (t) =>
-            `<button type="button" class="tag-filter-chip map-filter-chip ${state.tagFilterId === t.id ? "active" : ""}" data-id="${t.id}" style="--tag-color:${t.color}" title="${escapeHtml(t.regionName || t.name)}"><span class="map-emoji">${t.mapEmoji || "🗺️"}</span>${escapeHtml(t.name)}</button>`
+            `<button type="button" class="tag-filter-chip map-filter-chip ${state.tagFilterId === t.id ? "active" : ""}" data-id="${t.id}" style="--tag-color:${t.color}" title="${escapeHtml(t.regionName || t.name)}">${getTagIconHtml(t, 13)}${escapeHtml(t.name)}</button>`
         ),
       ];
       el.innerHTML = chips.join("") || '<span class="meta">暂无大陆</span>';
@@ -5280,7 +5559,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           const used = state.projects.filter((p) => (p.tagIds || []).includes(tag.id)).length;
           return `
           <div class="map-editor-item" data-tag-id="${tag.id}">
-            <div class="map-card-visual terrain-${tag.terrain || "forest"}" style="height:48px;font-size:1.5rem;margin-bottom:0.5rem;border-radius:8px">${tag.mapEmoji || "🗺️"}</div>
+            <div class="map-card-visual terrain-${tag.terrain || "forest"}" style="height:48px;margin-bottom:0.5rem;border-radius:8px;display:flex;align-items:center;justify-content:center">${terrainIconHtml(tag.terrain || "forest", 28)}</div>
             <input type="text" class="tag-name-input" value="${escapeHtml(tag.name)}" data-tag-id="${tag.id}" style="width:100%;margin-bottom:0.35rem" />
             <p class="map-story-preview">${escapeHtml(tag.mapStory || "暂无背景故事")}</p>
             <span class="meta" style="font-size:0.68rem">${used} 条任务线 · ${escapeHtml(tag.regionName || "")}</span>
@@ -7222,8 +7501,30 @@ ${lines.join("\n\n")}`;
       updateAppLayout();
     });
 
+
+    function wireUiIcons() {
+      const map = {
+        map: UI_ICON_SET.map,
+        hero: UI_ICON_SET.hero,
+        mountain: UI_ICON_SET.terrains.mountain,
+        skins: UI_ICON_SET.palette,
+        palette: UI_ICON_SET.palette,
+        calendar: UI_ICON_SET.calendar,
+        summary: UI_ICON_SET.summary,
+        export: UI_ICON_SET.export,
+        import: UI_ICON_SET.import,
+        github: UI_ICON_SET.github,
+      };
+      document.querySelectorAll("[data-ui-icon], [data-adv-icon]").forEach((el) => {
+        const key = el.dataset.uiIcon || el.dataset.advIcon;
+        const iconKey = map[key] || UI_ICON_SET[key] || UI_ICON_SET.map;
+        el.src = uiIconUrl(iconKey, "0891b2");
+      });
+    }
+
     async function initApp() {
       applyUiSkin(loadUiSkin());
+      wireUiIcons();
       load();
       if (isMobileLayout()) {
         mobilePanel = "work";
