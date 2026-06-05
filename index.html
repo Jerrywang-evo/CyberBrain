@@ -324,8 +324,28 @@
         --rail-w: 0px;
       }
 
-      input, select, textarea {
+      .field input,
+      .field select,
+      .field textarea,
+      .modal input,
+      .modal select,
+      .modal textarea,
+      .sidebar input,
+      .sidebar select,
+      .sidebar textarea,
+      .daily-filter-bar input,
+      .add-progress-row input,
+      .task-card input[type="text"],
+      .task-card input[type="datetime-local"],
+      .task-card textarea {
         font-size: 16px;
+      }
+
+      .header-actions .status-select,
+      .sort-select,
+      .task-toolbar .sort-select,
+      .progress-detail .sort-select {
+        font-size: 0.75rem;
       }
 
       .topbar {
@@ -653,8 +673,196 @@
         display: block;
         max-height: none;
         min-height: calc(100dvh - var(--topbar-h) - var(--mobile-tabbar-h));
-        padding: 0.75rem;
-        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        padding: 0.55rem 0.65rem;
+        padding-bottom: max(0.65rem, env(safe-area-inset-bottom));
+      }
+
+      .main-project {
+        gap: 0.4rem;
+      }
+
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.45rem;
+      }
+
+      .header-main {
+        min-width: 0;
+      }
+
+      .header-title-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.35rem;
+        flex-wrap: wrap;
+      }
+
+      .header-title-row h1 {
+        flex: 1 1 8rem;
+        min-width: 0;
+        font-size: 0.88rem;
+        line-height: 1.35;
+        font-weight: 650;
+        font-family: system-ui, -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+        letter-spacing: -0.01em;
+        word-break: break-word;
+      }
+
+      .header-title-row .header-tags {
+        flex: 0 0 auto;
+        margin-top: 0.1rem;
+        max-width: 100%;
+      }
+
+      .header-tags {
+        gap: 0.2rem;
+        margin-top: 0.25rem;
+      }
+
+      .header-tags .project-tag-dot,
+      .project-tag-header {
+        font-size: 0.58rem;
+        padding: 0.08rem 0.32rem;
+        line-height: 1.25;
+        max-width: none;
+      }
+
+      .header-tags .tag-emoji {
+        font-size: 0.72rem;
+        line-height: 1;
+        vertical-align: -0.05em;
+      }
+
+      .header-tags .tag-label {
+        max-width: 5.5rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      .header .quest-type-badge {
+        font-size: 0.52rem;
+        padding: 0.08rem 0.28rem;
+        margin-right: 0.2rem;
+        vertical-align: 0.05em;
+      }
+
+      .header .meta {
+        font-size: 0.62rem;
+        margin-top: 0.2rem;
+      }
+
+      .header .quest-story-box {
+        font-size: 0.72rem;
+        line-height: 1.45;
+        padding: 0.45rem 0.55rem;
+        margin: 0.35rem 0 0;
+        max-height: 5.5em;
+        overflow: hidden;
+      }
+
+      .header-actions {
+        width: 100%;
+        gap: 0.3rem;
+        padding-top: 0.4rem;
+        border-top: 1px solid var(--border);
+      }
+
+      .header-actions .status-select {
+        flex: 1;
+        min-width: 0;
+        max-width: 7rem;
+        padding: 0.28rem 0.4rem;
+      }
+
+      .header-actions .btn-sm {
+        padding: 0.32rem 0.45rem;
+        font-size: 0.68rem;
+        white-space: nowrap;
+      }
+
+      .overview-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        gap: 0.25rem;
+        padding: 0.15rem 0 0.35rem;
+        margin: 0 -0.1rem;
+      }
+
+      .overview-bar::-webkit-scrollbar { display: none; }
+
+      .overview-chip {
+        font-size: 0.62rem;
+        padding: 0.22rem 0.42rem;
+        flex-shrink: 0;
+      }
+
+      .overview-divider { height: 14px; }
+
+      .panel {
+        padding: 0.65rem 0.7rem;
+        margin-bottom: 0.45rem;
+      }
+
+      .panel-tasks {
+        padding: 0.55rem 0.65rem;
+        min-height: 0;
+      }
+
+      .panel-slim {
+        padding: 0.45rem 0.55rem;
+      }
+
+      .task-toolbar {
+        gap: 0.35rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .task-toolbar-row {
+        margin-bottom: 0.35rem;
+      }
+
+      .sort-bar label {
+        font-size: 0.62rem;
+      }
+
+      .tag-filter-bar {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 0.15rem;
+      }
+
+      .tag-filter-bar::-webkit-scrollbar { display: none; }
+
+      .tag-filter-chip {
+        font-size: 0.62rem;
+        padding: 0.18rem 0.38rem;
+        flex-shrink: 0;
+      }
+
+      .map-filter-chip .map-emoji {
+        font-size: 0.72rem;
+        margin-right: 0.12rem;
+      }
+
+      .project-list .project-tag-dot {
+        font-size: 0.55rem;
+        max-width: 5rem;
+      }
+
+      .project-item .name {
+        font-size: 0.82rem;
+      }
+
+      .project-item .sub {
+        font-size: 0.62rem;
       }
 
       .sidebar,
@@ -786,7 +994,24 @@
 
       .header-actions .btn { padding: 0.4rem 0.55rem; font-size: 0.72rem; }
 
-      .task-card { padding: 0.65rem 0.75rem; }
+      @media (max-width: 420px) {
+        .header-tags .tag-label { display: none; }
+
+        .header-tags .project-tag-dot,
+        .project-tag-header {
+          padding: 0.12rem 0.28rem;
+        }
+
+        .header-actions .btn-danger {
+          margin-left: auto;
+        }
+      }
+
+      .task-card { padding: 0.55rem 0.65rem; }
+
+      .task-title { font-size: 0.82rem; }
+
+      .task-desc { font-size: 0.74rem; }
 
       .task-actions button { min-height: 36px; padding: 0.35rem 0.55rem; }
 
@@ -1038,6 +1263,27 @@
 
     .empty-state h2 { font-size: 1.25rem; color: var(--text); font-weight: 600; }
 
+    .header-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .header-title-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .header-title-row h1 {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .header-title-row .header-tags {
+      margin-top: 0.15rem;
+    }
+
     .header {
       display: flex;
       align-items: flex-start;
@@ -1045,6 +1291,14 @@
       margin-bottom: 0;
       flex-wrap: wrap;
       gap: 0.5rem;
+    }
+
+    .project-tag-dot .tag-emoji {
+      line-height: 1;
+    }
+
+    .project-tag-dot .tag-label {
+      vertical-align: middle;
     }
 
     .header h1 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; }
@@ -4919,23 +5173,24 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       };
     }
 
-    function renderProjectTagsHtml(tagIds, compact = true) {
+    function renderProjectTagsHtml(tagIds, mode = "compact") {
       const tags = (tagIds || []).map(getTag).filter(Boolean);
       if (!tags.length) return "";
-      if (compact) {
-        return `<div class="project-tags">${tags
-          .map(
-            (t) =>
-              `<span class="project-tag-dot" style="--tag-color:${t.color}" title="${escapeHtml(t.regionName || t.name)}">${t.mapEmoji || "🗺️"} ${escapeHtml(t.name)}</span>`
-          )
-          .join("")}</div>`;
-      }
-      return tags
-        .map(
-          (t) =>
-            `<span class="project-tag-dot" style="--tag-color:${t.color}">${t.mapEmoji || "🗺️"} ${escapeHtml(t.name)}</span>`
-        )
-        .join("");
+      const renderOne = (t) => {
+        const emoji = t.mapEmoji || "🗺️";
+        const name = escapeHtml(t.name);
+        const title = escapeHtml(t.regionName || t.name);
+        if (mode === "header") {
+          return `<span class="project-tag-dot project-tag-header" style="--tag-color:${t.color}" title="${title}"><span class="tag-emoji">${emoji}</span><span class="tag-label">${name}</span></span>`;
+        }
+        if (mode === "icon") {
+          return `<span class="project-tag-dot project-tag-icon" style="--tag-color:${t.color}" title="${title}"><span class="tag-emoji">${emoji}</span></span>`;
+        }
+        return `<span class="project-tag-dot" style="--tag-color:${t.color}" title="${title}"><span class="tag-emoji">${emoji}</span><span class="tag-label">${name}</span></span>`;
+      };
+      const inner = tags.map(renderOne).join("");
+      if (mode === "header" || mode === "icon") return inner;
+      return `<div class="project-tags">${inner}</div>`;
     }
 
     function bindTagFilterBar(containerId) {
@@ -6199,9 +6454,11 @@ ${lines.join("\n\n")}`;
       main.innerHTML = `
         <div class="main-project">
         <header class="header">
-          <div>
-            <h1>${questTypeBadgeHtml(project)}${escapeHtml(project.name)}</h1>
-            ${(project.tagIds || []).length ? `<div class="header-tags">${renderProjectTagsHtml(project.tagIds, false)}</div>` : ""}
+          <div class="header-main">
+            <div class="header-title-row">
+              <h1>${questTypeBadgeHtml(project)}${escapeHtml(project.name)}</h1>
+              ${(project.tagIds || []).length ? `<div class="header-tags">${renderProjectTagsHtml(project.tagIds, "header")}</div>` : ""}
+            </div>
             ${project.questStory ? `<div class="quest-story-box">${escapeHtml(project.questStory)}</div>` : ""}
             <p class="meta">更新于 ${formatDate(project.updatedAt)}</p>
           </div>
