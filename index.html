@@ -84,7 +84,8 @@
       --z-topbar-backdrop: 110;
       --z-topbar: 120;
       --z-topbar-dropdown: 121;
-      --z-mobile-sheet: 115;
+      --z-mobile-sheet: 135;
+      --z-mobile-tabbar: 130;
       --z-modal: 200;
       --z-toast: 250;
     }
@@ -105,7 +106,10 @@
       position: fixed;
       width: 100%;
       overflow: hidden;
-      touch-action: none;
+    }
+
+    body.scroll-locked .shell > .mobile-tabbar {
+      touch-action: manipulation;
     }
 
     button, .topbar-btn, .topbar-dropdown-item, .mobile-tab, .skin-card {
@@ -545,7 +549,7 @@
       }
 
       .mobile-adventure-sheet {
-        display: block;
+        display: none;
         position: fixed;
         z-index: var(--z-mobile-sheet);
         inset: 0;
@@ -554,6 +558,7 @@
       }
 
       .mobile-adventure-sheet.open {
+        display: block;
         pointer-events: auto;
         visibility: visible;
       }
@@ -1314,7 +1319,7 @@
         display: flex;
         flex-shrink: 0;
         position: relative;
-        z-index: 100;
+        z-index: var(--z-mobile-tabbar);
         left: 0;
         right: 0;
         bottom: 0;
@@ -2140,10 +2145,15 @@
       padding: 1rem;
       opacity: 0;
       visibility: hidden;
+      pointer-events: none;
       transition: opacity 0.2s, visibility 0.2s;
     }
 
-    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-overlay.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
 
     .modal {
       background: var(--surface);
@@ -7419,6 +7429,20 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           completedAt: rec.recordedAt,
         });
       });
+      (state.sideQuests || []).forEach((sq) => {
+        const q = normalizeSideQuest(sq);
+        if (state.tagFilterId && q.continentId !== state.tagFilterId) return;
+        if (q.status !== "done" || !q.completedAt) return;
+        const map = getTag(q.continentId);
+        pushItem(dayKey(q.completedAt), {
+          kind: "side",
+          sideQuestId: q.id,
+          projectName: map ? map.name : "未归属大陆",
+          taskTitle: q.title,
+          taskDescription: q.description || "",
+          completedAt: q.completedAt,
+        });
+      });
       return [...byDay.entries()]
         .sort((a, b) => b[0].localeCompare(a[0]))
         .map(([key, items]) => ({
@@ -7438,6 +7462,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           const key = dayKey(task.completedAt);
           if (key < fromKey || key > toKey) return;
           items.push({
+            kind: "task",
             projectName: project.name,
             taskTitle: task.title,
             taskDescription: task.description || "",
@@ -7445,6 +7470,23 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             completedDay: key,
             tagNames: (project.tagIds || []).map(getTag).filter(Boolean).map((t) => t.name),
           });
+        });
+      });
+      (state.sideQuests || []).forEach((sq) => {
+        const q = normalizeSideQuest(sq);
+        if (tagId && q.continentId !== tagId) return;
+        if (q.status !== "done" || !q.completedAt) return;
+        const key = dayKey(q.completedAt);
+        if (key < fromKey || key > toKey) return;
+        const map = getTag(q.continentId);
+        items.push({
+          kind: "side",
+          projectName: map ? map.name : "未归属大陆",
+          taskTitle: q.title,
+          taskDescription: q.description || q.questStory || "",
+          completedAt: q.completedAt,
+          completedDay: key,
+          tagNames: map ? [map.name] : [],
         });
       });
       return items.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
@@ -7553,18 +7595,19 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const lines = tasks.map((t, i) => {
         const desc = (t.taskDescription || "").trim() || "（无任务说明）";
         const completedTime = t.completedAt ? formatDate(t.completedAt) : t.completedDay;
+        const projectLabel = t.kind === "side" ? `支线 · ${t.projectName}` : t.projectName;
         return `${i + 1}. 完成时间：${completedTime}
-   项目：${t.projectName}
+   项目：${projectLabel}
    任务标题：${t.taskTitle}
    任务说明：${desc}`;
       });
       const periodLabel = fromKey === toKey ? fromKey : `${fromKey} 至 ${toKey}`;
       const dayWord = fromKey === toKey ? "今天" : "这段时间";
-      return `以下是 ${periodLabel} 期间已完成的任务记录（筛选：${tagLabel}）。请根据这些条目，写${dayWord}的工作总结，说明${dayWord}做了些什么。
+      return `以下是 ${periodLabel} 期间已完成的主线任务与支线任务记录（筛选：${tagLabel}）。请根据这些条目，写${dayWord}的工作总结，说明${dayWord}做了些什么。
 
 写作要求：
-- 每个任务单独成段：共 ${tasks.length} 项任务须输出 ${tasks.length} 个自然段，段与段之间空一行
-- 每段只描述对应序号的一条任务，段首不要写编号；须体现该任务的项目名称、任务标题、任务说明（可改写语序，含义须一致；无说明的可不展开）
+- 每个任务单独成段：共 ${tasks.length} 项须输出 ${tasks.length} 个自然段，段与段之间空一行
+- 每段只描述对应序号的一条任务，段首不要写编号；须体现该任务的项目名称（支线任务标注为「支线 · 大陆名」）、任务标题、任务说明（可改写语序，含义须一致；无说明的可不展开）
 - 禁止把多个任务的内容混写在同一段里，禁止分点、小标题或编号列表
 - 仅依据清单已有信息总结，禁止编造清单中未出现的工作、结论、数据或评价
 - 语气平实，像日报/周报里的完成情况说明
@@ -7591,7 +7634,7 @@ ${lines.join("\n\n")}`;
             {
               role: "system",
               content:
-                "你是 WjyCyberBrain 的工作总结助手。根据用户提供的已完成任务记录撰写中文总结。要求：每个任务单独一个自然段，段与段之间空一行；每段只描述一条任务，须体现项目名、任务标题与任务说明，不得把多条任务混在同一段；不得遗漏任何一条任务，不得编造记录中没有的内容。不要分点、不要列表、不要标题、不要段首编号。",
+                "你是 WjyCyberBrain 的工作总结助手。根据用户提供的主线任务与支线任务完成记录撰写中文总结。要求：每个任务单独一个自然段，段与段之间空一行；每段只描述一条任务，须体现项目名（支线为「支线 · 大陆名」）、任务标题与任务说明，不得把多条任务混在同一段；不得遗漏任何一条任务，不得编造记录中没有的内容。不要分点、不要列表、不要标题、不要段首编号。",
             },
             { role: "user", content: userPrompt },
           ],
@@ -7653,7 +7696,7 @@ ${lines.join("\n\n")}`;
       const tasks = collectCompletedTasksForSummary(fromKey, toKey, tagId);
       if (!tasks.length) {
         out.className = "summary-output";
-        out.textContent = "该时间段与标签下没有已完成的任务，无法生成总结。";
+        out.textContent = "该时间段与标签下没有已完成的主线任务或支线，无法生成总结。";
         return;
       }
 
@@ -7800,13 +7843,36 @@ ${lines.join("\n\n")}`;
     }
 
     let mobilePanel = "work";
+    let mobilePanelBeforeAdventure = "work";
     let scrollLockY = 0;
 
     function isMobileLayout() {
       return window.matchMedia("(max-width: 768px)").matches;
     }
 
+    function syncMobileTabActive(panel) {
+      document.querySelectorAll(".mobile-tab").forEach((tab) => {
+        tab.classList.toggle("active", tab.dataset.mobilePanel === panel);
+      });
+    }
+
+    function applyMobilePanelClasses(panel) {
+      const app = document.getElementById("app");
+      if (!app || !isMobileLayout()) return;
+      app.classList.remove("mobile-panel-projects", "mobile-panel-tasks", "mobile-panel-work");
+      if (panel === "projects") app.classList.add("mobile-panel-projects");
+      else if (panel === "tasks") app.classList.add("mobile-panel-tasks");
+      else if (panel === "work") app.classList.add("mobile-panel-work");
+    }
+
+    function syncTopbarNavBackdrop() {
+      const navOpen = document.getElementById("topbarNav")?.classList.contains("open");
+      const backdrop = document.getElementById("topbarNavBackdrop");
+      if (backdrop) backdrop.hidden = !navOpen;
+    }
+
     function updateBodyScrollLock() {
+      syncTopbarNavBackdrop();
       const locked =
         !!document.querySelector(".modal-overlay.open") ||
         document.getElementById("topbarNav")?.classList.contains("open") ||
@@ -7824,41 +7890,42 @@ ${lines.join("\n\n")}`;
       }
     }
 
-    function setTopbarNavOpen(open) {
-      const nav = document.getElementById("topbarNav");
-      const backdrop = document.getElementById("topbarNavBackdrop");
-      nav?.classList.toggle("open", open);
-      if (backdrop) backdrop.hidden = !open;
-      updateBodyScrollLock();
-    }
-
-    function closeMobileAdventureSheet() {
+    function hideMobileAdventureSheetOnly() {
       const sheet = document.getElementById("mobileAdventureSheet");
       sheet?.classList.remove("open");
       sheet?.setAttribute("aria-hidden", "true");
-      if (isMobileLayout() && mobilePanel === "adventure") {
-        mobilePanel = "work";
-        document.querySelectorAll(".mobile-tab").forEach((tab) => {
-          tab.classList.toggle("active", tab.dataset.mobilePanel === "work");
-        });
-      }
       updateBodyScrollLock();
+    }
+
+    function setTopbarNavOpen(open) {
+      const nav = document.getElementById("topbarNav");
+      nav?.classList.toggle("open", open);
+      syncTopbarNavBackdrop();
+      updateBodyScrollLock();
+    }
+
+    function closeMobileAdventureSheet({ restorePanel = true } = {}) {
+      hideMobileAdventureSheetOnly();
+      if (!restorePanel || !isMobileLayout() || mobilePanel !== "adventure") return;
+      mobilePanel = mobilePanelBeforeAdventure || "work";
+      syncMobileTabActive(mobilePanel);
+      applyMobilePanelClasses(mobilePanel);
+      updateMobileContextBar();
     }
 
     function openMobileAdventureSheet() {
       if (!isMobileLayout()) return;
       setTopbarNavOpen(false);
       closeAllTopbarDropdowns();
+      if (mobilePanel !== "adventure") {
+        mobilePanelBeforeAdventure = mobilePanel || "work";
+      }
       updateXpBar();
       const sheet = document.getElementById("mobileAdventureSheet");
       sheet?.classList.add("open");
       sheet?.setAttribute("aria-hidden", "false");
-      document.querySelectorAll(".mobile-tab").forEach((tab) => {
-        tab.classList.toggle("active", tab.dataset.mobilePanel === "adventure");
-      });
-      const app = document.getElementById("app");
+      syncMobileTabActive("adventure");
       const backdrop = document.getElementById("mobileBackdrop");
-      app?.classList.remove("mobile-panel-projects", "mobile-panel-tasks");
       if (backdrop) backdrop.hidden = true;
       updateBodyScrollLock();
     }
@@ -7866,7 +7933,11 @@ ${lines.join("\n\n")}`;
     function closeMobileOverlays() {
       setTopbarNavOpen(false);
       closeAllTopbarDropdowns();
-      closeMobileAdventureSheet();
+      if (mobilePanel === "adventure") {
+        closeMobileAdventureSheet({ restorePanel: true });
+      } else {
+        hideMobileAdventureSheetOnly();
+      }
     }
 
     function updateMobileContextBar() {
@@ -7901,24 +7972,21 @@ ${lines.join("\n\n")}`;
         updateMobileContextBar();
         return;
       }
-      closeMobileAdventureSheet();
+      if (mobilePanel === "adventure") {
+        hideMobileAdventureSheetOnly();
+      }
       mobilePanel = panel;
-      const app = document.getElementById("app");
       const backdrop = document.getElementById("mobileBackdrop");
-      app?.classList.remove("mobile-panel-projects", "mobile-panel-tasks", "mobile-panel-work");
-      document.querySelectorAll(".mobile-tab").forEach((tab) => {
-        tab.classList.toggle("active", tab.dataset.mobilePanel === panel);
-      });
+      syncMobileTabActive(panel);
       if (!isMobileLayout()) {
         if (backdrop) backdrop.hidden = true;
         updateMobileContextBar();
         return;
       }
-      if (panel === "projects") app?.classList.add("mobile-panel-projects");
-      else if (panel === "tasks") app?.classList.add("mobile-panel-tasks");
-      else app?.classList.add("mobile-panel-work");
+      applyMobilePanelClasses(panel);
       if (backdrop) backdrop.hidden = true;
       updateMobileContextBar();
+      updateBodyScrollLock();
     }
 
     function applyMobileLayout() {
@@ -8091,6 +8159,14 @@ ${lines.join("\n\n")}`;
                 <span class="task">${escapeHtml(item.taskTitle)}</span>
               </button>`;
                   }
+                  if (item.kind === "side") {
+                    const time = formatDate(item.completedAt).split(" ")[1] || "";
+                    return `
+              <button type="button" class="daily-item daily-item-side" data-side-id="${item.sideQuestId}" title="支线 · ${escapeHtml(item.projectName)} · ${escapeHtml(item.taskTitle)}">
+                <span class="proj">支线 · ${escapeHtml(item.projectName)}${time ? ` · ${time}` : ""}</span>
+                <span class="task">${escapeHtml(item.taskTitle)}</span>
+              </button>`;
+                  }
                   return `
               <button type="button" class="daily-item" data-project-id="${item.projectId}" data-task-id="${item.taskId}" title="${escapeHtml(item.projectName)} · ${escapeHtml(item.taskTitle)}">
                 <span class="proj">${escapeHtml(item.projectName)}</span>
@@ -8119,6 +8195,17 @@ ${lines.join("\n\n")}`;
           save();
           updateSidebarTabs();
           renderDailyRecordsPanel();
+          focusWorkOnMobile();
+        });
+      });
+      panel.querySelectorAll(".daily-item-side").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.activeProjectId = SIDE_QUEST_BOARD_ID;
+          state.activeSideQuestId = btn.dataset.sideId;
+          state.leftSidebarTab = "projects";
+          taskFilter = "done";
+          save();
+          render();
           focusWorkOnMobile();
         });
       });
@@ -9731,8 +9818,9 @@ ${lines.join("\n\n")}`;
 
     document.querySelectorAll(".mobile-tab").forEach((tab) => {
       tab.addEventListener("click", () => {
-        setMobilePanel(tab.dataset.mobilePanel);
         setTopbarNavOpen(false);
+        closeAllTopbarDropdowns();
+        setMobilePanel(tab.dataset.mobilePanel);
       });
     });
 
