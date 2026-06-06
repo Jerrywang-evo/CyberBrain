@@ -3871,12 +3871,42 @@
     .vital-chip { font-size:0.58rem; padding:0.12rem 0.35rem; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); white-space:nowrap; }
     .vital-chip.warn { border-color:var(--warning); color:var(--warning); background:var(--warning-dim); }
     .vital-chip.danger { border-color:var(--danger); color:var(--danger); background:var(--danger-dim); }
+    .vital-chip.stamina { border-color:rgba(217,119,6,0.45); color:var(--gold); background:var(--gold-dim); }
+    .vital-chip.stamina.warn { border-color:var(--warning); color:var(--warning); background:var(--warning-dim); }
     .quest-filter-bar { display:flex; gap:0.18rem; flex-wrap:wrap; margin-bottom:0; }
     .quest-filter-chip { font-family:inherit; font-size:0.58rem; padding:0.1rem 0.3rem; border-radius:999px; border:1px solid var(--border); background:var(--input-bg); color:var(--text-muted); cursor:pointer; }
     .quest-filter-chip.active { background:var(--accent-dim); border-color:var(--accent-border); color:var(--accent); font-weight:600; }
     .project-item.side-quest-board-item { border-style:dashed; border-color:var(--silver-border); }
     .project-item.side-quest-board-item.active { border-color:var(--accent-border); background:var(--accent-dim); }
     .task-card.side-quest-card.focused { border-color:var(--accent-border); box-shadow:0 0 0 2px var(--accent-dim); }
+    .pet-manager-layout { display:grid; grid-template-columns:minmax(140px,200px) 1fr; gap:0.75rem; min-height:420px; max-height:min(70vh,560px); }
+    .pet-list-col { border-right:1px solid var(--border); padding-right:0.65rem; overflow-y:auto; display:flex; flex-direction:column; gap:0.35rem; }
+    .pet-list-item { font-family:inherit; text-align:left; padding:0.5rem 0.55rem; border-radius:var(--radius); border:1px solid var(--border); background:var(--input-bg); cursor:pointer; }
+    .pet-list-item.active { border-color:var(--accent-border); background:var(--accent-dim); }
+    .pet-list-item .pet-name { font-size:0.82rem; font-weight:600; }
+    .pet-list-item .pet-sub { font-size:0.62rem; color:var(--text-muted); margin-top:0.1rem; }
+    .pet-main-col { overflow-y:auto; min-height:0; }
+    .pet-profile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.45rem 0.75rem; font-size:0.78rem; margin-bottom:0.65rem; }
+    .pet-profile-grid dt { color:var(--text-muted); font-size:0.65rem; }
+    .pet-profile-grid dd { margin:0.1rem 0 0; font-weight:500; }
+    .pet-note-row { border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem; margin-bottom:0.45rem; background:var(--input-bg); }
+    .pet-note-row textarea { width:100%; min-height:52px; font-family:inherit; font-size:0.78rem; margin-bottom:0.35rem; }
+    .pet-note-ai { font-size:0.75rem; font-style:italic; color:var(--text-muted); padding:0.35rem 0.45rem; background:var(--surface); border-radius:6px; margin-bottom:0.35rem; }
+    .pet-care-row { border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem 0.65rem; margin-bottom:0.4rem; background:var(--input-bg); }
+    .pet-care-row.due { border-color:var(--warning); background:var(--warning-dim); }
+    .pet-care-row .care-title { font-size:0.82rem; font-weight:600; }
+    .pet-care-row .care-meta { font-size:0.62rem; color:var(--text-muted); margin-top:0.15rem; }
+    .pet-todo-card { border:1px solid var(--warning-border); background:var(--warning-dim); border-radius:var(--radius); padding:0.6rem 0.65rem; margin-bottom:0.4rem; }
+    .fuzzy-review-box { margin-top:0.75rem; padding:0.75rem; border:1px solid var(--accent-border); border-radius:var(--radius); background:var(--accent-dim); }
+    .fuzzy-review-box .field { margin-bottom:0.55rem; }
+    .fuzzy-intent-fields { display:none; }
+    .fuzzy-intent-fields.visible { display:block; }
+    @media (max-width:768px) {
+      .pet-manager-layout { grid-template-columns:1fr; max-height:none; }
+      .pet-list-col { border-right:none; border-bottom:1px solid var(--border); padding-right:0; padding-bottom:0.5rem; max-height:120px; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; }
+      .pet-list-item { flex:0 0 auto; min-width:100px; }
+      .pet-profile-grid { grid-template-columns:1fr; }
+    }
     .side-quest-item, .daily-action-item { border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem 0.65rem; margin-bottom:0.35rem; background:var(--input-bg); cursor:pointer; }
     .side-quest-item.active, .daily-action-item:hover { border-color:var(--accent-border); background:var(--surface-hover); }
     .side-quest-item .sq-title { font-size:0.82rem; font-weight:600; }
@@ -4037,17 +4067,20 @@
     <div class="topbar-brand"><img id="topbarBrandIcon" class="brand-logo" src="" alt="" width="20" height="20" /><span class="brand-name">Earth-Online</span><span class="brand-version">V.0.10</span></div>
     <nav class="topbar-nav" id="topbarNav">
       <button type="button" class="topbar-btn topbar-btn-primary" id="btnOpenHeroTop"><img class="ui-icon item-icon" data-ui-icon="hero" alt="" width="16" height="16" style="margin-right:0.25rem" />角色 · 属性</button>
+      <button type="button" class="topbar-btn" id="btnOpenPetsTop" title="宠物管理">🐾 宠物<span class="sidebar-tab-badge accent" id="petDueBadge" style="margin-left:0.2rem;display:none">0</span></button>
       <div class="topbar-dropdown" data-dropdown>
         <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">世界</button>
         <div class="topbar-dropdown-menu" role="menu">
           <button type="button" class="topbar-dropdown-item" id="btnWorldMap" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="map" alt="" width="16" height="16" />世界地图</button>
           <button type="button" class="topbar-dropdown-item" id="btnManageTags" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="mountain" alt="" width="16" height="16" />大陆管理</button>
           <button type="button" class="topbar-dropdown-item" id="btnOpenHero" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="hero" alt="" width="16" height="16" />角色 · 背包</button>
+          <button type="button" class="topbar-dropdown-item" id="btnOpenPets" role="menuitem">🐾 宠物管理</button>
         </div>
       </div>
       <div class="topbar-dropdown" data-dropdown>
         <button type="button" class="topbar-btn topbar-dropdown-toggle" aria-expanded="false" aria-haspopup="true">工具</button>
         <div class="topbar-dropdown-menu" role="menu">
+          <button type="button" class="topbar-dropdown-item" id="btnOpenFuzzyEntry" role="menuitem">✨ 模糊录入</button>
           <button type="button" class="topbar-dropdown-item" id="btnOpenCalendar" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="calendar" alt="" width="16" height="16" />任务日历</button>
           <button type="button" class="topbar-dropdown-item" id="btnOpenSummary" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="summary" alt="" width="16" height="16" />AI 总结</button>
           <button type="button" class="topbar-dropdown-item" id="btnOpenSkins" role="menuitem"><img class="ui-icon item-icon" data-ui-icon="skins" alt="" width="16" height="16" />界面皮肤</button>
@@ -4119,7 +4152,7 @@
           </div>
           <div class="sidebar-tab-panel" id="leftPanelRoutines">
             <div class="sidebar-scroll-panel" id="dailyRoutinesPanel"></div>
-            <button type="button" class="btn btn-primary btn-xs" id="btnNewDailyAction" style="margin-top:0.2rem;width:100%">+ 登记日常</button>
+            <button type="button" class="btn btn-primary btn-xs" id="btnNewDailyAction" style="margin-top:0.2rem;width:100%">+ 新建日常记录</button>
           </div>
           <div class="sidebar-tab-panel" id="leftPanelDaily">
             <div class="daily-filter-bar" id="dailyFilterBar">
@@ -4212,6 +4245,8 @@
         <button type="button" class="mobile-adventure-btn" data-adv-action="world"><img class="ui-icon adv-icon-img" data-adv-icon="map" alt="" width="22" height="22" />世界地图</button>
         <button type="button" class="mobile-adventure-btn" data-adv-action="hero"><img class="ui-icon adv-icon-img" data-adv-icon="hero" alt="" width="22" height="22" />角色 · 背包</button>
         <button type="button" class="mobile-adventure-btn" data-adv-action="maps"><img class="ui-icon adv-icon-img" data-adv-icon="mountain" alt="" width="22" height="22" />大陆管理</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="fuzzy"><span class="adv-icon" aria-hidden="true">✨</span>模糊录入</button>
+        <button type="button" class="mobile-adventure-btn" data-adv-action="pets"><span class="adv-icon" aria-hidden="true">🐾</span>宠物管理</button>
         <button type="button" class="mobile-adventure-btn" data-adv-action="skins"><img class="ui-icon adv-icon-img" data-adv-icon="skins" alt="" width="22" height="22" />界面皮肤</button>
       </div>
     </div>
@@ -4313,6 +4348,94 @@
     </div>
   </div>
 
+  </div>
+
+  <div class="modal-overlay" id="modalPets">
+    <div class="modal modal-wide">
+      <h3>🐾 宠物管理</h3>
+      <p class="meta" style="margin-bottom:0.65rem">登记宠物档案、描述条目与周期管护；系统会根据上次执行时间计算今日待办。</p>
+      <div class="pet-manager-layout">
+        <div class="pet-list-col" id="petListCol"></div>
+        <div class="pet-main-col">
+          <div class="hero-panel-tabs" id="petPanelTabs">
+            <button type="button" class="hero-panel-tab active" data-pet-tab="todos">今日待办</button>
+            <button type="button" class="hero-panel-tab" data-pet-tab="profile">档案</button>
+            <button type="button" class="hero-panel-tab" data-pet-tab="notes">描述条目</button>
+            <button type="button" class="hero-panel-tab" data-pet-tab="care">日常管护</button>
+          </div>
+          <div id="petPanelTodos" class="hero-tab-panel" style="margin-top:0.5rem"></div>
+          <div id="petPanelProfile" class="hero-tab-panel" style="display:none;margin-top:0.5rem"></div>
+          <div id="petPanelNotes" class="hero-tab-panel" style="display:none;margin-top:0.5rem"></div>
+          <div id="petPanelCare" class="hero-tab-panel" style="display:none;margin-top:0.5rem"></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-primary btn-sm" id="btnNewPet">+ 新建宠物</button>
+        <button type="button" class="btn btn-ghost" data-close="modalPets">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalPetEdit">
+    <div class="modal">
+      <h3 id="modalPetEditTitle">新建宠物</h3>
+      <div class="field"><label for="petNameInput">名字</label><input type="text" id="petNameInput" placeholder="如：豆豆" autocomplete="off" /></div>
+      <div class="field"><label for="petSpeciesInput">生物种类</label><input type="text" id="petSpeciesInput" placeholder="如：猫、狗、兔" autocomplete="off" /></div>
+      <div class="field"><label for="petBreedInput">品种</label><input type="text" id="petBreedInput" placeholder="如：英国短毛猫" autocomplete="off" /></div>
+      <div class="field"><label for="petGenderInput">性别</label>
+        <select id="petGenderInput">
+          <option value="male">公</option>
+          <option value="female">母</option>
+          <option value="unknown">未知</option>
+        </select>
+      </div>
+      <div class="field"><label for="petAgeInput">年龄</label><input type="text" id="petAgeInput" placeholder="如：2岁、8个月" autocomplete="off" /></div>
+      <div class="field" style="display:flex;gap:0.5rem;align-items:flex-end">
+        <div style="flex:1"><label for="petWeightInput">体重</label><input type="text" id="petWeightInput" placeholder="如：4.2" autocomplete="off" /></div>
+        <div style="width:88px"><label for="petWeightUnitInput">单位</label><select id="petWeightUnitInput"><option value="kg">kg</option><option value="g">g</option><option value="jin">斤</option></select></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="modalPetEdit">取消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmPetEdit">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalPetCare">
+    <div class="modal">
+      <h3 id="modalPetCareTitle">管护事项</h3>
+      <div class="field"><label for="petCareTitleInput">事项名称</label><input type="text" id="petCareTitleInput" placeholder="如：换猫砂、体内驱虫" autocomplete="off" /></div>
+      <div class="field"><label for="petCareDescInput">说明（可选）</label><textarea id="petCareDescInput" placeholder="补充细节"></textarea></div>
+      <div class="field"><label for="petCareIntervalSelect">执行频率</label>
+        <select id="petCareIntervalSelect">
+          <option value="1">每天一次</option>
+          <option value="2">每两天一次</option>
+          <option value="3">每三天一次</option>
+          <option value="7">每周一次</option>
+          <option value="14">每两周一次</option>
+          <option value="30">每月一次</option>
+          <option value="90">每季度一次</option>
+          <option value="180">每半年一次</option>
+          <option value="365">每年一次</option>
+          <option value="custom">自定义天数…</option>
+        </select>
+      </div>
+      <div class="field" id="petCareCustomDaysField" style="display:none">
+        <label for="petCareCustomDaysInput">自定义间隔（天）</label>
+        <input type="number" id="petCareCustomDaysInput" min="1" max="999" value="1" />
+      </div>
+      <div class="field">
+        <label for="petCareLastDoneInput">上次执行时间</label>
+        <input type="datetime-local" id="petCareLastDoneInput" />
+        <p class="field-hint" style="margin:0.25rem 0 0">用于计算下次待办；留空表示从未执行（将显示为待办）。</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="modalPetCare">取消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmPetCare">保存</button>
+      </div>
+    </div>
+  </div>
+
   
   <div class="modal-overlay" id="modalSideQuest">
     <div class="modal">
@@ -4356,11 +4479,12 @@
       <div class="field" id="daEffectsPreviewField" style="display:none">
         <label>AI 影响分析</label>
         <div class="quest-story-box" id="daEffectsPreview"></div>
+        <div class="task-attr-tags" id="daAttrTagsPreview" style="display:none;margin-top:0.35rem"></div>
       </div>
       <div class="llm-action-row">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenDaily">✨ AI 生成/重新生成 影响与说明</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenDaily">✨ AI 生成/重新生成 影响与标签</button>
       </div>
-      <p class="field-hint" id="daGenStatus">点击上方按钮生成；结果写入 JSON。保存后可用「执行」记录。</p>
+      <p class="field-hint" id="daGenStatus">点击上方按钮生成；保存后立即记为一条带日期时间的独立日常记录。</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalDailyAction">取消</button>
         <button type="button" class="btn btn-primary" id="btnConfirmDailyAction">保存</button>
@@ -4550,6 +4674,71 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="modalFuzzyEntry">
+    <div class="modal modal-wide">
+      <h3>✨ 模糊录入</h3>
+      <p class="meta" style="margin-bottom:0.65rem">输入一段话，AI 会判断应创建<strong>大陆·地图·任务</strong>、<strong>大陆支线</strong>，还是<strong>日常记录</strong>。解析结果可编辑后再确认。</p>
+      <div class="field">
+        <label for="fuzzyInputText">输入内容</label>
+        <textarea id="fuzzyInputText" rows="5" placeholder="例如：明天要在工作大陆的产品地图里加一个评审原型任务；或者：今晚跑步 5 公里"></textarea>
+      </div>
+      <div class="llm-action-row" style="margin-bottom:0.5rem">
+        <button type="button" class="btn btn-primary btn-sm" id="btnFuzzyAnalyze">AI 解析</button>
+        <span class="meta" id="fuzzyAnalyzeStatus"></span>
+      </div>
+      <div class="fuzzy-review-box" id="fuzzyReviewSection" style="display:none">
+        <p class="meta" id="fuzzyReasoning" style="margin-bottom:0.55rem"></p>
+        <div class="field">
+          <label for="fuzzyIntentSelect">录入类型</label>
+          <select id="fuzzyIntentSelect">
+            <option value="main_task">地图任务（归入已有或新建地图）</option>
+            <option value="new_map">新建地图（可选附带首个任务）</option>
+            <option value="side_quest">大陆支线</option>
+            <option value="daily">日常记录</option>
+          </select>
+        </div>
+        <div id="fuzzyFieldsContinent" class="fuzzy-intent-fields">
+          <div class="field"><label for="fuzzyContinentName">大陆</label><input type="text" id="fuzzyContinentName" autocomplete="off" /></div>
+          <label class="field-hint" style="display:flex;align-items:center;gap:0.35rem;margin:0 0 0.55rem"><input type="checkbox" id="fuzzyCreateContinent" /> 若不存在则新建大陆</label>
+        </div>
+        <div id="fuzzyFieldsProject" class="fuzzy-intent-fields">
+          <div class="field"><label for="fuzzyProjectName">地图 / 项目</label><input type="text" id="fuzzyProjectName" autocomplete="off" /></div>
+          <label class="field-hint" style="display:flex;align-items:center;gap:0.35rem;margin:0 0 0.55rem"><input type="checkbox" id="fuzzyCreateProject" /> 若不存在则新建地图</label>
+          <div class="field"><label for="fuzzyProjectDesc">地图说明（可选）</label><textarea id="fuzzyProjectDesc" rows="2"></textarea></div>
+        </div>
+        <div id="fuzzyFieldsTask" class="fuzzy-intent-fields">
+          <div class="field"><label for="fuzzyTaskTitle">任务标题</label><input type="text" id="fuzzyTaskTitle" autocomplete="off" /></div>
+          <div class="field"><label for="fuzzyTaskDesc">任务说明（可选）</label><textarea id="fuzzyTaskDesc" rows="2"></textarea></div>
+          <div class="field"><label for="fuzzyTaskPriority">优先级</label>
+            <select id="fuzzyTaskPriority"><option value="high">高</option><option value="medium" selected>中</option><option value="low">低</option></select>
+          </div>
+        </div>
+        <div id="fuzzyFieldsSide" class="fuzzy-intent-fields">
+          <div class="field"><label for="fuzzySideTitle">支线标题</label><input type="text" id="fuzzySideTitle" autocomplete="off" /></div>
+          <div class="field"><label for="fuzzySideDesc">支线说明（可选）</label><textarea id="fuzzySideDesc" rows="2"></textarea></div>
+        </div>
+        <div id="fuzzyFieldsDaily" class="fuzzy-intent-fields">
+          <div class="field"><label for="fuzzyDailyName">日常名称</label><input type="text" id="fuzzyDailyName" autocomplete="off" /></div>
+          <div class="field"><label for="fuzzyDailyDesc">日常说明（可选）</label><textarea id="fuzzyDailyDesc" rows="2"></textarea></div>
+          <div class="field"><label for="fuzzyDailyCategory">类别</label>
+            <select id="fuzzyDailyCategory">
+              <option value="exercise">锻炼 / 运动</option>
+              <option value="medicine">吃药 / 治疗</option>
+              <option value="supplement">保健品</option>
+              <option value="entertainment">娱乐</option>
+              <option value="rest">休息 / 睡眠</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="modalFuzzyEntry">取消</button>
+        <button type="button" class="btn btn-primary" id="btnFuzzyConfirm" disabled>确认创建</button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="modalSummary">
     <div class="modal modal-summary">
       <h3>AI 完成总结</h3>
@@ -4635,14 +4824,18 @@
 
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
-    const STATE_SCHEMA_VERSION = 4;
+    const STATE_SCHEMA_VERSION = 6;
     const SIDE_QUEST_BOARD_ID = "__side_quest_board__";
-    // schema 4: 全量 JSON 持久化 + 大陆/地图/任务/支线 LLM 剧情与标签
+    // schema 6: 宠物档案、描述条目 AI、周期管护待办
     const PHYSICAL_DECAY_PER_HOUR = 2 / 24;
     const MENTAL_RESET_VALUE = 80;
+    const STAMINA_DEFAULT = 100;
+    const STAMINA_DAILY_RECOVERY = 40;
     const MENTAL_COST_PER_TASK = 4;
+    const STAMINA_COST_PER_TASK = 10;
     const PHYSICAL_WARN_BELOW = 80;
     const MENTAL_WARN_BELOW = 50;
+    const STAMINA_WARN_BELOW = 25;
 
     const PLAYER_ATTR_KEYS = ["physique","mind","intelligence","technology","humanities","social","lifeSkills"];
     const PLAYER_ATTR_LABELS = { physique:"体格", mind:"心智", intelligence:"智力", technology:"科技", humanities:"人文艺术", social:"社交能力", lifeSkills:"生活力" };
@@ -4653,11 +4846,16 @@
 1) 只输出要求的 JSON，无 markdown。
 2) 任务能力标签 attrTags 只能从：体能、精神力、社交能力、科技、人文艺术 中选 0-3 个。
 3) 属性增量 attributes 的键只能是：physique,mind,intelligence,technology,humanities,social,lifeSkills，每项为 0-5 的整数。
-4) 身体健康 physicalHealth、精神健康 mentalHealth 变化范围为 -20 到 +20。
-5) 日常行动：锻炼/吃药/保健品可提升 physicalHealth；娱乐/休息/喝酒/休闲可提升 mentalHealth；其余按语义判断。
+4) 必须区分三种数值（不可混淆）：
+   - stamina 体力值：当下可消耗的精力。工作/任务/锻炼通常消耗（负值）；休息/睡眠通常恢复（正值）。范围 -30~+30。
+   - physicalHealth 身体健康：长期身体状态。锻炼/吃药/保健品可提升；生病/过劳可下降；一般工作影响较小。范围 -15~+15。
+   - mentalHealth 精神健康：情绪与心理负担。工作/压力消耗；娱乐/休息/社交恢复。范围 -20~+20。
+5) 示例：上班 stamina-12 mentalHealth-6 physicalHealth-1；健身 stamina-15 physicalHealth+8 mentalHealth+2。
 6) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
 
     const DAILY_CATEGORY_LABELS = { exercise:"锻炼", medicine:"吃药", supplement:"保健品", entertainment:"娱乐", rest:"休息", other:"其他" };
+    const PET_GENDER_LABELS = { male: "公", female: "母", unknown: "未知" };
+    const PET_WEIGHT_UNITS = { kg: "kg", g: "g", jin: "斤" };
     const APP_VERSION = "0.10";
     const APP_VERSION_LABEL = "V.0.10";
     const UI_SKIN_KEY = "earth-online-ui-skin";
@@ -5076,7 +5274,14 @@
     ];
 
     function defaultVitals() {
-      return { physicalHealth: 100, mentalHealth: MENTAL_RESET_VALUE, lastVitalTickAt: null, lastMentalDayKey: null };
+      return {
+        stamina: STAMINA_DEFAULT,
+        physicalHealth: 100,
+        mentalHealth: MENTAL_RESET_VALUE,
+        lastVitalTickAt: null,
+        lastMentalDayKey: null,
+        lastStaminaDayKey: null,
+      };
     }
     function defaultAttributes() {
       return { physique: 0, mind: 0, intelligence: 0, technology: 0, humanities: 0, social: 0, lifeSkills: 0 };
@@ -5146,10 +5351,12 @@
       const b = defaultVitals();
       if (!v || typeof v !== "object") return b;
       const out = {
+        stamina: clamp100(typeof v.stamina === "number" ? v.stamina : b.stamina),
         physicalHealth: clamp100(typeof v.physicalHealth === "number" ? v.physicalHealth : b.physicalHealth),
         mentalHealth: clamp100(typeof v.mentalHealth === "number" ? v.mentalHealth : b.mentalHealth),
         lastVitalTickAt: v.lastVitalTickAt || null,
         lastMentalDayKey: v.lastMentalDayKey || v.lastVitalDayKey || null,
+        lastStaminaDayKey: v.lastStaminaDayKey || null,
       };
       if (!out.lastVitalTickAt) out.lastVitalTickAt = new Date().toISOString();
       return out;
@@ -5206,10 +5413,12 @@
         discoveredItems: [...new Set([...(pa.discoveredItems || []), ...(pb.discoveredItems || [])])],
         stats,
         vitals: {
+          stamina: Math.max(pa.vitals.stamina, pb.vitals.stamina),
           physicalHealth: Math.max(pa.vitals.physicalHealth, pb.vitals.physicalHealth),
           mentalHealth: Math.max(pa.vitals.mentalHealth, pb.vitals.mentalHealth),
           lastVitalTickAt: pa.vitals.lastVitalTickAt || pb.vitals.lastVitalTickAt,
           lastMentalDayKey: pa.vitals.lastMentalDayKey || pb.vitals.lastMentalDayKey,
+          lastStaminaDayKey: pa.vitals.lastStaminaDayKey || pb.vitals.lastStaminaDayKey,
         },
         attributes: (() => {
           const out = { ...pa.attributes };
@@ -5244,8 +5453,9 @@
       state.tags = normTags;
       state.projects = (state.projects || []).map(normalizeProject);
       state.sideQuests = (state.sideQuests || []).map(normalizeSideQuest);
-      state.dailyActions = (state.dailyActions || []).map(normalizeDailyAction);
-      state.dailyLogs = Array.isArray(state.dailyLogs) ? state.dailyLogs : [];
+      migrateDailyRecordsV5();
+      state.dailyRecords = (state.dailyRecords || []).map(normalizeDailyRecord);
+      state.pets = (state.pets || []).map(normalizePet);
       state.taskFilter = taskFilter || "all";
       const llmCfg = loadLlmSummaryConfig();
       state.preferences = {
@@ -5394,15 +5604,21 @@
     function reverseMainTaskCompleteVitals(task) {
       const vo = task.vitalOnComplete || {};
       applyVitalDelta(
-        typeof vo.physical === "number" ? -vo.physical : 1,
-        typeof vo.mental === "number" ? -vo.mental : MENTAL_COST_PER_TASK
+        typeof vo.physical === "number" ? -vo.physical : 0,
+        typeof vo.mental === "number" ? -vo.mental : MENTAL_COST_PER_TASK,
+        typeof vo.stamina === "number" ? -vo.stamina : STAMINA_COST_PER_TASK
       );
       if (task.attrDelta) reverseAttributeDelta(task.attrDelta);
       else reverseAttrTagsFromPlayer(task.attrTags, 1);
     }
 
     function reverseSideQuestCompleteVitals(sq) {
-      applyVitalDelta(1, MENTAL_COST_PER_TASK);
+      const vo = sq.vitalOnComplete || {};
+      applyVitalDelta(
+        typeof vo.physical === "number" ? -vo.physical : 0,
+        typeof vo.mental === "number" ? -vo.mental : MENTAL_COST_PER_TASK,
+        typeof vo.stamina === "number" ? -vo.stamina : STAMINA_COST_PER_TASK
+      );
       if (sq.attrDelta) reverseAttributeDelta(sq.attrDelta);
       else reverseAttrTagsFromPlayer(sq.attrTags, 1);
     }
@@ -5749,18 +5965,26 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       }
     }
 
-    function renderDailyLlmPreviewInModal(effects, summary) {
-      const field = document.getElementById("daEffectsPreviewField");
-      const box = document.getElementById("daEffectsPreview");
-      if (!field || !box) return;
+    function formatVitalEffectLine(effects) {
+      const st = effects?.stamina ?? 0;
       const ph = effects?.physicalHealth ?? 0;
       const mh = effects?.mentalHealth ?? 0;
-      const lines = [
-        summary || "",
-        `身体健康 ${ph >= 0 ? "+" : ""}${ph} · 精神健康 ${mh >= 0 ? "+" : ""}${mh}`,
-      ].filter(Boolean);
+      return `体力 ${st >= 0 ? "+" : ""}${st} · 身体健康 ${ph >= 0 ? "+" : ""}${ph} · 精神健康 ${mh >= 0 ? "+" : ""}${mh}`;
+    }
+
+    function renderDailyLlmPreviewInModal(effects, summary, attrTags) {
+      const field = document.getElementById("daEffectsPreviewField");
+      const box = document.getElementById("daEffectsPreview");
+      const tagsEl = document.getElementById("daAttrTagsPreview");
+      if (!field || !box) return;
+      const tags = attrTags || effects?.attrTags || [];
+      const lines = [summary || "", formatVitalEffectLine(effects || {})].filter(Boolean);
       box.textContent = lines.join("\n");
       field.style.display = lines.length ? "" : "none";
+      if (tagsEl) {
+        tagsEl.innerHTML = tags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
+        tagsEl.style.display = tags.length ? "" : "none";
+      }
     }
 
     function applyMapLoreToTag(tag, lore) {
@@ -5910,9 +6134,14 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       task.attrTags = (analysis.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
       task.taskStory = analysis.taskStory || task.taskStory || "";
       task.attrDelta = analysis.attributes || task.attrDelta || null;
-      if (typeof analysis.physicalHealth === "number" || typeof analysis.mentalHealth === "number") {
+      if (
+        typeof analysis.physicalHealth === "number" ||
+        typeof analysis.mentalHealth === "number" ||
+        typeof analysis.stamina === "number"
+      ) {
         task.vitalOnComplete = {
-          physical: typeof analysis.physicalHealth === "number" ? analysis.physicalHealth : (task.vitalOnComplete?.physical ?? -1),
+          stamina: typeof analysis.stamina === "number" ? analysis.stamina : (task.vitalOnComplete?.stamina ?? -STAMINA_COST_PER_TASK),
+          physical: typeof analysis.physicalHealth === "number" ? analysis.physicalHealth : (task.vitalOnComplete?.physical ?? 0),
           mental: typeof analysis.mentalHealth === "number" ? analysis.mentalHealth : (task.vitalOnComplete?.mental ?? -MENTAL_COST_PER_TASK),
         };
       }
@@ -6250,8 +6479,9 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     let state = {
       projects: [],
       sideQuests: [],
-      dailyActions: [],
-      dailyLogs: [],
+      dailyRecords: [],
+      pets: [],
+      activePetId: null,
       tags: [],
       player: defaultPlayer(),
       tagFilterId: null,
@@ -6284,6 +6514,10 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     let taskModalLlmDraft = null;
     let dailyModalLlmDraft = null;
     let sideQuestModalLlmDraft = null;
+    let petPanelTab = "todos";
+    let editingPetId = null;
+    let editingPetCareId = null;
+    let fuzzyEntryDraft = null;
 
     function uid() {
       return Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
@@ -6588,8 +6822,11 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       state.tags = tags;
       state.player = normalizePlayer(data.player);
       state.sideQuests = Array.isArray(data.sideQuests) ? data.sideQuests.map(normalizeSideQuest) : [];
-      state.dailyActions = Array.isArray(data.dailyActions) ? data.dailyActions.map(normalizeDailyAction) : [];
+      state.dailyRecords = Array.isArray(data.dailyRecords) ? data.dailyRecords.map(normalizeDailyRecord) : [];
+      state.dailyActions = Array.isArray(data.dailyActions) ? data.dailyActions : [];
       state.dailyLogs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
+      state.pets = Array.isArray(data.pets) ? data.pets.map(normalizePet) : [];
+      state.activePetId = data.activePetId && state.pets.some((p) => p.id === data.activePetId) ? data.activePetId : null;
       state.questLineFilter = data.questLineFilter || "all";
       state.todoPriorityFilter = data.todoPriorityFilter || "all";
       state.taskFilter = data.taskFilter || "all";
@@ -6716,11 +6953,17 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       task.attrDelta = task.attrDelta && typeof task.attrDelta === "object" ? task.attrDelta : null;
       task.vitalOnComplete = task.vitalOnComplete && typeof task.vitalOnComplete === "object"
         ? {
+            stamina: typeof task.vitalOnComplete.stamina === "number" ? task.vitalOnComplete.stamina : undefined,
             physical: typeof task.vitalOnComplete.physical === "number" ? task.vitalOnComplete.physical : undefined,
             mental: typeof task.vitalOnComplete.mental === "number" ? task.vitalOnComplete.mental : undefined,
           }
         : null;
-      if (task.vitalOnComplete && task.vitalOnComplete.physical == null && task.vitalOnComplete.mental == null) {
+      if (
+        task.vitalOnComplete &&
+        task.vitalOnComplete.stamina == null &&
+        task.vitalOnComplete.physical == null &&
+        task.vitalOnComplete.mental == null
+      ) {
         task.vitalOnComplete = null;
       }
       task.llmEnriched = !!task.llmEnriched;
@@ -7042,7 +7285,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const sideN = getFilteredSideQuests().length;
       el.textContent = tag
         ? `大陆：${tag.mapEmoji || "🗺️"} ${tag.name} · ${n} 张地图 · ${sideN} 条支线${ghHint}`
-        : `Earth-Online · ${getFilteredProjects().length} 张地图 · Lv.${getLevelFromXp(state.player?.xp || 0)} · 体${state.player?.vitals?.physicalHealth ?? "—"}/精${state.player?.vitals?.mentalHealth ?? "—"}${ghHint}`;
+        : `Earth-Online · ${getFilteredProjects().length} 张地图 · Lv.${getLevelFromXp(state.player?.xp || 0)} · 力${state.player?.vitals?.stamina ?? "—"}/身${state.player?.vitals?.physicalHealth ?? "—"}/精${state.player?.vitals?.mentalHealth ?? "—"}${ghHint}`;
     }
 
     function isoToDatetimeLocal(iso) {
@@ -7146,13 +7389,16 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     function collectDailyCompletions() {
       const byDay = new Map();
+      const pushItem = (key, item) => {
+        if (!dateKeyInDailyRange(key)) return;
+        if (!byDay.has(key)) byDay.set(key, []);
+        byDay.get(key).push(item);
+      };
       getFilteredProjects().forEach((project) => {
         (project.tasks || []).forEach((task) => {
           if (task.status !== "done" || !task.completedAt) return;
-          const key = dayKey(task.completedAt);
-          if (!dateKeyInDailyRange(key)) return;
-          if (!byDay.has(key)) byDay.set(key, []);
-          byDay.get(key).push({
+          pushItem(dayKey(task.completedAt), {
+            kind: "task",
             projectId: project.id,
             projectName: project.name,
             taskId: task.id,
@@ -7160,6 +7406,17 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
             taskDescription: task.description || "",
             completedAt: task.completedAt,
           });
+        });
+      });
+      (state.dailyRecords || []).forEach((rec) => {
+        if (!rec.recordedAt) return;
+        pushItem(dayKey(rec.recordedAt), {
+          kind: "daily",
+          recordId: rec.id,
+          taskTitle: rec.name,
+          taskDescription: rec.description || rec.effects?.summary || "",
+          category: rec.category,
+          completedAt: rec.recordedAt,
         });
       });
       return [...byDay.entries()]
@@ -7825,12 +8082,21 @@ ${lines.join("\n\n")}`;
             </div>
             ${day.items
               .map(
-                (item) => `
+                (item) => {
+                  if (item.kind === "daily") {
+                    const time = formatDate(item.completedAt).split(" ")[1] || "";
+                    return `
+              <button type="button" class="daily-item daily-item-record" data-record-id="${item.recordId}" title="日常 · ${escapeHtml(item.taskTitle)}">
+                <span class="proj">日常 · ${escapeHtml(DAILY_CATEGORY_LABELS[item.category] || item.category || "记录")}${time ? ` · ${time}` : ""}</span>
+                <span class="task">${escapeHtml(item.taskTitle)}</span>
+              </button>`;
+                  }
+                  return `
               <button type="button" class="daily-item" data-project-id="${item.projectId}" data-task-id="${item.taskId}" title="${escapeHtml(item.projectName)} · ${escapeHtml(item.taskTitle)}">
                 <span class="proj">${escapeHtml(item.projectName)}</span>
                 <span class="task">${escapeHtml(item.taskTitle)}</span>
-              </button>
-            `
+              </button>`;
+                }
               )
               .join("")}
           </section>
@@ -7838,12 +8104,22 @@ ${lines.join("\n\n")}`;
         )
         .join("");
 
-      panel.querySelectorAll(".daily-item").forEach((btn) => {
+      panel.querySelectorAll(".daily-item[data-project-id]").forEach((btn) => {
         btn.addEventListener("click", () => {
           state.activeProjectId = btn.dataset.projectId;
+          state.leftSidebarTab = "projects";
           taskFilter = "done";
           save();
           render();
+        });
+      });
+      panel.querySelectorAll(".daily-item-record").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.leftSidebarTab = "routines";
+          save();
+          updateSidebarTabs();
+          renderDailyRecordsPanel();
+          focusWorkOnMobile();
         });
       });
     }
@@ -8996,15 +9272,18 @@ ${lines.join("\n\n")}`;
         if (statusEl) statusEl.textContent = "AI 分析影响中…";
         const analysis = await analyzeDailyActionWithLlm(name, desc, category);
         dailyModalLlmDraft = {
+          stamina: analysis.stamina || 0,
           physicalHealth: analysis.physicalHealth || 0,
           mentalHealth: analysis.mentalHealth || 0,
           attributes: analysis.attributes || {},
+          attrTags: (analysis.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t)),
           summary: analysis.summary || "",
         };
-        renderDailyLlmPreviewInModal(dailyModalLlmDraft, dailyModalLlmDraft.summary);
-        const live = editId ? state.dailyActions.find((x) => x.id === editId) : null;
+        renderDailyLlmPreviewInModal(dailyModalLlmDraft, dailyModalLlmDraft.summary, dailyModalLlmDraft.attrTags);
+        const live = editId ? state.dailyRecords.find((x) => x.id === editId) : null;
         if (live) {
           live.effects = { ...dailyModalLlmDraft };
+          live.attrTags = dailyModalLlmDraft.attrTags;
           live.llmGenerated = true;
           live.updatedAt = new Date().toISOString();
           save();
@@ -9225,8 +9504,23 @@ ${lines.join("\n\n")}`;
               });
             }
             if (data.sideQuests) state.sideQuests = data.sideQuests.map(normalizeSideQuest);
-            if (data.dailyActions) state.dailyActions = data.dailyActions.map(normalizeDailyAction);
+            if (data.dailyRecords) state.dailyRecords = data.dailyRecords.map(normalizeDailyRecord);
+            if (data.dailyActions) state.dailyActions = data.dailyActions;
             if (data.dailyLogs) state.dailyLogs = data.dailyLogs;
+            if (data.pets) {
+              if (!state.pets) state.pets = [];
+              const petIds = new Set(state.pets.map((p) => p.id));
+              data.pets.forEach((p) => {
+                const norm = normalizePet(p);
+                if (petIds.has(norm.id)) {
+                  const ex = state.pets.find((x) => x.id === norm.id);
+                  Object.assign(ex, norm);
+                } else {
+                  state.pets.push(norm);
+                }
+              });
+            }
+            if (data.activePetId) state.activePetId = data.activePetId;
             if (data.player) state.player = mergePlayerData(state.player, data.player);
             applyImportedPreferences(data.preferences);
             if (data.tagFilterId) state.tagFilterId = data.tagFilterId;
@@ -9274,7 +9568,7 @@ ${lines.join("\n\n")}`;
       renderTopbarVitals();
       renderTagFilters();
       renderQuestLineFilter();
-      renderDailyRoutinesPanel();
+      renderDailyRecordsPanel();
       renderProjectList();
       renderDailyDigest();
       renderPriorityPanel();
@@ -9284,6 +9578,8 @@ ${lines.join("\n\n")}`;
       updateTopbarHint();
       updateMobileContextBar();
       if (document.getElementById("modalCalendar")?.classList.contains("open")) renderCalendar();
+      if (document.getElementById("modalPets")?.classList.contains("open")) renderPetManager();
+      updatePetDueBadge();
     }
 
     document.getElementById("btnCollapseLeft").addEventListener("click", () => {
@@ -9419,7 +9715,7 @@ ${lines.join("\n\n")}`;
 
     bindDailyFilterEvents();
 
-    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins", "modalSideQuest", "modalDailyAction", "modalVitalWarn"].forEach((id) => {
+    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalFuzzyEntry", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins", "modalSideQuest", "modalDailyAction", "modalVitalWarn", "modalPets", "modalPetEdit", "modalPetCare"].forEach((id) => {
       document.getElementById(id).addEventListener("click", (e) => {
         if (e.target.id === id) closeModal(id);
       });
@@ -9451,6 +9747,8 @@ ${lines.join("\n\n")}`;
         if (action === "world") openWorldMapModal();
         else if (action === "hero") openHeroModal();
         else if (action === "maps") openTagsModal();
+        else if (action === "pets") openPetsModal("todos");
+        else if (action === "fuzzy") openFuzzyEntryModal();
         else if (action === "skins") openSkinsModal();
       });
     });
@@ -9570,23 +9868,66 @@ ${lines.join("\n\n")}`;
         updatedAt: q.updatedAt || now,
       };
     }
-    function normalizeDailyAction(a) {
-      const effects = a.effects && typeof a.effects === "object" ? a.effects : { physicalHealth: 0, mentalHealth: 0, attributes: {} };
+    function normalizeDailyEffects(effects, attrTags) {
+      const eff = effects && typeof effects === "object" ? effects : {};
+      const tags = Array.isArray(attrTags) ? attrTags.filter((t) => TASK_ATTR_TAGS.includes(t)) : (eff.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
       return {
-        id: a.id || uid(),
-        name: (a.name || "").trim() || "日常行动",
-        description: a.description || "",
-        category: a.category || "other",
-        effects: {
-          physicalHealth: effects.physicalHealth || 0,
-          mentalHealth: effects.mentalHealth || 0,
-          attributes: effects.attributes && typeof effects.attributes === "object" ? effects.attributes : {},
-          summary: effects.summary || "",
-        },
-        llmGenerated: !!a.llmGenerated,
-        createdAt: a.createdAt || new Date().toISOString(),
-        updatedAt: a.updatedAt || a.createdAt || new Date().toISOString(),
+        stamina: typeof eff.stamina === "number" ? eff.stamina : 0,
+        physicalHealth: typeof eff.physicalHealth === "number" ? eff.physicalHealth : 0,
+        mentalHealth: typeof eff.mentalHealth === "number" ? eff.mentalHealth : 0,
+        attributes: eff.attributes && typeof eff.attributes === "object" ? eff.attributes : {},
+        attrTags: tags,
+        summary: eff.summary || "",
       };
+    }
+
+    function normalizeDailyRecord(r) {
+      const now = new Date().toISOString();
+      const effects = normalizeDailyEffects(r.effects, r.attrTags || r.effects?.attrTags);
+      return {
+        id: r.id || uid(),
+        name: (r.name || "").trim() || "日常记录",
+        description: r.description || "",
+        category: r.category || "other",
+        attrTags: effects.attrTags,
+        effects,
+        recordedAt: r.recordedAt || r.completedAt || now,
+        llmGenerated: !!r.llmGenerated,
+        createdAt: r.createdAt || r.recordedAt || now,
+        updatedAt: r.updatedAt || r.recordedAt || now,
+      };
+    }
+
+    function migrateDailyRecordsV5() {
+      if (state._migratedDailyV5) {
+        state.dailyRecords = (state.dailyRecords || []).map(normalizeDailyRecord);
+        return;
+      }
+      if (!state.dailyRecords) state.dailyRecords = [];
+      if (state.dailyRecords.length) {
+        state.dailyRecords = state.dailyRecords.map(normalizeDailyRecord);
+        state._migratedDailyV5 = true;
+        return;
+      }
+      const actionMap = new Map((state.dailyActions || []).map((a) => [a.id, a]));
+      (state.dailyLogs || []).forEach((log) => {
+        const tpl = actionMap.get(log.actionId);
+        const eff = log.effects || tpl?.effects || {};
+        state.dailyRecords.push(normalizeDailyRecord({
+          id: log.id || uid(),
+          name: tpl?.name || "日常记录",
+          description: tpl?.description || "",
+          category: tpl?.category || "other",
+          attrTags: tpl?.attrTags || eff.attrTags || [],
+          effects: eff,
+          recordedAt: log.completedAt || log.recordedAt,
+          llmGenerated: !!tpl?.llmGenerated,
+          createdAt: log.completedAt,
+        }));
+      });
+      state.dailyRecords = state.dailyRecords.map(normalizeDailyRecord);
+      state.dailyRecords.sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+      state._migratedDailyV5 = true;
     }
     function migrateLegacySideProjects() {
       if (state._migratedSideV3) return;
@@ -9637,10 +9978,11 @@ ${lines.join("\n\n")}`;
         if (key) state.player.attributes[key] = (state.player.attributes[key] || 0) + s;
       });
     }
-    function applyVitalDelta(physical, mental) {
+    function applyVitalDelta(physical, mental, stamina) {
       const v = state.player.vitals;
       if (typeof physical === "number") v.physicalHealth = clamp100(v.physicalHealth + physical);
       if (typeof mental === "number") v.mentalHealth = clamp100(v.mentalHealth + mental);
+      if (typeof stamina === "number") v.stamina = clamp100(v.stamina + stamina);
     }
     function tickVitals() {
       const now = Date.now();
@@ -9658,16 +10000,29 @@ ${lines.join("\n\n")}`;
         v.mentalHealth = MENTAL_RESET_VALUE;
         v.lastMentalDayKey = day;
       }
+      if (v.lastStaminaDayKey !== day) {
+        v.stamina = clamp100(v.stamina + STAMINA_DAILY_RECOVERY);
+        v.lastStaminaDayKey = day;
+      }
     }
     const tickDailyVitals = tickVitals;
     function onMainTaskCompleteVitals(task) {
       const vo = task.vitalOnComplete || {};
-      applyVitalDelta(typeof vo.physical === "number" ? vo.physical : -1, typeof vo.mental === "number" ? vo.mental : -MENTAL_COST_PER_TASK);
+      applyVitalDelta(
+        typeof vo.physical === "number" ? vo.physical : 0,
+        typeof vo.mental === "number" ? vo.mental : -MENTAL_COST_PER_TASK,
+        typeof vo.stamina === "number" ? vo.stamina : -STAMINA_COST_PER_TASK
+      );
       if (task.attrDelta) applyAttributeDelta(task.attrDelta);
       else applyAttrTagsToPlayer(task.attrTags, 1);
     }
     function onSideQuestCompleteVitals(sq) {
-      applyVitalDelta(-1, -MENTAL_COST_PER_TASK);
+      const vo = sq.vitalOnComplete || {};
+      applyVitalDelta(
+        typeof vo.physical === "number" ? vo.physical : 0,
+        typeof vo.mental === "number" ? vo.mental : -MENTAL_COST_PER_TASK,
+        typeof vo.stamina === "number" ? vo.stamina : -STAMINA_COST_PER_TASK
+      );
       if (sq.attrDelta) applyAttributeDelta(sq.attrDelta);
       else applyAttrTagsToPlayer(sq.attrTags, 1);
     }
@@ -9703,10 +10058,10 @@ ${lines.join("\n\n")}`;
       const fallback = {
         attrTags: task.title.match(/会议|社交|客户/) ? ["社交能力"] : task.title.match(/代码|开发|技术/) ? ["科技"] : ["精神力"],
         taskStory: `${task.title}：在大陆「${map?.name || "未知"}」的地图「${project.name}」中推进的一步。`,
-        attributes: {}, physicalHealth: -1, mentalHealth: -MENTAL_COST_PER_TASK,
+        attributes: {}, stamina: -STAMINA_COST_PER_TASK, physicalHealth: 0, mentalHealth: -MENTAL_COST_PER_TASK,
       };
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析主线任务并输出 JSON：
-{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"60字内任务剧情","attributes":{},"physicalHealth":-5~5,"mentalHealth":-10~0}
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"60字内任务剧情","attributes":{},"stamina":-20~0,"physicalHealth":-5~5,"mentalHealth":-10~0}
 大陆：${map?.name || ""}；地图：${project.name}；地图背景：${(project.questStory || "").slice(0,120)}
 任务标题：${task.title}；描述：${task.description || "无"}`);
       return { ...fallback, ...(j || {}) };
@@ -9714,24 +10069,27 @@ ${lines.join("\n\n")}`;
     async function analyzeSideQuestWithLlm(sq) {
       const map = getTag(sq.continentId);
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析大陆支线任务 JSON：
-{"attrTags":[],"questStory":"60字","attributes":{},"physicalHealth":0,"mentalHealth":-8}
+{"attrTags":[],"questStory":"60字","attributes":{},"stamina":-12,"physicalHealth":0,"mentalHealth":-8}
 大陆：${map?.name || ""}；标题：${sq.title}；描述：${sq.description || ""}`);
-      return j || { attrTags: ["精神力"], questStory: `${sq.title}：${map?.name || "大陆"}上的支线。`, mentalHealth: -6 };
+      return j || { attrTags: ["精神力"], questStory: `${sq.title}：${map?.name || "大陆"}上的支线。`, stamina: -STAMINA_COST_PER_TASK, mentalHealth: -6 };
     }
     async function analyzeDailyActionWithLlm(name, desc, category) {
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON：
-{"physicalHealth":-10~15,"mentalHealth":-10~15,"attributes":{},"summary":"20字"}
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"stamina":-30~30,"physicalHealth":-15~15,"mentalHealth":-20~20,"attributes":{},"summary":"20字"}
 名称：${name}；描述：${desc}；类别：${DAILY_CATEGORY_LABELS[category] || category}`);
-      const fb = { physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
-      if (category === "exercise" || category === "medicine" || category === "supplement") fb.physicalHealth = 5;
-      if (category === "entertainment" || category === "rest") fb.mentalHealth = 8;
+      const fb = { attrTags: [], stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
+      if (category === "exercise") { fb.stamina = -15; fb.physicalHealth = 8; fb.attrTags = ["体能"]; }
+      else if (category === "medicine" || category === "supplement") { fb.physicalHealth = 6; }
+      else if (category === "entertainment") { fb.mentalHealth = 8; fb.stamina = 5; fb.attrTags = ["精神力"]; }
+      else if (category === "rest") { fb.mentalHealth = 10; fb.stamina = 20; fb.attrTags = ["精神力"]; }
       return { ...fb, ...(j || {}) };
     }
     function vitalWarnBannerHtml() {
       const v = state.player?.vitals;
       if (!v) return "";
       const parts = [];
-      if (v.physicalHealth < PHYSICAL_WARN_BELOW) parts.push(`身体健康 ${v.physicalHealth} 分偏低，建议锻炼、用药或休息`);
+      if (v.stamina < STAMINA_WARN_BELOW) parts.push(`体力值 ${v.stamina} 分偏低，建议休息、睡眠或减少高强度事项`);
+      if (v.physicalHealth < PHYSICAL_WARN_BELOW) parts.push(`身体健康 ${v.physicalHealth} 分偏低，建议锻炼、用药或调养`);
       if (v.mentalHealth < MENTAL_WARN_BELOW) parts.push(`精神健康 ${v.mentalHealth} 分偏低，完成新事项前建议娱乐/休息类日常行动`);
       if (!parts.length) return "";
       return `<div class="vital-alert-box">${parts.map((p) => `<p>⚠️ ${escapeHtml(p)}</p>`).join("")}</div>`;
@@ -9741,9 +10099,10 @@ ${lines.join("\n\n")}`;
       if (!el) return;
       tickDailyVitals();
       const v = state.player.vitals;
+      const sc = v.stamina < STAMINA_WARN_BELOW ? " stamina warn" : " stamina";
       const pc = v.physicalHealth < PHYSICAL_WARN_BELOW ? " warn" : "";
       const mc = v.mentalHealth < MENTAL_WARN_BELOW ? " danger" : "";
-      el.innerHTML = `<span class="vital-chip${pc}" title="身体健康">体 ${v.physicalHealth}</span><span class="vital-chip${mc}" title="精神健康">精 ${v.mentalHealth}</span>`;
+      el.innerHTML = `<span class="vital-chip${sc}" title="体力值（当下精力）">力 ${v.stamina}</span><span class="vital-chip${pc}" title="身体健康（长期状态）">身 ${v.physicalHealth}</span><span class="vital-chip${mc}" title="精神健康">精 ${v.mentalHealth}</span>`;
     }
     function renderQuestLineFilter() {
       const el = document.getElementById("questLineFilter");
@@ -9763,116 +10122,964 @@ ${lines.join("\n\n")}`;
       if (state.questLineFilter === "main") return [];
       return list;
     }
-    function countDailyLogsForAction(actionId) {
-      return (state.dailyLogs || []).filter((l) => l.actionId === actionId).length;
+    function applyDailyRecordEffects(record, { reverse = false } = {}) {
+      const eff = record?.effects || {};
+      const sign = reverse ? -1 : 1;
+      applyVitalDelta(
+        sign * (eff.physicalHealth || 0),
+        sign * (eff.mentalHealth || 0),
+        sign * (eff.stamina || 0)
+      );
+      if (eff.attributes && Object.keys(eff.attributes).length) {
+        if (reverse) reverseAttributeDelta(eff.attributes);
+        else applyAttributeDelta(eff.attributes);
+      }
+      const tags = record?.attrTags || eff.attrTags || [];
+      if (tags.length) {
+        if (reverse) reverseAttrTagsFromPlayer(tags, 1);
+        else applyAttrTagsToPlayer(tags, 1);
+      }
     }
 
-    function renderDailyRoutinesPanel() {
-      const panel = document.getElementById("dailyRoutinesPanel");
-      if (!panel) return;
-      const acts = state.dailyActions || [];
-      if (!acts.length) { panel.innerHTML = '<p class="meta">记录健身、喝酒、吃药等日常，会影响身体与精神状态。</p>'; return; }
-      panel.innerHTML = acts.map((a) => {
-        const execCount = countDailyLogsForAction(a.id);
-        return `
-        <div class="daily-action-item" data-da-id="${a.id}">
-          <div class="sq-title">${escapeHtml(a.name)} <span class="meta">(${DAILY_CATEGORY_LABELS[a.category] || a.category})</span></div>
-          <div class="sq-sub">体${a.effects?.physicalHealth >= 0 ? "+" : ""}${a.effects?.physicalHealth || 0} / 精${a.effects?.mentalHealth >= 0 ? "+" : ""}${a.effects?.mentalHealth || 0}${a.effects?.summary ? ` · ${escapeHtml(a.effects.summary)}` : ""}${execCount ? ` · 已执行 ${execCount} 次` : ""}</div>
-          <div style="display:flex;gap:0.35rem;margin-top:0.35rem;flex-wrap:wrap">
-            <button type="button" class="btn btn-ghost btn-xs btn-edit-daily" data-id="${a.id}">编辑</button>
-            <button type="button" class="btn btn-primary btn-xs btn-exec-daily" data-id="${a.id}">再执行</button>
-            ${execCount ? `<button type="button" class="btn btn-ghost btn-xs btn-undo-daily" data-id="${a.id}">回退</button>` : ""}
-          </div>
-        </div>`;
-      }).join("");
-      panel.querySelectorAll(".btn-exec-daily").forEach((btn) => {
-        btn.addEventListener("click", (e) => { e.stopPropagation(); executeDailyAction(btn.dataset.id); });
-      });
-      panel.querySelectorAll(".btn-undo-daily").forEach((btn) => {
-        btn.addEventListener("click", (e) => { e.stopPropagation(); undoDailyActionExecution(btn.dataset.id); });
-      });
-      panel.querySelectorAll(".btn-edit-daily").forEach((btn) => {
-        btn.addEventListener("click", (e) => { e.stopPropagation(); openDailyActionModal(btn.dataset.id); });
-      });
-    }
-
-    function applyDailyActionEffects(eff) {
-      const effects = eff || {};
-      applyVitalDelta(effects.physicalHealth || 0, effects.mentalHealth || 0);
-      applyAttributeDelta(effects.attributes);
-    }
-
-    function reverseDailyActionEffects(eff) {
-      const effects = eff || {};
-      applyVitalDelta(-(effects.physicalHealth || 0), -(effects.mentalHealth || 0));
-      reverseAttributeDelta(effects.attributes);
-    }
-
-    async function executeDailyAction(id, { silent = false } = {}) {
-      const a = (state.dailyActions || []).find((x) => x.id === id);
-      if (!a) return false;
+    function addDailyRecord(item) {
       tickDailyVitals();
-      const eff = {
-        physicalHealth: a.effects?.physicalHealth || 0,
-        mentalHealth: a.effects?.mentalHealth || 0,
-        attributes: a.effects?.attributes ? { ...a.effects.attributes } : {},
-      };
-      applyDailyActionEffects(eff);
-      state.dailyLogs = state.dailyLogs || [];
-      state.dailyLogs.push({
-        id: uid(),
-        actionId: id,
-        completedAt: new Date().toISOString(),
-        effects: eff,
-      });
+      const record = normalizeDailyRecord(item);
+      applyDailyRecordEffects(record);
+      if (!state.dailyRecords) state.dailyRecords = [];
+      state.dailyRecords.unshift(record);
       state.player.stats.dailyActionsCompleted = (state.player.stats.dailyActionsCompleted || 0) + 1;
       save();
       renderTopbarVitals();
-      renderDailyRoutinesPanel();
+      renderDailyRecordsPanel();
+      renderDailyDigest();
       checkPhysicalHealthNotice();
       checkAchievements();
-      if (!silent) toast(`已记录：${a.name}`);
-      return true;
+      return record;
     }
 
-    function undoDailyActionExecution(id) {
-      const logs = state.dailyLogs || [];
-      let lastIdx = -1;
-      for (let i = logs.length - 1; i >= 0; i--) {
-        if (logs[i].actionId === id) { lastIdx = i; break; }
-      }
-      if (lastIdx < 0) {
-        toast("没有可回退的执行记录");
-        return false;
-      }
-      const a = (state.dailyActions || []).find((x) => x.id === id);
-      const log = logs[lastIdx];
-      const eff = log.effects || (a ? {
-        physicalHealth: a.effects?.physicalHealth || 0,
-        mentalHealth: a.effects?.mentalHealth || 0,
-        attributes: a.effects?.attributes || {},
-      } : null);
-      if (eff) reverseDailyActionEffects(eff);
-      logs.splice(lastIdx, 1);
+    function deleteDailyRecord(id) {
+      const idx = (state.dailyRecords || []).findIndex((r) => r.id === id);
+      if (idx < 0) return false;
+      const record = state.dailyRecords[idx];
+      applyDailyRecordEffects(record, { reverse: true });
+      state.dailyRecords.splice(idx, 1);
       if (state.player.stats.dailyActionsCompleted > 0) {
         state.player.stats.dailyActionsCompleted--;
       }
       save();
       renderTopbarVitals();
-      renderDailyRoutinesPanel();
-      toast(a ? `已回退：${a.name}` : "已回退日常执行");
+      renderDailyRecordsPanel();
+      renderDailyDigest();
+      toast(`已删除日常记录：${record.name}`);
       return true;
     }
+
+    function renderDailyRecordsPanel() {
+      const panel = document.getElementById("dailyRoutinesPanel");
+      if (!panel) return;
+      const records = [...(state.dailyRecords || [])].sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
+      if (!records.length) {
+        panel.innerHTML = '<p class="meta">每次登记都会生成一条独立记录（含日期时间），与项目任务分开管理。</p>';
+        return;
+      }
+      panel.innerHTML = records.map((rec) => {
+        const eff = rec.effects || {};
+        const tags = (rec.attrTags || []).map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
+        return `
+        <div class="daily-action-item" data-record-id="${rec.id}">
+          <div class="sq-title">${escapeHtml(rec.name)} <span class="meta">(${DAILY_CATEGORY_LABELS[rec.category] || rec.category})</span></div>
+          <div class="sq-sub">${formatDate(rec.recordedAt)}</div>
+          <div class="sq-sub">${formatVitalEffectLine(eff)}${eff.summary ? ` · ${escapeHtml(eff.summary)}` : ""}</div>
+          ${tags ? `<div class="task-attr-tags" style="margin-top:0.25rem">${tags}</div>` : ""}
+          <div style="display:flex;gap:0.35rem;margin-top:0.35rem;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost btn-xs btn-delete-daily-record" data-id="${rec.id}">删除</button>
+          </div>
+        </div>`;
+      }).join("");
+      panel.querySelectorAll(".btn-delete-daily-record").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!confirm("删除此条日常记录？将回退对应的体力/健康/属性影响。")) return;
+          deleteDailyRecord(btn.dataset.id);
+        });
+      });
+    }
+    function normalizePetNote(n) {
+      const now = new Date().toISOString();
+      return {
+        id: n.id || uid(),
+        content: (n.content || "").trim(),
+        aiDescription: n.aiDescription || "",
+        llmGenerated: !!n.llmGenerated,
+        updatedAt: n.updatedAt || now,
+      };
+    }
+
+    function normalizePetCareTask(t) {
+      const now = new Date().toISOString();
+      const intervalDays = Math.max(1, Math.min(999, parseInt(t.intervalDays, 10) || 1));
+      return {
+        id: t.id || uid(),
+        title: (t.title || "").trim() || "管护事项",
+        description: t.description || "",
+        intervalDays,
+        lastDoneAt: t.lastDoneAt || null,
+        createdAt: t.createdAt || now,
+        updatedAt: t.updatedAt || now,
+      };
+    }
+
+    function normalizePet(p) {
+      const now = new Date().toISOString();
+      return {
+        id: p.id || uid(),
+        name: (p.name || "").trim() || "未命名宠物",
+        species: (p.species || "").trim(),
+        breed: (p.breed || "").trim(),
+        gender: ["male", "female", "unknown"].includes(p.gender) ? p.gender : "unknown",
+        age: (p.age || "").trim(),
+        weight: (p.weight || "").trim(),
+        weightUnit: PET_WEIGHT_UNITS[p.weightUnit] ? p.weightUnit : "kg",
+        notes: Array.isArray(p.notes) ? p.notes.map(normalizePetNote) : [],
+        careTasks: Array.isArray(p.careTasks) ? p.careTasks.map(normalizePetCareTask) : [],
+        createdAt: p.createdAt || now,
+        updatedAt: p.updatedAt || now,
+      };
+    }
+
+    function getPet(id) {
+      return (state.pets || []).find((p) => p.id === id) || null;
+    }
+
+    function getActivePet() {
+      if (state.activePetId) {
+        const p = getPet(state.activePetId);
+        if (p) return p;
+      }
+      return (state.pets || [])[0] || null;
+    }
+
+    function parseDayKey(key) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key || ""));
+      if (!m) return null;
+      return new Date(+m[1], +m[2] - 1, +m[3], DAY_START_HOUR, 0, 0, 0);
+    }
+
+    function logicalDaysBetween(fromKey, toKey) {
+      const a = parseDayKey(fromKey);
+      const b = parseDayKey(toKey);
+      if (!a || !b) return 0;
+      return Math.round((b.getTime() - a.getTime()) / (24 * 60 * 60 * 1000));
+    }
+
+    function formatPetCareInterval(days) {
+      const d = Math.max(1, parseInt(days, 10) || 1);
+      const presets = {
+        1: "每天一次",
+        2: "每两天一次",
+        3: "每三天一次",
+        7: "每周一次",
+        14: "每两周一次",
+        30: "每月一次",
+        90: "每季度一次",
+        180: "每半年一次",
+        365: "每年一次",
+      };
+      return presets[d] || `每 ${d} 天一次`;
+    }
+
+    function isPetCareDueToday(task, refDayKey = todayLogicalDayKey()) {
+      if (!task) return false;
+      const interval = Math.max(1, task.intervalDays || 1);
+      if (!task.lastDoneAt) return true;
+      const lastKey = dayKey(task.lastDoneAt);
+      const elapsed = logicalDaysBetween(lastKey, refDayKey);
+      return elapsed >= interval;
+    }
+
+    function getPetCareDueItems(petId = null) {
+      const items = [];
+      (state.pets || []).forEach((pet) => {
+        if (petId && pet.id !== petId) return;
+        (pet.careTasks || []).forEach((task) => {
+          if (isPetCareDueToday(task)) {
+            items.push({ pet, task });
+          }
+        });
+      });
+      return items;
+    }
+
+    function markPetCareDone(petId, careTaskId) {
+      const pet = getPet(petId);
+      const task = pet?.careTasks?.find((t) => t.id === careTaskId);
+      if (!task) return false;
+      task.lastDoneAt = new Date().toISOString();
+      task.updatedAt = task.lastDoneAt;
+      pet.updatedAt = task.lastDoneAt;
+      save();
+      renderPetManager();
+      updatePetDueBadge();
+      toast(`已完成：${pet.name} · ${task.title}`);
+      return true;
+    }
+
+    async function generatePetNoteDescription(pet, content) {
+      const trimmed = (content || "").trim();
+      if (!trimmed) return "";
+      const j = await callLlmJson(
+        LLM_SYSTEM_GAME,
+        `根据用户笔记为宠物写一句中文描述（20-45字，温馨具体），输出 JSON：{"description":"..."}
+宠物：${pet.name}；种类：${pet.species || "未知"}；品种：${pet.breed || "未知"}；笔记内容：${trimmed}`
+      );
+      if (j?.description) return String(j.description).trim();
+      const text = await callLlmNarrative(
+        LLM_SYSTEM_GAME,
+        `用一句中文（20-45字）描述以下宠物相关笔记，不要 markdown：\n宠物${pet.name}（${pet.species}）\n${trimmed}`
+      );
+      return text ? text.trim().slice(0, 80) : trimmed.slice(0, 40);
+    }
+
+    function updatePetDueBadge() {
+      const badge = document.getElementById("petDueBadge");
+      if (!badge) return;
+      const n = getPetCareDueItems().length;
+      badge.textContent = String(n);
+      badge.style.display = n > 0 ? "inline" : "none";
+    }
+
+    function switchPetPanelTab(tab) {
+      petPanelTab = tab;
+      document.querySelectorAll("#petPanelTabs .hero-panel-tab").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.petTab === tab);
+      });
+      ["todos", "profile", "notes", "care"].forEach((id) => {
+        const el = document.getElementById(`petPanel${id.charAt(0).toUpperCase()}${id.slice(1)}`);
+        if (el) el.style.display = id === tab ? "" : "none";
+      });
+    }
+
+    function renderPetManager() {
+      const pets = state.pets || [];
+      if (!state.activePetId && pets.length) state.activePetId = pets[0].id;
+      const listCol = document.getElementById("petListCol");
+      if (!listCol) return;
+
+      if (!pets.length) {
+        listCol.innerHTML = '<p class="meta">暂无宠物</p>';
+        ["Todos", "Profile", "Notes", "Care"].forEach((s) => {
+          const el = document.getElementById(`petPanel${s}`);
+          if (el) el.innerHTML = '<p class="meta">点击「+ 新建宠物」开始登记。</p>';
+        });
+        return;
+      }
+
+      listCol.innerHTML = pets
+        .map((pet) => {
+          const due = getPetCareDueItems(pet.id).length;
+          return `<button type="button" class="pet-list-item ${pet.id === state.activePetId ? "active" : ""}" data-pet-id="${pet.id}">
+            <div class="pet-name">${escapeHtml(pet.name)}</div>
+            <div class="pet-sub">${escapeHtml(pet.species || "—")}${due ? ` · ${due} 项待办` : ""}</div>
+          </button>`;
+        })
+        .join("");
+
+      listCol.querySelectorAll(".pet-list-item").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.activePetId = btn.dataset.petId;
+          save();
+          renderPetManager();
+        });
+      });
+
+      switchPetPanelTab(petPanelTab);
+      renderPetPanelTodos();
+      renderPetPanelProfile();
+      renderPetPanelNotes();
+      renderPetPanelCare();
+    }
+
+    function renderPetPanelTodos() {
+      const panel = document.getElementById("petPanelTodos");
+      const pet = getActivePet();
+      if (!panel || !pet) return;
+      const dueAll = getPetCareDueItems(pet.id);
+      const todayKey = todayLogicalDayKey();
+      if (!dueAll.length) {
+        panel.innerHTML = `<p class="meta">${escapeHtml(pet.name)} 今日（${formatDayLabel(todayKey)}）暂无到期管护事项 🎉</p>`;
+        return;
+      }
+      panel.innerHTML = `<p class="meta" style="margin-bottom:0.45rem">${escapeHtml(pet.name)} · ${formatDayLabel(todayKey)} 待办 ${dueAll.length} 项</p>` +
+        dueAll
+          .map(({ task }) => {
+            const last = task.lastDoneAt ? formatDate(task.lastDoneAt) : "从未执行";
+            return `<div class="pet-todo-card">
+              <div class="care-title">${escapeHtml(task.title)}</div>
+              <div class="care-meta">${formatPetCareInterval(task.intervalDays)} · 上次：${escapeHtml(last)}</div>
+              ${task.description ? `<p class="meta" style="margin:0.35rem 0 0">${escapeHtml(task.description)}</p>` : ""}
+              <button type="button" class="btn btn-primary btn-xs btn-pet-care-done" data-pet-id="${pet.id}" data-care-id="${task.id}" style="margin-top:0.4rem">标记已完成</button>
+            </div>`;
+          })
+          .join("");
+      panel.querySelectorAll(".btn-pet-care-done").forEach((btn) => {
+        btn.addEventListener("click", () => markPetCareDone(btn.dataset.petId, btn.dataset.careId));
+      });
+    }
+
+    function renderPetPanelProfile() {
+      const panel = document.getElementById("petPanelProfile");
+      const pet = getActivePet();
+      if (!panel || !pet) return;
+      const wUnit = PET_WEIGHT_UNITS[pet.weightUnit] || pet.weightUnit;
+      panel.innerHTML = `
+        <dl class="pet-profile-grid">
+          <div><dt>名字</dt><dd>${escapeHtml(pet.name)}</dd></div>
+          <div><dt>生物种类</dt><dd>${escapeHtml(pet.species || "—")}</dd></div>
+          <div><dt>品种</dt><dd>${escapeHtml(pet.breed || "—")}</dd></div>
+          <div><dt>性别</dt><dd>${PET_GENDER_LABELS[pet.gender] || "未知"}</dd></div>
+          <div><dt>年龄</dt><dd>${escapeHtml(pet.age || "—")}</dd></div>
+          <div><dt>体重</dt><dd>${pet.weight ? escapeHtml(pet.weight) + " " + escapeHtml(wUnit) : "—"}</dd></div>
+        </dl>
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnEditActivePet">编辑档案</button>
+          <button type="button" class="btn btn-danger btn-sm" id="btnDeleteActivePet">删除宠物</button>
+        </div>`;
+      document.getElementById("btnEditActivePet")?.addEventListener("click", () => openPetEditModal(pet.id));
+      document.getElementById("btnDeleteActivePet")?.addEventListener("click", () => {
+        if (!confirm(`确定删除宠物「${pet.name}」及其全部描述与管护事项？`)) return;
+        state.pets = state.pets.filter((p) => p.id !== pet.id);
+        if (state.activePetId === pet.id) state.activePetId = state.pets[0]?.id || null;
+        save();
+        renderPetManager();
+        updatePetDueBadge();
+        toast("宠物已删除");
+      });
+    }
+
+    function renderPetPanelNotes() {
+      const panel = document.getElementById("petPanelNotes");
+      const pet = getActivePet();
+      if (!panel || !pet) return;
+      const notes = pet.notes || [];
+      panel.innerHTML = `
+        <p class="meta" style="margin-bottom:0.45rem">每条可填写自由内容，并用 AI 生成一句描述。</p>
+        <div id="petNotesList">${notes.length ? notes.map((n) => renderPetNoteRowHtml(pet.id, n)).join("") : '<p class="meta">暂无描述条目</p>'}</div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnAddPetNote" style="margin-top:0.35rem">+ 添加描述条目</button>`;
+      bindPetNoteRowEvents(pet);
+      document.getElementById("btnAddPetNote")?.addEventListener("click", () => {
+        pet.notes.push(normalizePetNote({ content: "" }));
+        pet.updatedAt = new Date().toISOString();
+        save();
+        renderPetPanelNotes();
+      });
+    }
+
+    function renderPetNoteRowHtml(petId, note) {
+      return `<div class="pet-note-row" data-note-id="${note.id}">
+        <textarea class="pet-note-content" placeholder="输入与该宠物相关的事项、习惯、病史等…">${escapeHtml(note.content)}</textarea>
+        ${note.aiDescription ? `<div class="pet-note-ai">${escapeHtml(note.aiDescription)}</div>` : ""}
+        <div style="display:flex;gap:0.35rem;flex-wrap:wrap">
+          <button type="button" class="btn btn-ghost btn-xs btn-pet-note-ai" data-pet-id="${petId}" data-note-id="${note.id}">✨ AI 生成描述</button>
+          <button type="button" class="btn btn-ghost btn-xs btn-pet-note-save" data-note-id="${note.id}">保存条目</button>
+          <button type="button" class="btn btn-ghost btn-xs btn-pet-note-del" data-note-id="${note.id}">删除</button>
+        </div>
+      </div>`;
+    }
+
+    function bindPetNoteRowEvents(pet) {
+      const panel = document.getElementById("petPanelNotes");
+      if (!panel) return;
+      panel.querySelectorAll(".pet-note-content").forEach((ta) => {
+        ta.addEventListener("change", () => {
+          const row = ta.closest(".pet-note-row");
+          const note = pet.notes.find((n) => n.id === row?.dataset.noteId);
+          if (note) { note.content = ta.value.trim(); note.updatedAt = new Date().toISOString(); save(); }
+        });
+      });
+      panel.querySelectorAll(".btn-pet-note-save").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".pet-note-row");
+          const ta = row?.querySelector(".pet-note-content");
+          const note = pet.notes.find((n) => n.id === btn.dataset.noteId);
+          if (note && ta) {
+            note.content = ta.value.trim();
+            note.updatedAt = new Date().toISOString();
+            pet.updatedAt = note.updatedAt;
+            save();
+            toast("条目已保存");
+          }
+        });
+      });
+      panel.querySelectorAll(".btn-pet-note-del").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          pet.notes = pet.notes.filter((n) => n.id !== btn.dataset.noteId);
+          pet.updatedAt = new Date().toISOString();
+          save();
+          renderPetPanelNotes();
+        });
+      });
+      panel.querySelectorAll(".btn-pet-note-ai").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          if (!hasLlmApiKey()) { toast("请先在「工具 → AI 总结」中配置大模型 API"); return; }
+          const row = btn.closest(".pet-note-row");
+          const ta = row?.querySelector(".pet-note-content");
+          const note = pet.notes.find((n) => n.id === btn.dataset.noteId);
+          if (!note || !ta) return;
+          note.content = ta.value.trim();
+          if (!note.content) { toast("请先输入条目内容"); return; }
+          btn.disabled = true;
+          btn.textContent = "生成中…";
+          try {
+            note.aiDescription = await generatePetNoteDescription(pet, note.content);
+            note.llmGenerated = true;
+            note.updatedAt = new Date().toISOString();
+            pet.updatedAt = note.updatedAt;
+            save();
+            renderPetPanelNotes();
+            toast("描述已生成");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "✨ AI 生成描述";
+          }
+        });
+      });
+    }
+
+    function renderPetPanelCare() {
+      const panel = document.getElementById("petPanelCare");
+      const pet = getActivePet();
+      if (!panel || !pet) return;
+      const tasks = pet.careTasks || [];
+      panel.innerHTML = `
+        <p class="meta" style="margin-bottom:0.45rem">设置周期事项；系统按「上次执行时间 + 间隔天数」判断今日是否待办。</p>
+        ${tasks.length ? tasks.map((t) => {
+          const due = isPetCareDueToday(t);
+          const last = t.lastDoneAt ? formatDate(t.lastDoneAt) : "从未执行";
+          return `<div class="pet-care-row ${due ? "due" : ""}">
+            <div class="care-title">${escapeHtml(t.title)}${due ? ' <span class="badge badge-priority-high">今日待办</span>' : ""}</div>
+            <div class="care-meta">${formatPetCareInterval(t.intervalDays)} · 上次：${escapeHtml(last)}</div>
+            ${t.description ? `<p class="meta" style="margin:0.25rem 0 0">${escapeHtml(t.description)}</p>` : ""}
+            <div style="display:flex;gap:0.35rem;margin-top:0.35rem;flex-wrap:wrap">
+              <button type="button" class="btn btn-primary btn-xs btn-pet-care-done-inline" data-pet-id="${pet.id}" data-care-id="${t.id}">标记完成</button>
+              <button type="button" class="btn btn-ghost btn-xs btn-pet-care-edit" data-care-id="${t.id}">编辑</button>
+              <button type="button" class="btn btn-ghost btn-xs btn-pet-care-del" data-care-id="${t.id}">删除</button>
+            </div>
+          </div>`;
+        }).join("") : '<p class="meta">暂无管护事项</p>'}
+        <button type="button" class="btn btn-primary btn-sm" id="btnAddPetCare" style="margin-top:0.45rem">+ 添加管护事项</button>`;
+      panel.querySelectorAll(".btn-pet-care-done-inline").forEach((btn) => {
+        btn.addEventListener("click", () => markPetCareDone(btn.dataset.petId, btn.dataset.careId));
+      });
+      panel.querySelectorAll(".btn-pet-care-edit").forEach((btn) => {
+        btn.addEventListener("click", () => openPetCareModal(btn.dataset.careId));
+      });
+      panel.querySelectorAll(".btn-pet-care-del").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          if (!confirm("确定删除该管护事项？")) return;
+          pet.careTasks = pet.careTasks.filter((t) => t.id !== btn.dataset.careId);
+          pet.updatedAt = new Date().toISOString();
+          save();
+          renderPetManager();
+          updatePetDueBadge();
+        });
+      });
+      document.getElementById("btnAddPetCare")?.addEventListener("click", () => openPetCareModal());
+    }
+
+    function datetimeLocalToIso(val) {
+      if (!val) return null;
+      const d = new Date(val);
+      return Number.isNaN(d.getTime()) ? null : d.toISOString();
+    }
+
+    function openPetsModal(tab = "todos") {
+      petPanelTab = tab;
+      renderPetManager();
+      updatePetDueBadge();
+      openModal("modalPets");
+    }
+
+    function openPetEditModal(editId = null) {
+      editingPetId = editId;
+      const pet = editId ? getPet(editId) : null;
+      document.getElementById("modalPetEditTitle").textContent = pet ? "编辑宠物" : "新建宠物";
+      document.getElementById("petNameInput").value = pet?.name || "";
+      document.getElementById("petSpeciesInput").value = pet?.species || "";
+      document.getElementById("petBreedInput").value = pet?.breed || "";
+      document.getElementById("petGenderInput").value = pet?.gender || "unknown";
+      document.getElementById("petAgeInput").value = pet?.age || "";
+      document.getElementById("petWeightInput").value = pet?.weight || "";
+      document.getElementById("petWeightUnitInput").value = pet?.weightUnit || "kg";
+      openModal("modalPetEdit");
+    }
+
+    function openPetCareModal(editCareId = null) {
+      const pet = getActivePet();
+      if (!pet) { toast("请先选择或创建宠物"); return; }
+      editingPetCareId = editCareId;
+      const task = editCareId ? pet.careTasks.find((t) => t.id === editCareId) : null;
+      document.getElementById("modalPetCareTitle").textContent = task ? "编辑管护事项" : "添加管护事项";
+      document.getElementById("petCareTitleInput").value = task?.title || "";
+      document.getElementById("petCareDescInput").value = task?.description || "";
+      const interval = task?.intervalDays || 1;
+      const presetValues = ["1", "2", "3", "7", "14", "30", "90", "180", "365"];
+      const sel = document.getElementById("petCareIntervalSelect");
+      if (presetValues.includes(String(interval))) {
+        sel.value = String(interval);
+        document.getElementById("petCareCustomDaysField").style.display = "none";
+      } else {
+        sel.value = "custom";
+        document.getElementById("petCareCustomDaysField").style.display = "";
+        document.getElementById("petCareCustomDaysInput").value = String(interval);
+      }
+      document.getElementById("petCareLastDoneInput").value = isoToDatetimeLocal(task?.lastDoneAt);
+      openModal("modalPetCare");
+    }
+
+    function findTagByFuzzyName(name) {
+      const n = (name || "").trim().toLowerCase();
+      if (!n) return null;
+      const tags = state.tags || [];
+      return (
+        tags.find((t) => t.name.toLowerCase() === n) ||
+        tags.find((t) => t.name.toLowerCase().includes(n) || n.includes(t.name.toLowerCase()))
+      );
+    }
+
+    function findProjectByFuzzyName(name, continentId) {
+      const n = (name || "").trim().toLowerCase();
+      if (!n) return null;
+      const pool = state.projects.filter(
+        (p) =>
+          (p.questType || "main") !== "side" &&
+          (!continentId || (p.tagIds || []).includes(continentId))
+      );
+      return (
+        pool.find((p) => p.name.toLowerCase() === n) ||
+        pool.find((p) => p.name.toLowerCase().includes(n) || n.includes(p.name.toLowerCase()))
+      );
+    }
+
+    function ensureContinentByName(name, create) {
+      const trimmed = (name || "").trim();
+      if (!trimmed) return null;
+      const existing = findTagByFuzzyName(trimmed);
+      if (existing) return existing;
+      if (!create) return null;
+      const tag = normalizeTag({
+        id: uid(),
+        name: trimmed,
+        color: TAG_COLORS[(state.tags || []).length % TAG_COLORS.length],
+        loreGenerated: false,
+      });
+      state.tags.push(tag);
+      return tag;
+    }
+
+    function buildWorldContextForFuzzyLlm() {
+      const lines = [];
+      (state.tags || []).forEach((tag) => {
+        const maps = state.projects.filter(
+          (p) => (p.tagIds || []).includes(tag.id) && (p.questType || "main") !== "side"
+        );
+        lines.push(
+          `大陆「${tag.name}」：${maps.length ? maps.map((m) => `地图「${m.name}」`).join("、") : "暂无地图"}`
+        );
+      });
+      if (!lines.length) lines.push("（尚无大陆，可建议新建）");
+      return lines.join("\n");
+    }
+
+    async function analyzeFuzzyEntryWithLlm(text) {
+      const world = buildWorldContextForFuzzyLlm();
+      const prompt = `用户用自然语言描述要做的事，请判断应如何录入 Earth-Online。
+
+现有世界：
+${world}
+
+用户输入：
+${text}
+
+输出 JSON（不要 markdown）：
+{
+  "intent":"main_task|new_map|side_quest|daily",
+  "reasoning":"一句中文说明判断依据",
+  "continentName":"大陆名",
+  "createContinent":false,
+  "projectName":"地图/项目名",
+  "createProject":true,
+  "projectDescription":"",
+  "taskTitle":"任务标题",
+  "taskDescription":"",
+  "taskPriority":"high|medium|low",
+  "sideQuestTitle":"",
+  "sideQuestDescription":"",
+  "dailyName":"",
+  "dailyDescription":"",
+  "dailyCategory":"exercise|medicine|supplement|entertainment|rest|other"
+}
+
+规则：工作/学习/项目 → main_task 或 new_map；健身/喝酒/休息/吃药 → daily；大陆级跟进 → side_quest；优先复用已有名称。`;
+
+      const j = await callLlmJson(LLM_SYSTEM_GAME, prompt);
+      return normalizeFuzzyDraft(j || {}, text);
+    }
+
+    function normalizeFuzzyDraft(raw, sourceText) {
+      const intent = ["main_task", "new_map", "side_quest", "daily"].includes(raw.intent)
+        ? raw.intent
+        : "main_task";
+      const pri = ["high", "medium", "low"].includes(raw.taskPriority) ? raw.taskPriority : "medium";
+      const cat = Object.keys(DAILY_CATEGORY_LABELS).includes(raw.dailyCategory) ? raw.dailyCategory : "other";
+      return {
+        sourceText: sourceText || "",
+        intent,
+        reasoning: raw.reasoning || "已根据输入内容解析",
+        continentName: (raw.continentName || "").trim(),
+        createContinent: !!raw.createContinent,
+        projectName: (raw.projectName || "").trim(),
+        createProject: raw.createProject !== false,
+        projectDescription: (raw.projectDescription || "").trim(),
+        taskTitle: (raw.taskTitle || "").trim(),
+        taskDescription: (raw.taskDescription || "").trim(),
+        taskPriority: pri,
+        sideQuestTitle: (raw.sideQuestTitle || "").trim(),
+        sideQuestDescription: (raw.sideQuestDescription || "").trim(),
+        dailyName: (raw.dailyName || "").trim(),
+        dailyDescription: (raw.dailyDescription || "").trim(),
+        dailyCategory: cat,
+      };
+    }
+
+    function updateFuzzyIntentFieldsVisibility() {
+      const intent = document.getElementById("fuzzyIntentSelect")?.value || "main_task";
+      document.getElementById("fuzzyFieldsContinent")?.classList.toggle("visible", intent !== "daily");
+      document.getElementById("fuzzyFieldsProject")?.classList.toggle("visible", intent === "main_task" || intent === "new_map");
+      document.getElementById("fuzzyFieldsTask")?.classList.toggle("visible", intent === "main_task" || intent === "new_map");
+      document.getElementById("fuzzyFieldsSide")?.classList.toggle("visible", intent === "side_quest");
+      document.getElementById("fuzzyFieldsDaily")?.classList.toggle("visible", intent === "daily");
+      const createProj = document.getElementById("fuzzyCreateProject");
+      if (createProj) {
+        if (intent === "new_map") {
+          createProj.checked = true;
+          createProj.disabled = true;
+        } else {
+          createProj.disabled = false;
+        }
+      }
+    }
+
+    function fillFuzzyReviewForm(draft) {
+      fuzzyEntryDraft = draft;
+      document.getElementById("fuzzyReviewSection").style.display = "";
+      document.getElementById("fuzzyReasoning").textContent = draft.reasoning || "";
+      document.getElementById("fuzzyIntentSelect").value = draft.intent;
+      document.getElementById("fuzzyContinentName").value = draft.continentName || "";
+      document.getElementById("fuzzyCreateContinent").checked = !!draft.createContinent;
+      document.getElementById("fuzzyProjectName").value = draft.projectName || "";
+      document.getElementById("fuzzyCreateProject").checked = draft.intent === "new_map" ? true : !!draft.createProject;
+      document.getElementById("fuzzyProjectDesc").value = draft.projectDescription || "";
+      document.getElementById("fuzzyTaskTitle").value = draft.taskTitle || "";
+      document.getElementById("fuzzyTaskDesc").value = draft.taskDescription || "";
+      document.getElementById("fuzzyTaskPriority").value = draft.taskPriority || "medium";
+      document.getElementById("fuzzySideTitle").value = draft.sideQuestTitle || "";
+      document.getElementById("fuzzySideDesc").value = draft.sideQuestDescription || "";
+      document.getElementById("fuzzyDailyName").value = draft.dailyName || "";
+      document.getElementById("fuzzyDailyDesc").value = draft.dailyDescription || "";
+      document.getElementById("fuzzyDailyCategory").value = draft.dailyCategory || "other";
+      document.getElementById("btnFuzzyConfirm").disabled = false;
+      updateFuzzyIntentFieldsVisibility();
+    }
+
+    function readFuzzyDraftFromForm() {
+      return normalizeFuzzyDraft(
+        {
+          intent: document.getElementById("fuzzyIntentSelect").value,
+          reasoning: document.getElementById("fuzzyReasoning").textContent,
+          continentName: document.getElementById("fuzzyContinentName").value,
+          createContinent: document.getElementById("fuzzyCreateContinent").checked,
+          projectName: document.getElementById("fuzzyProjectName").value,
+          createProject: document.getElementById("fuzzyCreateProject").checked,
+          projectDescription: document.getElementById("fuzzyProjectDesc").value,
+          taskTitle: document.getElementById("fuzzyTaskTitle").value,
+          taskDescription: document.getElementById("fuzzyTaskDesc").value,
+          taskPriority: document.getElementById("fuzzyTaskPriority").value,
+          sideQuestTitle: document.getElementById("fuzzySideTitle").value,
+          sideQuestDescription: document.getElementById("fuzzySideDesc").value,
+          dailyName: document.getElementById("fuzzyDailyName").value,
+          dailyDescription: document.getElementById("fuzzyDailyDesc").value,
+          dailyCategory: document.getElementById("fuzzyDailyCategory").value,
+        },
+        document.getElementById("fuzzyInputText").value.trim()
+      );
+    }
+
+    async function executeFuzzyEntry(draft) {
+      const now = new Date().toISOString();
+      const created = [];
+
+      if (draft.intent === "daily") {
+        if (!draft.dailyName) {
+          toast("请填写日常名称");
+          return false;
+        }
+        let effects = null;
+        if (hasLlmApiKey()) {
+          const analysis = await analyzeDailyActionWithLlm(
+            draft.dailyName,
+            draft.dailyDescription,
+            draft.dailyCategory
+          );
+          effects = normalizeDailyEffects(analysis, analysis.attrTags);
+        } else {
+          effects = normalizeDailyEffects(
+            { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: draft.dailyDescription },
+            []
+          );
+        }
+        addDailyRecord({
+          id: uid(),
+          name: draft.dailyName,
+          description: draft.dailyDescription,
+          category: draft.dailyCategory,
+          attrTags: effects.attrTags || [],
+          effects,
+          recordedAt: now,
+          llmGenerated: !!hasLlmApiKey(),
+          createdAt: now,
+          updatedAt: now,
+        });
+        state.leftSidebarTab = "routines";
+        created.push(`日常「${draft.dailyName}」`);
+      } else if (draft.intent === "side_quest") {
+        if (!draft.continentName) {
+          toast("请填写所属大陆");
+          return false;
+        }
+        if (!draft.sideQuestTitle) {
+          toast("请填写支线标题");
+          return false;
+        }
+        const tag = ensureContinentByName(draft.continentName, draft.createContinent);
+        if (!tag) {
+          toast("未找到大陆，请勾选「新建大陆」或修正名称");
+          return false;
+        }
+        const sq = normalizeSideQuest({
+          id: uid(),
+          continentId: tag.id,
+          title: draft.sideQuestTitle,
+          description: draft.sideQuestDescription,
+          status: "todo",
+          priority: draft.taskPriority,
+          createdAt: now,
+          updatedAt: now,
+        });
+        state.sideQuests.push(sq);
+        state.activeProjectId = SIDE_QUEST_BOARD_ID;
+        state.activeSideQuestId = sq.id;
+        created.push(`支线「${sq.title}」→ ${tag.name}`);
+      } else {
+        if (!draft.continentName) {
+          toast("请填写所属大陆");
+          return false;
+        }
+        if (!draft.projectName) {
+          toast("请填写地图/项目名称");
+          return false;
+        }
+        const tag = ensureContinentByName(draft.continentName, draft.createContinent);
+        if (!tag) {
+          toast("未找到大陆，请勾选「新建大陆」或修正名称");
+          return false;
+        }
+        let project = findProjectByFuzzyName(draft.projectName, tag.id);
+        const mustCreate = draft.intent === "new_map" || draft.createProject;
+        if (!project && mustCreate) {
+          project = defaultProject(
+            draft.projectName,
+            draft.projectDescription,
+            [tag.id],
+            "main",
+            ""
+          );
+          state.projects.push(project);
+          created.push(`地图「${project.name}」`);
+        }
+        if (!project) {
+          toast("未找到地图，请勾选「新建地图」或修正名称");
+          return false;
+        }
+        if (draft.taskTitle) {
+          const task = normalizeTask({
+            id: uid(),
+            title: draft.taskTitle,
+            description: draft.taskDescription,
+            status: "todo",
+            priority: draft.taskPriority,
+            createdAt: now,
+            updatedAt: now,
+          });
+          if (!project.tasks) project.tasks = [];
+          project.tasks.push(task);
+          project.updatedAt = now;
+          created.push(`任务「${task.title}」`);
+        } else if (draft.intent === "main_task") {
+          toast("地图任务类型需要填写任务标题");
+          return false;
+        }
+        state.activeProjectId = project.id;
+        state.activeSideQuestId = null;
+        taskFilter = "all";
+        if (!created.some((c) => c.includes("地图"))) {
+          created.push(`归入地图「${project.name}」`);
+        }
+      }
+
+      save();
+      render();
+      closeModal("modalFuzzyEntry");
+      toast(`已创建：${created.join(" · ")}`);
+      focusWorkOnMobile();
+      return true;
+    }
+
+    function openFuzzyEntryModal() {
+      fuzzyEntryDraft = null;
+      document.getElementById("fuzzyInputText").value = "";
+      document.getElementById("fuzzyReviewSection").style.display = "none";
+      document.getElementById("fuzzyAnalyzeStatus").textContent = "";
+      document.getElementById("btnFuzzyConfirm").disabled = true;
+      openModal("modalFuzzyEntry");
+      setTimeout(() => document.getElementById("fuzzyInputText")?.focus(), 100);
+    }
+
+    function bindFuzzyEntryUi() {
+      document.getElementById("btnOpenFuzzyEntry")?.addEventListener("click", openFuzzyEntryModal);
+      document.getElementById("fuzzyIntentSelect")?.addEventListener("change", updateFuzzyIntentFieldsVisibility);
+      document.getElementById("btnFuzzyAnalyze")?.addEventListener("click", async () => {
+        if (!hasLlmApiKey()) {
+          toast("请先在「工具 → AI 总结」中配置大模型 API");
+          return;
+        }
+        const text = document.getElementById("fuzzyInputText").value.trim();
+        if (!text) {
+          toast("请先输入一段话");
+          return;
+        }
+        const statusEl = document.getElementById("fuzzyAnalyzeStatus");
+        const btn = document.getElementById("btnFuzzyAnalyze");
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = "解析中…";
+        try {
+          fillFuzzyReviewForm(await analyzeFuzzyEntryWithLlm(text));
+          if (statusEl) statusEl.textContent = "解析完成，请复核后确认";
+        } catch (e) {
+          if (statusEl) statusEl.textContent = "";
+          toast(e.message || "解析失败");
+        } finally {
+          btn.disabled = false;
+        }
+      });
+      document.getElementById("btnFuzzyConfirm")?.addEventListener("click", async () => {
+        const btn = document.getElementById("btnFuzzyConfirm");
+        btn.disabled = true;
+        try {
+          await executeFuzzyEntry(readFuzzyDraftFromForm());
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
+    function bindPetSystemUi() {
+      document.getElementById("btnOpenPetsTop")?.addEventListener("click", () => openPetsModal("todos"));
+      document.getElementById("btnOpenPets")?.addEventListener("click", () => openPetsModal("todos"));
+      document.getElementById("btnNewPet")?.addEventListener("click", () => openPetEditModal());
+      document.querySelectorAll("#petPanelTabs .hero-panel-tab").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          petPanelTab = btn.dataset.petTab;
+          switchPetPanelTab(petPanelTab);
+          renderPetManager();
+        });
+      });
+      document.getElementById("petCareIntervalSelect")?.addEventListener("change", (e) => {
+        document.getElementById("petCareCustomDaysField").style.display = e.target.value === "custom" ? "" : "none";
+      });
+      document.getElementById("btnConfirmPetEdit")?.addEventListener("click", () => {
+        const name = document.getElementById("petNameInput").value.trim();
+        if (!name) { toast("请填写宠物名字"); return; }
+        const payload = normalizePet({
+          id: editingPetId || uid(),
+          name,
+          species: document.getElementById("petSpeciesInput").value.trim(),
+          breed: document.getElementById("petBreedInput").value.trim(),
+          gender: document.getElementById("petGenderInput").value,
+          age: document.getElementById("petAgeInput").value.trim(),
+          weight: document.getElementById("petWeightInput").value.trim(),
+          weightUnit: document.getElementById("petWeightUnitInput").value,
+          updatedAt: new Date().toISOString(),
+        });
+        const existing = editingPetId ? getPet(editingPetId) : null;
+        if (existing) {
+          Object.assign(existing, payload, {
+            notes: existing.notes,
+            careTasks: existing.careTasks,
+            createdAt: existing.createdAt,
+          });
+        } else {
+          if (!state.pets) state.pets = [];
+          state.pets.push(payload);
+          state.activePetId = payload.id;
+        }
+        save();
+        closeModal("modalPetEdit");
+        if (document.getElementById("modalPets")?.classList.contains("open")) renderPetManager();
+        else openPetsModal("profile");
+        toast(existing ? "宠物档案已更新" : "宠物已创建");
+      });
+      document.getElementById("btnConfirmPetCare")?.addEventListener("click", () => {
+        const pet = getActivePet();
+        if (!pet) return;
+        const title = document.getElementById("petCareTitleInput").value.trim();
+        if (!title) { toast("请填写事项名称"); return; }
+        let intervalDays = parseInt(document.getElementById("petCareIntervalSelect").value, 10);
+        if (document.getElementById("petCareIntervalSelect").value === "custom") {
+          intervalDays = parseInt(document.getElementById("petCareCustomDaysInput").value, 10) || 1;
+        }
+        const lastDoneAt = datetimeLocalToIso(document.getElementById("petCareLastDoneInput").value);
+        const item = normalizePetCareTask({
+          id: editingPetCareId || uid(),
+          title,
+          description: document.getElementById("petCareDescInput").value.trim(),
+          intervalDays,
+          lastDoneAt,
+          updatedAt: new Date().toISOString(),
+        });
+        const existing = editingPetCareId ? pet.careTasks.find((t) => t.id === editingPetCareId) : null;
+        if (existing) Object.assign(existing, item, { createdAt: existing.createdAt });
+        else pet.careTasks.push(item);
+        pet.updatedAt = new Date().toISOString();
+        save();
+        closeModal("modalPetCare");
+        renderPetManager();
+        updatePetDueBadge();
+        toast("管护事项已保存");
+      });
+    }
+
     function renderHeroAttributes() {
       const p = state.player;
       tickDailyVitals();
       const v = p.vitals;
       document.getElementById("heroPanelAttrs").innerHTML = `
+        <div class="vital-meter"><label><span>体力值</span><span>${v.stamina}/100</span></label>
+          <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.stamina}%;background:linear-gradient(90deg,#d97706,#fbbf24)"></div></div></div>
         <div class="vital-meter"><label><span>身体健康</span><span>${v.physicalHealth}/100</span></label>
           <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.physicalHealth}%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div></div>
         <div class="vital-meter"><label><span>精神健康</span><span>${v.mentalHealth}/100</span></label>
           <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.mentalHealth}%;background:linear-gradient(90deg,#6366f1,#a78bfa)"></div></div></div>
-        <p class="field-hint">体：自然按小时缓慢下降，完成任务/日常可增减；低于 ${PHYSICAL_WARN_BELOW} 提醒。精：每日 6:00 重置 ${MENTAL_RESET_VALUE}；完成任务消耗；娱乐/休息类日常可恢复。</p>
+        <p class="field-hint">力：当下可消耗精力，工作/锻炼消耗、休息恢复，每日 6:00 额外恢复 ${STAMINA_DAILY_RECOVERY}。身：长期身体状态，锻炼/用药提升。精：每日 6:00 重置 ${MENTAL_RESET_VALUE}；工作压力消耗，娱乐/休息恢复。</p>
         <h4 style="font-size:0.82rem;margin:0.65rem 0 0.35rem">成长属性</h4>
         <div class="attr-grid">${PLAYER_ATTR_KEYS.map((k) => `
           <div class="attr-card"><h5>${PLAYER_ATTR_LABELS[k]}</h5><div class="attr-val">${p.attributes[k] || 0}</div></div>`).join("")}</div>`;
@@ -9881,7 +11088,8 @@ ${lines.join("\n\n")}`;
       const hp = state.player.healthProfile || defaultHealthProfile();
       const v = state.player.vitals;
       const alerts = [];
-      if (v.physicalHealth < PHYSICAL_WARN_BELOW) alerts.push(`⚠️ 身体健康 ${v.physicalHealth} 分，低于 ${PHYSICAL_WARN_BELOW}，建议锻炼、休息或用药。`);
+      if (v.stamina < STAMINA_WARN_BELOW) alerts.push(`⚠️ 体力值 ${v.stamina} 分，低于 ${STAMINA_WARN_BELOW}，建议休息或减少高强度事项。`);
+      if (v.physicalHealth < PHYSICAL_WARN_BELOW) alerts.push(`⚠️ 身体健康 ${v.physicalHealth} 分，低于 ${PHYSICAL_WARN_BELOW}，建议锻炼或用药调养。`);
       if (v.mentalHealth < MENTAL_WARN_BELOW) alerts.push(`⚠️ 精神健康 ${v.mentalHealth} 分，低于 ${MENTAL_WARN_BELOW}，建议娱乐、休息或睡眠类日常行动。`);
       document.getElementById("heroPanelStatus").innerHTML = `
         ${alerts.length ? `<div class="vital-alert-box">${alerts.map((a) => `<p>${escapeHtml(a)}</p>`).join("")}</div>` : ""}
@@ -9916,50 +11124,37 @@ ${lines.join("\n\n")}`;
         });
       });
     }
-    function openDailyActionModal(editId) {
-      const a = editId ? state.dailyActions.find((x) => x.id === editId) : null;
-      dailyModalLlmDraft = a?.effects
-        ? {
-            physicalHealth: a.effects.physicalHealth || 0,
-            mentalHealth: a.effects.mentalHealth || 0,
-            attributes: a.effects.attributes || {},
-            summary: a.effects.summary || "",
-          }
-        : null;
-      document.getElementById("modalDailyActionTitle").textContent = a ? "编辑日常行动" : "新建日常行动";
-      document.getElementById("daNameInput").value = a?.name || "";
-      document.getElementById("daDescInput").value = a?.description || "";
-      document.getElementById("daCategoryInput").value = a?.category || "other";
-      renderDailyLlmPreviewInModal(dailyModalLlmDraft, dailyModalLlmDraft?.summary);
-      document.getElementById("daGenStatus").textContent = a?.llmGenerated ? "已生成内容保存在 JSON 中，可重新生成。" : "点击上方按钮生成；结果写入 JSON。";
-      wireDailyLlmRegenButton(editId);
+    function openDailyActionModal() {
+      dailyModalLlmDraft = null;
+      document.getElementById("modalDailyActionTitle").textContent = "登记日常";
+      document.getElementById("daNameInput").value = "";
+      document.getElementById("daDescInput").value = "";
+      document.getElementById("daCategoryInput").value = "other";
+      renderDailyLlmPreviewInModal(null, "", []);
+      document.getElementById("daGenStatus").textContent = "点击 AI 按钮分析体力/身体健康/精神健康与属性标签；保存后立即记为一条新记录。";
+      wireDailyLlmRegenButton(null);
       document.getElementById("btnConfirmDailyAction").onclick = () => {
         const name = document.getElementById("daNameInput").value.trim();
         if (!name) { toast("请输入行动名称"); return; }
         const desc = document.getElementById("daDescInput").value.trim();
         const category = document.getElementById("daCategoryInput").value;
-        const eff = dailyModalLlmDraft || { physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
-        const item = normalizeDailyAction({
-          id: a?.id || uid(),
+        const eff = dailyModalLlmDraft || { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, attrTags: [], summary: "" };
+        const now = new Date().toISOString();
+        const record = addDailyRecord({
+          id: uid(),
           name,
           description: desc,
           category,
+          attrTags: eff.attrTags || [],
           effects: eff,
-          llmGenerated: !!dailyModalLlmDraft || !!a?.llmGenerated,
-          updatedAt: new Date().toISOString(),
+          recordedAt: now,
+          llmGenerated: !!dailyModalLlmDraft,
+          createdAt: now,
+          updatedAt: now,
         });
-        const isNew = !a;
-        if (a) Object.assign(a, item);
-        else state.dailyActions.push(item);
-        save();
         closeModal("modalDailyAction");
-        if (isNew) {
-          executeDailyAction(item.id, { silent: false });
-          render();
-        } else {
-          render();
-          toast("日常行动已保存");
-        }
+        render();
+        toast(`已记录：${record.name}`);
       };
       openModal("modalDailyAction");
     }
@@ -10021,6 +11216,8 @@ ${lines.join("\n\n")}`;
         applyUiSkin(loadUiSkin());
       }
       bindLifeSystemUi();
+      bindPetSystemUi();
+      bindFuzzyEntryUi();
       if (isMobileLayout()) {
         mobilePanel = "work";
         state.leftSidebarCollapsed = true;
