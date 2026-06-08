@@ -373,7 +373,10 @@
       cursor: pointer;
     }
 
-    .topbar-nav-backdrop[hidden] { display: none; }
+    .topbar-nav-backdrop[hidden] {
+      display: none !important;
+      pointer-events: none !important;
+    }
 
     @media (max-width: 768px) {
       :root {
@@ -914,6 +917,7 @@
         overflow: hidden;
         display: flex;
         flex-direction: column;
+        padding-bottom: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom));
       }
 
       body.mobile-layout .mobile-page-title {
@@ -1318,7 +1322,7 @@
       .mobile-tabbar {
         display: flex;
         flex-shrink: 0;
-        position: relative;
+        position: fixed;
         z-index: var(--z-mobile-tabbar);
         left: 0;
         right: 0;
@@ -1330,6 +1334,10 @@
         background: var(--surface);
         border-top: 1px solid var(--border);
         box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.08);
+        touch-action: manipulation;
+        pointer-events: auto;
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
       }
 
       .mobile-tab {
@@ -1350,6 +1358,8 @@
         -webkit-tap-highlight-color: transparent;
         min-height: 44px;
         position: relative;
+        touch-action: manipulation;
+        pointer-events: auto;
       }
 
       .mobile-tab .mob-tab-icon {
@@ -2138,7 +2148,7 @@
       position: fixed;
       inset: 0;
       background: var(--overlay);
-      display: flex;
+      display: none;
       align-items: center;
       justify-content: center;
       z-index: var(--z-modal);
@@ -2150,6 +2160,7 @@
     }
 
     .modal-overlay.open {
+      display: flex;
       opacity: 1;
       visibility: visible;
       pointer-events: auto;
@@ -7865,6 +7876,62 @@ ${lines.join("\n\n")}`;
       else if (panel === "work") app.classList.add("mobile-panel-work");
     }
 
+    function syncMobilePanelView() {
+      if (!isMobileLayout()) return;
+      if (mobilePanel === "adventure") {
+        applyMobilePanelClasses(mobilePanelBeforeAdventure || "work");
+        syncMobileTabActive("adventure");
+        return;
+      }
+      applyMobilePanelClasses(mobilePanel);
+      syncMobileTabActive(mobilePanel);
+    }
+
+    function ensureMobileUiInteractive() {
+      if (!isMobileLayout()) return;
+
+      syncTopbarNavBackdrop();
+
+      const sheet = document.getElementById("mobileAdventureSheet");
+      if (sheet?.classList.contains("open") && mobilePanel !== "adventure") {
+        hideMobileAdventureSheetOnly();
+      }
+
+      document.querySelectorAll(".modal-overlay:not(.open)").forEach((el) => {
+        el.style.pointerEvents = "none";
+      });
+
+      const tabbar = document.getElementById("mobileTabbar");
+      if (tabbar) tabbar.style.pointerEvents = "auto";
+
+      updateBodyScrollLock();
+    }
+
+    function handleMobileTabSelect(panel) {
+      if (!panel) return;
+      setTopbarNavOpen(false);
+      closeAllTopbarDropdowns();
+      setMobilePanel(panel);
+      ensureMobileUiInteractive();
+    }
+
+    function bindMobileTabbar() {
+      const tabbar = document.getElementById("mobileTabbar");
+      if (!tabbar || tabbar.dataset.bound === "1") return;
+      tabbar.dataset.bound = "1";
+      tabbar.addEventListener(
+        "click",
+        (e) => {
+          const tab = e.target.closest(".mobile-tab");
+          if (!tab || !tabbar.contains(tab)) return;
+          e.preventDefault();
+          e.stopPropagation();
+          handleMobileTabSelect(tab.dataset.mobilePanel);
+        },
+        true
+      );
+    }
+
     function syncTopbarNavBackdrop() {
       const navOpen = document.getElementById("topbarNav")?.classList.contains("open");
       const backdrop = document.getElementById("topbarNavBackdrop");
@@ -7938,6 +8005,7 @@ ${lines.join("\n\n")}`;
       } else {
         hideMobileAdventureSheetOnly();
       }
+      ensureMobileUiInteractive();
     }
 
     function updateMobileContextBar() {
@@ -7999,7 +8067,8 @@ ${lines.join("\n\n")}`;
       if (isM) {
         document.getElementById("sidebar")?.classList.remove("collapsed");
         document.getElementById("priorityPanel")?.classList.remove("collapsed");
-        setMobilePanel(mobilePanel || "work");
+        syncMobilePanelView();
+        ensureMobileUiInteractive();
       } else {
         document.getElementById("app")?.classList.remove(
           "mobile-panel-projects",
@@ -8517,6 +8586,7 @@ ${lines.join("\n\n")}`;
     function closeModal(id) {
       document.getElementById(id).classList.remove("open");
       updateBodyScrollLock();
+      ensureMobileUiInteractive();
       if (id === "modalLoot") requestAnimationFrame(() => pumpRewardModalQueue());
     }
 
@@ -9664,6 +9734,7 @@ ${lines.join("\n\n")}`;
       renderMain();
       updateTopbarHint();
       updateMobileContextBar();
+      ensureMobileUiInteractive();
       if (document.getElementById("modalCalendar")?.classList.contains("open")) renderCalendar();
       if (document.getElementById("modalPets")?.classList.contains("open")) renderPetManager();
       updatePetDueBadge();
@@ -9816,13 +9887,7 @@ ${lines.join("\n\n")}`;
       if (e.key === "Enter" && !taskModalSaving) document.getElementById("btnConfirmTask").click();
     });
 
-    document.querySelectorAll(".mobile-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        setTopbarNavOpen(false);
-        closeAllTopbarDropdowns();
-        setMobilePanel(tab.dataset.mobilePanel);
-      });
-    });
+    bindMobileTabbar();
 
     document.getElementById("mobileBackdrop")?.addEventListener("click", () => setMobilePanel("work"));
 
@@ -9910,6 +9975,10 @@ ${lines.join("\n\n")}`;
     window.addEventListener("resize", () => {
       applyMobileLayout();
       updateAppLayout();
+    });
+
+    window.addEventListener("pageshow", () => {
+      ensureMobileUiInteractive();
     });
 
 
@@ -11312,8 +11381,10 @@ ${text}
         state.rightSidebarCollapsed = true;
       }
       await maybeSyncFromGitHubOnLoad();
+      bindMobileTabbar();
       render();
       applyMobileLayout();
+      ensureMobileUiInteractive();
     }
 
     initApp();
