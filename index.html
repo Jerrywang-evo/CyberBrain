@@ -85,9 +85,9 @@
       --z-topbar: 120;
       --z-topbar-dropdown: 121;
       --z-mobile-sheet: 135;
-      --z-mobile-tabbar: 130;
       --z-modal: 200;
       --z-toast: 250;
+      --z-mobile-tabbar: 10000;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -108,8 +108,9 @@
       overflow: hidden;
     }
 
-    body.scroll-locked .shell > .mobile-tabbar {
+    body.scroll-locked #mobileTabbar {
       touch-action: manipulation;
+      pointer-events: auto !important;
     }
 
     button, .topbar-btn, .topbar-dropdown-item, .mobile-tab, .skin-card {
@@ -356,6 +357,7 @@
     }
 
     .mobile-tabbar,
+    #mobileTabbar,
     .mobile-backdrop,
     .mobile-context-bar,
     .mobile-page-title,
@@ -821,7 +823,7 @@
 
       .modal {
         max-width: 100%;
-        max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem);
+        max-height: calc(100dvh - var(--mobile-tabbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 1rem);
         margin: 0;
         border-radius: 16px 16px 0 0;
         padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom));
@@ -1319,25 +1321,28 @@
         font-size: 0.62rem;
       }
 
-      .mobile-tabbar {
-        display: flex;
+      .mobile-tabbar,
+      #mobileTabbar {
+        display: flex !important;
         flex-shrink: 0;
         position: fixed;
         z-index: var(--z-mobile-tabbar);
         left: 0;
         right: 0;
         bottom: 0;
+        width: 100%;
         height: calc(var(--mobile-tabbar-h) + env(safe-area-inset-bottom));
         padding-bottom: env(safe-area-inset-bottom);
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
         background: var(--surface);
         border-top: 1px solid var(--border);
-        box-shadow: 0 -2px 16px rgba(15, 23, 42, 0.08);
+        box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.14);
         touch-action: manipulation;
-        pointer-events: auto;
-        -webkit-transform: translateZ(0);
-        transform: translateZ(0);
+        pointer-events: auto !important;
+        isolation: isolate;
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
       }
 
       .mobile-tab {
@@ -4079,6 +4084,13 @@
       display: flex !important;
     }
 
+    body.mobile-layout #mobileTabbar {
+      display: flex !important;
+      position: fixed !important;
+      z-index: 10000 !important;
+      pointer-events: auto !important;
+    }
+
   </style>
 </head>
 <body class="game-theme">
@@ -4272,24 +4284,6 @@
       </div>
     </div>
   </div>
-  <nav class="mobile-tabbar" id="mobileTabbar" aria-label="手机导航">
-    <button type="button" class="mobile-tab" data-mobile-panel="projects" aria-label="探索">
-      <span class="mob-tab-icon" aria-hidden="true">🗺️</span>
-      <span class="mob-tab-label">探索</span>
-    </button>
-    <button type="button" class="mobile-tab active" data-mobile-panel="work" aria-label="任务">
-      <span class="mob-tab-icon" aria-hidden="true">⚔️</span>
-      <span class="mob-tab-label">任务</span>
-    </button>
-    <button type="button" class="mobile-tab" data-mobile-panel="tasks" aria-label="情报">
-      <span class="mob-tab-icon" aria-hidden="true">📋</span>
-      <span class="mob-tab-label">情报</span>
-    </button>
-    <button type="button" class="mobile-tab" data-mobile-panel="adventure" aria-label="角色">
-      <span class="mob-tab-icon" aria-hidden="true">🎒</span>
-      <span class="mob-tab-label">角色</span>
-    </button>
-  </nav>
   </div>
 
   <div class="modal-overlay" id="modalSkins">
@@ -4842,6 +4836,25 @@
   </div>
 
   <div class="toast" id="toast"></div>
+
+  <nav class="mobile-tabbar" id="mobileTabbar" aria-label="手机导航">
+    <button type="button" class="mobile-tab" data-mobile-panel="projects" aria-label="探索">
+      <span class="mob-tab-icon" aria-hidden="true">🗺️</span>
+      <span class="mob-tab-label">探索</span>
+    </button>
+    <button type="button" class="mobile-tab active" data-mobile-panel="work" aria-label="任务">
+      <span class="mob-tab-icon" aria-hidden="true">⚔️</span>
+      <span class="mob-tab-label">任务</span>
+    </button>
+    <button type="button" class="mobile-tab" data-mobile-panel="tasks" aria-label="情报">
+      <span class="mob-tab-icon" aria-hidden="true">📋</span>
+      <span class="mob-tab-label">情报</span>
+    </button>
+    <button type="button" class="mobile-tab" data-mobile-panel="adventure" aria-label="角色">
+      <span class="mob-tab-icon" aria-hidden="true">🎒</span>
+      <span class="mob-tab-label">角色</span>
+    </button>
+  </nav>
 
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
@@ -7899,37 +7912,61 @@ ${lines.join("\n\n")}`;
 
       document.querySelectorAll(".modal-overlay:not(.open)").forEach((el) => {
         el.style.pointerEvents = "none";
+        el.style.display = "none";
       });
 
       const tabbar = document.getElementById("mobileTabbar");
-      if (tabbar) tabbar.style.pointerEvents = "auto";
+      if (tabbar) {
+        tabbar.style.display = "flex";
+        tabbar.style.pointerEvents = "auto";
+        tabbar.style.zIndex = "10000";
+        if (tabbar.parentElement !== document.body) {
+          document.body.appendChild(tabbar);
+        }
+      }
 
       updateBodyScrollLock();
     }
 
+    function closeAllOpenModals() {
+      document.querySelectorAll(".modal-overlay.open").forEach((el) => {
+        if (el.id) closeModal(el.id);
+        else el.classList.remove("open");
+      });
+    }
+
     function handleMobileTabSelect(panel) {
       if (!panel) return;
+      closeAllOpenModals();
       setTopbarNavOpen(false);
       closeAllTopbarDropdowns();
       setMobilePanel(panel);
       ensureMobileUiInteractive();
     }
 
+    let lastMobileTabTapAt = 0;
+
     function bindMobileTabbar() {
       const tabbar = document.getElementById("mobileTabbar");
-      if (!tabbar || tabbar.dataset.bound === "1") return;
+      if (!tabbar) return;
+      if (tabbar.parentElement !== document.body) {
+        document.body.appendChild(tabbar);
+      }
+      if (tabbar.dataset.bound === "1") return;
       tabbar.dataset.bound = "1";
-      tabbar.addEventListener(
-        "click",
-        (e) => {
-          const tab = e.target.closest(".mobile-tab");
-          if (!tab || !tabbar.contains(tab)) return;
-          e.preventDefault();
-          e.stopPropagation();
-          handleMobileTabSelect(tab.dataset.mobilePanel);
-        },
-        true
-      );
+
+      const activateTab = (e) => {
+        const tab = e.target.closest(".mobile-tab");
+        if (!tab || !tabbar.contains(tab)) return;
+        const now = Date.now();
+        if (now - lastMobileTabTapAt < 240) return;
+        lastMobileTabTapAt = now;
+        if (e.cancelable) e.preventDefault();
+        e.stopImmediatePropagation();
+        handleMobileTabSelect(tab.dataset.mobilePanel);
+      };
+
+      tabbar.addEventListener("pointerup", activateTab, { capture: true, passive: false });
     }
 
     function syncTopbarNavBackdrop() {
@@ -8061,7 +8098,11 @@ ${lines.join("\n\n")}`;
       const tabbar = document.getElementById("mobileTabbar");
       const isM = isMobileLayout();
       document.body.classList.toggle("mobile-layout", isM);
-      if (tabbar) tabbar.style.display = isM ? "flex" : "none";
+      if (tabbar) {
+        tabbar.style.display = isM ? "flex" : "none";
+        tabbar.style.pointerEvents = isM ? "auto" : "none";
+        tabbar.style.zIndex = isM ? "10000" : "";
+      }
       const ctxBar = document.getElementById("mobileContextBar");
       if (ctxBar && !isM) ctxBar.style.display = "none";
       if (isM) {
@@ -8579,12 +8620,22 @@ ${lines.join("\n\n")}`;
 
     function openModal(id) {
       closeMobileOverlays();
-      document.getElementById(id).classList.add("open");
+      const el = document.getElementById(id);
+      if (el) {
+        el.style.display = "flex";
+        el.classList.add("open");
+      }
+      ensureMobileUiInteractive();
       updateBodyScrollLock();
     }
 
     function closeModal(id) {
-      document.getElementById(id).classList.remove("open");
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove("open");
+        el.style.display = "none";
+        el.style.pointerEvents = "none";
+      }
       updateBodyScrollLock();
       ensureMobileUiInteractive();
       if (id === "modalLoot") requestAnimationFrame(() => pumpRewardModalQueue());
