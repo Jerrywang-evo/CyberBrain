@@ -6788,7 +6788,12 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       }
     }
 
-    async function pushToGitHub(showToastMsg = true) {
+    function isGithubPushConflict(err) {
+      const msg = String(err?.message || err || "");
+      return err?.status === 409 || /409|sha.*match|does not match|expected/i.test(msg);
+    }
+
+    async function pushToGitHub(showToastMsg = true, { force = false } = {}) {
       const cfg = loadGithubConfig();
       if (!cfg.enabled) return;
       if (!cfg.token || !cfg.owner || !cfg.repo) {
@@ -6798,11 +6803,21 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       githubSyncing = true;
       updateGithubSyncStatus();
       try {
+        if (force) {
+          try {
+            await fetchGitHubState(cfg);
+          } catch (e) {
+            if (e.status !== 404) throw e;
+            githubSha = null;
+          }
+        }
         touchStateMeta();
         normalizeStateForPersistence();
         const body = JSON.stringify(state, null, 2);
         const payload = {
-          message: `Earth-Online 同步 ${state.updatedAt}`,
+          message: force
+            ? `Earth-Online 强制同步 ${state.updatedAt}`
+            : `Earth-Online 同步 ${state.updatedAt}`,
           content: utf8ToBase64(body),
           branch: cfg.branch,
         };
@@ -6814,11 +6829,45 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         });
         githubSha = data.content?.sha || githubSha;
         updateGithubSyncStatus(`上次推送：${formatDate(state.updatedAt)}`);
-        if (showToastMsg) toast("已推送到 GitHub");
+        if (showToastMsg) toast(force ? "已强制覆盖并推送到 GitHub" : "已推送到 GitHub");
+      } catch (e) {
+        if (!force && isGithubPushConflict(e)) {
+          const conflictErr = new Error(e.message || "推送冲突");
+          conflictErr.status = e.status || 409;
+          conflictErr.conflict = true;
+          throw conflictErr;
+        }
+        throw e;
       } finally {
         githubSyncing = false;
         updateGithubSyncStatus();
         updateTopbarHint();
+      }
+    }
+
+    async function pushToGitHubManual() {
+      try {
+        await pushToGitHub(true);
+      } catch (e) {
+        if (e.conflict || isGithubPushConflict(e)) {
+          const ok = confirm(
+            "GitHub 上的数据与本地不一致（可能另一台设备已推送过）。\n\n" +
+              "是否用当前本地数据强制覆盖 GitHub 上的版本？\n\n" +
+              "注意：远程上尚未合并的改动将会丢失。"
+          );
+          if (!ok) {
+            toast("已取消推送");
+            return;
+          }
+          await pushToGitHub(true, { force: true });
+          return;
+        }
+        const msg = String(e.message || e);
+        if (/401|403|Bad credentials/i.test(msg)) {
+          toast("Token 无效或权限不足，请检查 GitHub Token 是否有 repo 权限");
+        } else {
+          toast(msg.length > 80 ? msg.slice(0, 80) + "…" : msg);
+        }
       }
     }
 
@@ -9931,18 +9980,7 @@ ${lines.join("\n\n")}`;
     document.getElementById("btnPullGithub").addEventListener("click", () =>
       pullFromGitHub(true).catch((e) => toast(e.message))
     );
-    document.getElementById("btnPushGithub").addEventListener("click", () =>
-      pushToGitHub(true).catch((e) => {
-        const msg = String(e.message || e);
-        if (e.status === 409 || /409|sha.*match|does not match/i.test(msg)) {
-          toast("推送冲突：手机/电脑同时改过数据。请先点「从 GitHub 拉取」，再编辑后推送");
-        } else if (/401|403|Bad credentials/i.test(msg)) {
-          toast("Token 无效或权限不足，请检查 GitHub Token 是否有 repo 权限");
-        } else {
-          toast(msg.length > 80 ? msg.slice(0, 80) + "…" : msg);
-        }
-      })
-    );
+    document.getElementById("btnPushGithub").addEventListener("click", () => pushToGitHubManual());
     document.getElementById("btnGenerateSummary").addEventListener("click", generateAiSummary);
     document.getElementById("summaryProviderSelect").addEventListener("change", () => {
       updateSummaryProviderPanels();
