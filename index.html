@@ -3953,6 +3953,25 @@
       .pet-list-item { flex:0 0 auto; min-width:100px; }
       .pet-profile-grid { grid-template-columns:1fr; }
     }
+    .daily-action-item, .daily-record-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.45rem 0.55rem;
+      margin-bottom: 0.3rem;
+      background: var(--input-bg);
+    }
+    .daily-record-card .task-title { font-size: 0.82rem; font-weight: 600; line-height: 1.35; }
+    .daily-record-card .task-desc { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; line-height: 1.4; }
+    .daily-record-card .task-meta { margin-top: 0.2rem; gap: 0.25rem; }
+    .daily-record-card .time-meta { font-size: 0.58rem; }
+    .daily-todo-section { margin-bottom: 0.75rem; padding-bottom: 0.65rem; border-bottom: 1px dashed var(--border); }
+    .daily-todo-section h4 { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 600; }
+    .daily-todo-item { display: flex; align-items: flex-start; gap: 0.4rem; padding: 0.35rem 0; border-bottom: 1px solid var(--border); }
+    .daily-todo-item:last-child { border-bottom: none; }
+    .daily-todo-item.done .daily-todo-label { text-decoration: line-through; color: var(--text-muted); }
+    .daily-todo-label { font-size: 0.78rem; line-height: 1.35; flex: 1; }
+    .combo-chip { font-size: 0.62rem; font-weight: 700; padding: 0.12rem 0.38rem; border-radius: 999px; background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(217,119,6,0.35); margin-left: 0.25rem; animation: combo-pop 0.35s ease; }
+    @keyframes combo-pop { 0% { transform: scale(0.85); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
     .side-quest-item, .daily-action-item { border:1px solid var(--border); border-radius:var(--radius); padding:0.55rem 0.65rem; margin-bottom:0.35rem; background:var(--input-bg); cursor:pointer; }
     .side-quest-item.active, .daily-action-item:hover { border-color:var(--accent-border); background:var(--surface-hover); }
     .side-quest-item .sq-title { font-size:0.82rem; font-weight:600; }
@@ -4216,7 +4235,8 @@
           </div>
           <div class="sidebar-tab-panel" id="leftPanelRoutines">
             <div class="sidebar-scroll-panel" id="dailyRoutinesPanel"></div>
-            <button type="button" class="btn btn-primary btn-xs" id="btnNewDailyAction" style="margin-top:0.2rem;width:100%">+ 新建日常记录</button>
+            <button type="button" class="btn btn-ghost btn-xs" id="btnNewDailyTodo" style="margin-top:0.2rem;width:100%">+ 添加每日待办</button>
+            <button type="button" class="btn btn-primary btn-xs" id="btnNewDailyAction" style="margin-top:0.2rem;width:100%">+ 登记日常记录</button>
           </div>
           <div class="sidebar-tab-panel" id="leftPanelDaily">
             <div class="daily-filter-bar" id="dailyFilterBar">
@@ -4489,6 +4509,31 @@
       <div class="field"><label for="sqContinentSelect">所属大陆</label><select id="sqContinentSelect"></select></div>
       <div class="field"><label for="sqTitleInput">支线标题</label><input type="text" id="sqTitleInput" autocomplete="off" /></div>
       <div class="field"><label for="sqDescInput">说明（可选）</label><textarea id="sqDescInput"></textarea></div>
+      <div class="grid-2">
+        <div class="field">
+          <label for="sqStatusInput">状态</label>
+          <select id="sqStatusInput">
+            <option value="todo">待办</option>
+            <option value="doing">进行中</option>
+            <option value="done">已完成</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="sqPriorityInput">优先级</label>
+          <select id="sqPriorityInput">
+            <option value="low">低</option>
+            <option value="medium" selected>中</option>
+            <option value="high">高</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="sqDueDateInput">截止时间（可选）</label>
+        <div class="field-due-row">
+          <input type="date" id="sqDueDateInput" />
+          <button type="button" class="btn btn-ghost btn-sm" id="btnClearSqDueDate">清除</button>
+        </div>
+      </div>
       <div class="field" id="sqStoryPreviewField" style="display:none">
         <label>支线剧情（AI）</label>
         <div class="quest-story-box" id="sqStoryPreview"></div>
@@ -4501,6 +4546,11 @@
         <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenSideQuest">✨ AI 生成/重新生成 剧情与标签</button>
       </div>
       <p class="field-hint" id="sqGenStatus">生成结果会写入 JSON，导出/导入时同步。</p>
+      <div class="field" id="sqCompletedAtField" style="display:none">
+        <label for="sqCompletedAtInput">完成时间</label>
+        <input type="datetime-local" id="sqCompletedAtInput" step="60" />
+        <p class="field-hint">标记为已完成时可填写或修改。统计按<strong>6:00～次日 6:00</strong>为一天。</p>
+      </div>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalSideQuest">取消</button>
         <button type="button" class="btn btn-primary" id="btnConfirmSideQuest">保存</button>
@@ -4511,17 +4561,7 @@
     <div class="modal">
       <h3 id="modalDailyActionTitle">日常行动</h3>
       <div class="field"><label for="daNameInput">行动名称</label><input type="text" id="daNameInput" placeholder="如：健身、喝酒、吃药" autocomplete="off" /></div>
-      <div class="field"><label for="daDescInput">描述（可选）</label><textarea id="daDescInput" placeholder="补充细节，供 AI 判断属性影响"></textarea></div>
-      <div class="field"><label for="daCategoryInput">类别</label>
-        <select id="daCategoryInput">
-          <option value="exercise">锻炼 / 运动</option>
-          <option value="medicine">吃药 / 治疗</option>
-          <option value="supplement">保健品</option>
-          <option value="entertainment">娱乐（喝酒、休闲等）</option>
-          <option value="rest">休息 / 睡眠</option>
-          <option value="other">其他</option>
-        </select>
-      </div>
+      <div class="field"><label for="daDescInput">描述（可选）</label><textarea id="daDescInput" placeholder="补充细节，供 AI 判断属性与数值影响"></textarea></div>
       <div class="field" id="daEffectsPreviewField" style="display:none">
         <label>AI 影响分析</label>
         <div class="quest-story-box" id="daEffectsPreview"></div>
@@ -4530,10 +4570,24 @@
       <div class="llm-action-row">
         <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenDaily">✨ AI 生成/重新生成 影响与标签</button>
       </div>
-      <p class="field-hint" id="daGenStatus">点击上方按钮生成；保存后立即记为一条带日期时间的独立日常记录。</p>
+      <p class="field-hint" id="daGenStatus">点击上方按钮由 AI 自动判断标签与体力/健康影响；保存后立即记为一条带日期时间的独立日常记录。</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalDailyAction">取消</button>
         <button type="button" class="btn btn-primary" id="btnConfirmDailyAction">保存</button>
+      </div>
+    </div>
+  </div>
+  <div class="modal-overlay" id="modalDailyTodo">
+    <div class="modal">
+      <h3>添加每日待办</h3>
+      <div class="field">
+        <label for="dailyTodoTitleInput">待办事项</label>
+        <input type="text" id="dailyTodoTitleInput" placeholder="如：晨间阅读、整理桌面" autocomplete="off" />
+        <p class="field-hint">每天 6:00 后重置为未完成，当天勾选后即标记完成。</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close="modalDailyTodo">取消</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmDailyTodo">添加</button>
       </div>
     </div>
   </div>
@@ -4766,16 +4820,6 @@
         <div id="fuzzyFieldsDaily" class="fuzzy-intent-fields">
           <div class="field"><label for="fuzzyDailyName">日常名称</label><input type="text" id="fuzzyDailyName" autocomplete="off" /></div>
           <div class="field"><label for="fuzzyDailyDesc">日常说明（可选）</label><textarea id="fuzzyDailyDesc" rows="2"></textarea></div>
-          <div class="field"><label for="fuzzyDailyCategory">类别</label>
-            <select id="fuzzyDailyCategory">
-              <option value="exercise">锻炼 / 运动</option>
-              <option value="medicine">吃药 / 治疗</option>
-              <option value="supplement">保健品</option>
-              <option value="entertainment">娱乐</option>
-              <option value="rest">休息 / 睡眠</option>
-              <option value="other">其他</option>
-            </select>
-          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -4889,18 +4933,21 @@
 
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
-    const STATE_SCHEMA_VERSION = 6;
+    const STATE_SCHEMA_VERSION = 7;
     const SIDE_QUEST_BOARD_ID = "__side_quest_board__";
-    // schema 6: 宠物档案、描述条目 AI、周期管护待办
-    const PHYSICAL_DECAY_PER_HOUR = 2 / 24;
+    // schema 7: 每日待办、连击、体/健康规则调整
+    const PHYSICAL_DECAY_PER_DAY = 5;
     const MENTAL_RESET_VALUE = 80;
     const STAMINA_DEFAULT = 100;
-    const STAMINA_DAILY_RECOVERY = 40;
-    const MENTAL_COST_PER_TASK = 4;
-    const STAMINA_COST_PER_TASK = 10;
+    const STAMINA_DAILY_RESET = 100;
+    const MENTAL_COST_PER_TASK = 3;
+    const STAMINA_COST_PER_TASK = 4;
+    const STAMINA_TASK_CLAMP = 10;
     const PHYSICAL_WARN_BELOW = 80;
     const MENTAL_WARN_BELOW = 50;
     const STAMINA_WARN_BELOW = 25;
+    const COMBO_WINDOW_MS = 30 * 60 * 1000;
+    const COMBO_DISPLAY_MIN = 2;
 
     const PLAYER_ATTR_KEYS = ["physique","mind","intelligence","technology","humanities","social","lifeSkills"];
     const PLAYER_ATTR_LABELS = { physique:"体格", mind:"心智", intelligence:"智力", technology:"科技", humanities:"人文艺术", social:"社交能力", lifeSkills:"生活力" };
@@ -4912,11 +4959,12 @@
 2) 任务能力标签 attrTags 只能从：体能、精神力、社交能力、科技、人文艺术 中选 0-3 个。
 3) 属性增量 attributes 的键只能是：physique,mind,intelligence,technology,humanities,social,lifeSkills，每项为 0-5 的整数。
 4) 必须区分三种数值（不可混淆）：
-   - stamina 体力值：当下可消耗的精力。工作/任务/锻炼通常消耗（负值）；休息/睡眠通常恢复（正值）。范围 -30~+30。
-   - physicalHealth 身体健康：长期身体状态。锻炼/吃药/保健品可提升；生病/过劳可下降；一般工作影响较小。范围 -15~+15。
+   - stamina 体力值：当下可消耗的精力。一般任务完成消耗约 2~5（负值），范围 -10~+10。
+   - physicalHealth 身体健康：长期身体状态。锻炼/吃药/保健品可提升；不健康行为可略降；一般工作影响较小。范围 -15~+15。
    - mentalHealth 精神健康：情绪与心理负担。工作/压力消耗；娱乐/休息/社交恢复。范围 -20~+20。
-5) 示例：上班 stamina-12 mentalHealth-6 physicalHealth-1；健身 stamina-15 physicalHealth+8 mentalHealth+2。
-6) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
+5) 示例：上班 stamina-4 mentalHealth-5 physicalHealth-1；健身 stamina-8 physicalHealth+8 mentalHealth+2。
+6) 日常/任务 attrTags 可选 1 至多个标签，从：体能、精神力、社交能力、科技、人文艺术 中选择。
+7) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
 
     const DAILY_CATEGORY_LABELS = { exercise:"锻炼", medicine:"吃药", supplement:"保健品", entertainment:"娱乐", rest:"休息", other:"其他" };
     const PET_GENDER_LABELS = { male: "公", female: "母", unknown: "未知" };
@@ -5346,6 +5394,7 @@
         lastVitalTickAt: null,
         lastMentalDayKey: null,
         lastStaminaDayKey: null,
+        lastPhysicalDayKey: null,
       };
     }
     function defaultAttributes() {
@@ -5409,6 +5458,9 @@
         vitals: normalizeVitals(p.vitals),
         attributes: normalizeAttributes(p.attributes),
         healthProfile: normalizeHealthProfile(p.healthProfile),
+        combo: p.combo && typeof p.combo === "object"
+          ? { count: Math.max(0, p.combo.count || 0), lastAt: p.combo.lastAt || null }
+          : { count: 0, lastAt: null },
       };
     }
 
@@ -5422,6 +5474,7 @@
         lastVitalTickAt: v.lastVitalTickAt || null,
         lastMentalDayKey: v.lastMentalDayKey || v.lastVitalDayKey || null,
         lastStaminaDayKey: v.lastStaminaDayKey || null,
+        lastPhysicalDayKey: v.lastPhysicalDayKey || null,
       };
       if (!out.lastVitalTickAt) out.lastVitalTickAt = new Date().toISOString();
       return out;
@@ -5444,6 +5497,23 @@
       };
     }
     function clamp100(n) { return Math.min(100, Math.max(0, Math.round(n))); }
+    function clampTaskStamina(n) {
+      if (typeof n !== "number") return -STAMINA_COST_PER_TASK;
+      return Math.min(STAMINA_TASK_CLAMP, Math.max(-STAMINA_TASK_CLAMP, Math.round(n)));
+    }
+    function clampTaskMental(n) {
+      if (typeof n !== "number") return -MENTAL_COST_PER_TASK;
+      return Math.min(10, Math.max(-10, Math.round(n)));
+    }
+    function registerComboHit() {
+      if (!state.player.combo) state.player.combo = { count: 0, lastAt: null };
+      const now = Date.now();
+      const c = state.player.combo;
+      if (c.lastAt && now - new Date(c.lastAt).getTime() <= COMBO_WINDOW_MS) c.count = (c.count || 0) + 1;
+      else c.count = 1;
+      c.lastAt = new Date(now).toISOString();
+      return c.count;
+    }
 
     function mergePlayerData(current, incoming) {
       const pa = normalizePlayer(current);
@@ -5484,6 +5554,11 @@
           lastVitalTickAt: pa.vitals.lastVitalTickAt || pb.vitals.lastVitalTickAt,
           lastMentalDayKey: pa.vitals.lastMentalDayKey || pb.vitals.lastMentalDayKey,
           lastStaminaDayKey: pa.vitals.lastStaminaDayKey || pb.vitals.lastStaminaDayKey,
+          lastPhysicalDayKey: pa.vitals.lastPhysicalDayKey || pb.vitals.lastPhysicalDayKey,
+        },
+        combo: {
+          count: Math.max(pa.combo?.count || 0, pb.combo?.count || 0),
+          lastAt: [pa.combo?.lastAt, pb.combo?.lastAt].filter(Boolean).sort().pop() || null,
         },
         attributes: (() => {
           const out = { ...pa.attributes };
@@ -5520,6 +5595,8 @@
       state.sideQuests = (state.sideQuests || []).map(normalizeSideQuest);
       migrateDailyRecordsV5();
       state.dailyRecords = (state.dailyRecords || []).map(normalizeDailyRecord);
+      state.dailyTodoTemplates = (state.dailyTodoTemplates || []).map(normalizeDailyTodoTemplate);
+      if (!state.dailyTodoCompletions || typeof state.dailyTodoCompletions !== "object") state.dailyTodoCompletions = {};
       state.pets = (state.pets || []).map(normalizePet);
       state.taskFilter = taskFilter || "all";
       const llmCfg = loadLlmSummaryConfig();
@@ -5873,9 +5950,11 @@
     function showItemLootModal(title, narrative, itemId, xp) {
       queueRewardModal(() => {
         const def = itemId ? getItemDef(itemId) : null;
+        const combo = state.player?.combo?.count || 0;
         document.getElementById("lootModalBody").innerHTML = `
           <div class="loot-ach-title">${escapeHtml(title)}</div>
           ${xp ? `<div class="loot-xp">+${xp} XP</div>` : ""}
+          ${combo >= COMBO_DISPLAY_MIN ? `<div class="combo-chip" style="display:inline-block;margin:0.25rem 0">🔥 ${combo} 连击</div>` : ""}
           <div class="loot-narrative">${escapeHtml(narrative || "")}</div>
           ${def ? `<div class="loot-items"><div class="inv-item rarity-${def.rarity || "common"}">${getItemIconHtml(itemId, 24)}${escapeHtml(def.name)}</div><p class="field-hint" style="margin-top:0.35rem">已放入背包</p></div>` : ""}
         `;
@@ -5888,6 +5967,7 @@
       const prevLevel = getLevelFromXp(state.player.xp);
       state.player.xp += xp;
       onMainTaskCompleteVitals(task);
+      registerComboHit();
       task.xpAwarded = xp;
       const isMain = (project.questType || "main") === "main";
       state.player.stats.tasksCompleted++;
@@ -6205,9 +6285,9 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         typeof analysis.stamina === "number"
       ) {
         task.vitalOnComplete = {
-          stamina: typeof analysis.stamina === "number" ? analysis.stamina : (task.vitalOnComplete?.stamina ?? -STAMINA_COST_PER_TASK),
-          physical: typeof analysis.physicalHealth === "number" ? analysis.physicalHealth : (task.vitalOnComplete?.physical ?? 0),
-          mental: typeof analysis.mentalHealth === "number" ? analysis.mentalHealth : (task.vitalOnComplete?.mental ?? -MENTAL_COST_PER_TASK),
+          stamina: clampTaskStamina(typeof analysis.stamina === "number" ? analysis.stamina : (task.vitalOnComplete?.stamina ?? -STAMINA_COST_PER_TASK)),
+          physical: typeof analysis.physicalHealth === "number" ? Math.min(10, Math.max(-10, Math.round(analysis.physicalHealth))) : (task.vitalOnComplete?.physical ?? 0),
+          mental: clampTaskMental(typeof analysis.mentalHealth === "number" ? analysis.mentalHealth : (task.vitalOnComplete?.mental ?? -MENTAL_COST_PER_TASK)),
         };
       }
       task.llmEnriched = true;
@@ -6229,10 +6309,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const live = (state.sideQuests || []).find((q) => q.id === sq.id);
       if (!live) return null;
       const analysis = await analyzeSideQuestWithLlm(live);
-      live.questStory = analysis?.questStory || live.questStory || "";
-      live.attrTags = (analysis?.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
-      if (analysis?.attributes) live.attrDelta = analysis.attributes;
-      live.loreGenerated = true;
+      applySideQuestAnalysis(live, analysis);
       live.updatedAt = new Date().toISOString();
       save();
       if (showToast) toast(`支线「${live.title}」剧情已生成`);
@@ -6545,6 +6622,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       projects: [],
       sideQuests: [],
       dailyRecords: [],
+      dailyTodoTemplates: [],
+      dailyTodoCompletions: {},
       pets: [],
       activePetId: null,
       tags: [],
@@ -6937,6 +7016,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       state.player = normalizePlayer(data.player);
       state.sideQuests = Array.isArray(data.sideQuests) ? data.sideQuests.map(normalizeSideQuest) : [];
       state.dailyRecords = Array.isArray(data.dailyRecords) ? data.dailyRecords.map(normalizeDailyRecord) : [];
+      state.dailyTodoTemplates = Array.isArray(data.dailyTodoTemplates) ? data.dailyTodoTemplates.map(normalizeDailyTodoTemplate) : [];
+      state.dailyTodoCompletions = data.dailyTodoCompletions && typeof data.dailyTodoCompletions === "object" ? data.dailyTodoCompletions : {};
       state.dailyActions = Array.isArray(data.dailyActions) ? data.dailyActions : [];
       state.dailyLogs = Array.isArray(data.dailyLogs) ? data.dailyLogs : [];
       state.pets = Array.isArray(data.pets) ? data.pets.map(normalizePet) : [];
@@ -9110,6 +9191,7 @@ ${lines.join("\n\n")}`;
       const prevLevel = getLevelFromXp(state.player.xp);
       state.player.xp += xp;
       onSideQuestCompleteVitals(sq);
+      registerComboHit();
       sq.xpAwarded = xp;
       state.player.stats.tasksCompleted++;
       state.player.stats.sideTasksCompleted++;
@@ -9522,14 +9604,17 @@ ${lines.join("\n\n")}`;
           questStory: analysis?.questStory || "",
           attrTags: (analysis?.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t)),
           attrDelta: analysis?.attributes || null,
+          vitalOnComplete: analysis ? {
+            stamina: clampTaskStamina(analysis.stamina ?? -STAMINA_COST_PER_TASK),
+            physical: typeof analysis.physicalHealth === "number" ? Math.min(10, Math.max(-10, Math.round(analysis.physicalHealth))) : 0,
+            mental: clampTaskMental(analysis.mentalHealth ?? -MENTAL_COST_PER_TASK),
+          } : null,
         };
         renderSideQuestLlmPreviewInModal(sideQuestModalLlmDraft);
         const live = editId ? state.sideQuests.find((x) => x.id === editId) : null;
         if (live) {
-          live.questStory = sideQuestModalLlmDraft.questStory;
-          live.attrTags = sideQuestModalLlmDraft.attrTags;
-          live.attrDelta = sideQuestModalLlmDraft.attrDelta;
-          live.loreGenerated = !!live.questStory;
+          applySideQuestAnalysis(live, analysis);
+          if (sideQuestModalLlmDraft.vitalOnComplete) live.vitalOnComplete = sideQuestModalLlmDraft.vitalOnComplete;
           live.updatedAt = new Date().toISOString();
           save();
           if (statusEl) statusEl.textContent = "已写入 JSON";
@@ -9555,11 +9640,10 @@ ${lines.join("\n\n")}`;
           return;
         }
         const desc = document.getElementById("daDescInput").value.trim();
-        const category = document.getElementById("daCategoryInput").value;
         const statusEl = document.getElementById("daGenStatus");
         btn.disabled = true;
         if (statusEl) statusEl.textContent = "AI 分析影响中…";
-        const analysis = await analyzeDailyActionWithLlm(name, desc, category);
+        const analysis = await analyzeDailyActionWithLlm(name, desc);
         dailyModalLlmDraft = {
           stamina: analysis.stamina || 0,
           physicalHealth: analysis.physicalHealth || 0,
@@ -9994,7 +10078,7 @@ ${lines.join("\n\n")}`;
 
     bindDailyFilterEvents();
 
-    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalFuzzyEntry", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins", "modalSideQuest", "modalDailyAction", "modalVitalWarn", "modalPets", "modalPetEdit", "modalPetCare"].forEach((id) => {
+    ["modalProject", "modalTask", "modalTags", "modalCalendar", "modalSummary", "modalFuzzyEntry", "modalGithub", "modalHero", "modalWorldMap", "modalLoot", "modalMapDetail", "modalSkins", "modalSideQuest", "modalDailyAction", "modalDailyTodo", "modalVitalWarn", "modalPets", "modalPetEdit", "modalPetCare"].forEach((id) => {
       document.getElementById(id).addEventListener("click", (e) => {
         if (e.target.id === id) closeModal(id);
       });
@@ -10142,6 +10226,13 @@ ${lines.join("\n\n")}`;
         loreGenerated: !!q.loreGenerated,
         xpAwarded: q.xpAwarded || 0,
         completionLootItemId: q.completionLootItemId || null,
+        vitalOnComplete: q.vitalOnComplete && typeof q.vitalOnComplete === "object"
+          ? {
+            stamina: typeof q.vitalOnComplete.stamina === "number" ? q.vitalOnComplete.stamina : undefined,
+            physical: typeof q.vitalOnComplete.physical === "number" ? q.vitalOnComplete.physical : undefined,
+            mental: typeof q.vitalOnComplete.mental === "number" ? q.vitalOnComplete.mental : undefined,
+          }
+          : null,
         createdAt: q.createdAt || now,
         updatedAt: q.updatedAt || now,
       };
@@ -10174,6 +10265,61 @@ ${lines.join("\n\n")}`;
         createdAt: r.createdAt || r.recordedAt || now,
         updatedAt: r.updatedAt || r.recordedAt || now,
       };
+    }
+
+    function normalizeDailyTodoTemplate(t) {
+      const now = new Date().toISOString();
+      return {
+        id: t.id || uid(),
+        title: (t.title || "").trim() || "待办事项",
+        sortOrder: typeof t.sortOrder === "number" ? t.sortOrder : 0,
+        createdAt: t.createdAt || now,
+      };
+    }
+
+    function getDailyTodoDoneMap(dayKey = todayLogicalDayKey()) {
+      return state.dailyTodoCompletions?.[dayKey] || {};
+    }
+
+    function toggleDailyTodo(id, checked) {
+      tickDailyVitals();
+      const dayKey = todayLogicalDayKey();
+      if (!state.dailyTodoCompletions) state.dailyTodoCompletions = {};
+      if (!state.dailyTodoCompletions[dayKey]) state.dailyTodoCompletions[dayKey] = {};
+      if (checked) state.dailyTodoCompletions[dayKey][id] = new Date().toISOString();
+      else delete state.dailyTodoCompletions[dayKey][id];
+      save();
+      renderDailyRecordsPanel();
+    }
+
+    function deleteDailyTodoTemplate(id) {
+      state.dailyTodoTemplates = (state.dailyTodoTemplates || []).filter((t) => t.id !== id);
+      Object.keys(state.dailyTodoCompletions || {}).forEach((dayKey) => {
+        if (state.dailyTodoCompletions[dayKey]?.[id]) delete state.dailyTodoCompletions[dayKey][id];
+      });
+      save();
+      renderDailyRecordsPanel();
+    }
+
+    function renderDailyTodosSection() {
+      const templates = [...(state.dailyTodoTemplates || [])].sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      const dayKey = todayLogicalDayKey();
+      const doneMap = getDailyTodoDoneMap(dayKey);
+      const doneCount = templates.filter((t) => doneMap[t.id]).length;
+      if (!templates.length) {
+        return `<div class="daily-todo-section"><h4>每日待办</h4><p class="meta" style="font-size:0.68rem;margin:0">添加每天需要重复完成的事项，每天 6:00 后重置。</p></div>`;
+      }
+      return `<div class="daily-todo-section">
+        <h4>每日待办 · ${doneCount}/${templates.length}</h4>
+        ${templates.map((t) => {
+          const done = !!doneMap[t.id];
+          return `<div class="daily-todo-item ${done ? "done" : ""}" data-todo-id="${t.id}">
+            <input type="checkbox" class="daily-todo-check" data-id="${t.id}" ${done ? "checked" : ""} title="标记今日完成" />
+            <span class="daily-todo-label">${escapeHtml(t.title)}</span>
+            <button type="button" class="btn btn-ghost btn-xs btn-delete-daily-todo" data-id="${t.id}" title="删除模板">×</button>
+          </div>`;
+        }).join("")}
+      </div>`;
     }
 
     function migrateDailyRecordsV5() {
@@ -10263,25 +10409,27 @@ ${lines.join("\n\n")}`;
       if (typeof stamina === "number") v.stamina = clamp100(v.stamina + stamina);
     }
     function tickVitals() {
-      const now = Date.now();
-      const v = state.player.vitals;
-      if (!v.lastVitalTickAt) v.lastVitalTickAt = new Date(now).toISOString();
-      const lastTick = new Date(v.lastVitalTickAt).getTime();
-      const hours = Math.max(0, (now - lastTick) / 3600000);
-      if (hours >= 0.05) {
-        const decay = hours * PHYSICAL_DECAY_PER_HOUR;
-        if (decay > 0) v.physicalHealth = clamp100(v.physicalHealth - decay);
-        v.lastVitalTickAt = new Date(now).toISOString();
-      }
       const day = todayLogicalDayKey();
+      const v = state.player.vitals;
       if (v.lastMentalDayKey !== day) {
         v.mentalHealth = MENTAL_RESET_VALUE;
         v.lastMentalDayKey = day;
       }
       if (v.lastStaminaDayKey !== day) {
-        v.stamina = clamp100(v.stamina + STAMINA_DAILY_RECOVERY);
+        v.stamina = STAMINA_DAILY_RESET;
         v.lastStaminaDayKey = day;
       }
+      if (v.lastPhysicalDayKey !== day) {
+        const prevKey = v.lastPhysicalDayKey;
+        if (!prevKey) {
+          v.lastPhysicalDayKey = day;
+        } else {
+          const days = Math.max(1, logicalDaysBetween(prevKey, day));
+          v.physicalHealth = clamp100(v.physicalHealth - PHYSICAL_DECAY_PER_DAY * days);
+          v.lastPhysicalDayKey = day;
+        }
+      }
+      v.lastVitalTickAt = new Date().toISOString();
     }
     const tickDailyVitals = tickVitals;
     function onMainTaskCompleteVitals(task) {
@@ -10293,6 +10441,24 @@ ${lines.join("\n\n")}`;
       );
       if (task.attrDelta) applyAttributeDelta(task.attrDelta);
       else applyAttrTagsToPlayer(task.attrTags, 1);
+    }
+    function applySideQuestAnalysis(sq, analysis) {
+      if (!sq || !analysis) return;
+      sq.attrTags = (analysis.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
+      sq.questStory = analysis.questStory || sq.questStory || "";
+      sq.attrDelta = analysis.attributes || sq.attrDelta || null;
+      if (
+        typeof analysis.physicalHealth === "number" ||
+        typeof analysis.mentalHealth === "number" ||
+        typeof analysis.stamina === "number"
+      ) {
+        sq.vitalOnComplete = {
+          stamina: clampTaskStamina(typeof analysis.stamina === "number" ? analysis.stamina : (sq.vitalOnComplete?.stamina ?? -STAMINA_COST_PER_TASK)),
+          physical: typeof analysis.physicalHealth === "number" ? Math.min(10, Math.max(-10, Math.round(analysis.physicalHealth))) : (sq.vitalOnComplete?.physical ?? 0),
+          mental: clampTaskMental(typeof analysis.mentalHealth === "number" ? analysis.mentalHealth : (sq.vitalOnComplete?.mental ?? -MENTAL_COST_PER_TASK)),
+        };
+      }
+      sq.loreGenerated = !!sq.questStory;
     }
     function onSideQuestCompleteVitals(sq) {
       const vo = sq.vitalOnComplete || {};
@@ -10339,7 +10505,7 @@ ${lines.join("\n\n")}`;
         attributes: {}, stamina: -STAMINA_COST_PER_TASK, physicalHealth: 0, mentalHealth: -MENTAL_COST_PER_TASK,
       };
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析主线任务并输出 JSON：
-{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"60字内任务剧情","attributes":{},"stamina":-20~0,"physicalHealth":-5~5,"mentalHealth":-10~0}
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"60字内任务剧情","attributes":{},"stamina":-2~-10,"physicalHealth":-5~5,"mentalHealth":-10~0}
 大陆：${map?.name || ""}；地图：${project.name}；地图背景：${(project.questStory || "").slice(0,120)}
 任务标题：${task.title}；描述：${task.description || "无"}`);
       return { ...fallback, ...(j || {}) };
@@ -10347,19 +10513,15 @@ ${lines.join("\n\n")}`;
     async function analyzeSideQuestWithLlm(sq) {
       const map = getTag(sq.continentId);
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析大陆支线任务 JSON：
-{"attrTags":[],"questStory":"60字","attributes":{},"stamina":-12,"physicalHealth":0,"mentalHealth":-8}
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"questStory":"60字","attributes":{},"stamina":-2~-10,"physicalHealth":-5~5,"mentalHealth":-10~0}
 大陆：${map?.name || ""}；标题：${sq.title}；描述：${sq.description || ""}`);
-      return j || { attrTags: ["精神力"], questStory: `${sq.title}：${map?.name || "大陆"}上的支线。`, stamina: -STAMINA_COST_PER_TASK, mentalHealth: -6 };
+      return j || { attrTags: ["精神力"], questStory: `${sq.title}：${map?.name || "大陆"}上的支线。`, stamina: -STAMINA_COST_PER_TASK, mentalHealth: -MENTAL_COST_PER_TASK };
     }
-    async function analyzeDailyActionWithLlm(name, desc, category) {
-      const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON：
+    async function analyzeDailyActionWithLlm(name, desc) {
+      const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON（根据名称与描述自动判断 1 至多个 attrTags）：
 {"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"stamina":-30~30,"physicalHealth":-15~15,"mentalHealth":-20~20,"attributes":{},"summary":"20字"}
-名称：${name}；描述：${desc}；类别：${DAILY_CATEGORY_LABELS[category] || category}`);
+名称：${name}；描述：${desc || "无"}`);
       const fb = { attrTags: [], stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
-      if (category === "exercise") { fb.stamina = -15; fb.physicalHealth = 8; fb.attrTags = ["体能"]; }
-      else if (category === "medicine" || category === "supplement") { fb.physicalHealth = 6; }
-      else if (category === "entertainment") { fb.mentalHealth = 8; fb.stamina = 5; fb.attrTags = ["精神力"]; }
-      else if (category === "rest") { fb.mentalHealth = 10; fb.stamina = 20; fb.attrTags = ["精神力"]; }
       return { ...fb, ...(j || {}) };
     }
     function vitalWarnBannerHtml() {
@@ -10380,7 +10542,9 @@ ${lines.join("\n\n")}`;
       const sc = v.stamina < STAMINA_WARN_BELOW ? " stamina warn" : " stamina";
       const pc = v.physicalHealth < PHYSICAL_WARN_BELOW ? " warn" : "";
       const mc = v.mentalHealth < MENTAL_WARN_BELOW ? " danger" : "";
-      el.innerHTML = `<span class="vital-chip${sc}" title="体力值（当下精力）">力 ${v.stamina}</span><span class="vital-chip${pc}" title="身体健康（长期状态）">身 ${v.physicalHealth}</span><span class="vital-chip${mc}" title="精神健康">精 ${v.mentalHealth}</span>`;
+      const combo = state.player?.combo?.count || 0;
+      const comboHtml = combo >= COMBO_DISPLAY_MIN ? `<span class="combo-chip" title="30分钟内连续完成任务">🔥 ${combo}</span>` : "";
+      el.innerHTML = `${comboHtml}<span class="vital-chip${sc}" title="体力值（每天 6:00 重置为 100）">力 ${v.stamina}</span><span class="vital-chip${pc}" title="身体健康（每天自动 -5，不重置）">身 ${v.physicalHealth}</span><span class="vital-chip${mc}" title="精神健康（每天 6:00 重置为 80）">精 ${v.mentalHealth}</span>`;
     }
     function renderQuestLineFilter() {
       const el = document.getElementById("questLineFilter");
@@ -10455,25 +10619,44 @@ ${lines.join("\n\n")}`;
     function renderDailyRecordsPanel() {
       const panel = document.getElementById("dailyRoutinesPanel");
       if (!panel) return;
+      tickDailyVitals();
       const records = [...(state.dailyRecords || [])].sort((a, b) => new Date(b.recordedAt) - new Date(a.recordedAt));
-      if (!records.length) {
-        panel.innerHTML = '<p class="meta">每次登记都会生成一条独立记录（含日期时间），与项目任务分开管理。</p>';
-        return;
-      }
-      panel.innerHTML = records.map((rec) => {
-        const eff = rec.effects || {};
-        const tags = (rec.attrTags || []).map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
-        return `
-        <div class="daily-action-item" data-record-id="${rec.id}">
-          <div class="sq-title">${escapeHtml(rec.name)} <span class="meta">(${DAILY_CATEGORY_LABELS[rec.category] || rec.category})</span></div>
-          <div class="sq-sub">${formatDate(rec.recordedAt)}</div>
-          <div class="sq-sub">${formatVitalEffectLine(eff)}${eff.summary ? ` · ${escapeHtml(eff.summary)}` : ""}</div>
-          ${tags ? `<div class="task-attr-tags" style="margin-top:0.25rem">${tags}</div>` : ""}
-          <div style="display:flex;gap:0.35rem;margin-top:0.35rem;flex-wrap:wrap">
-            <button type="button" class="btn btn-ghost btn-xs btn-delete-daily-record" data-id="${rec.id}">删除</button>
+      const todosHtml = renderDailyTodosSection();
+      const recordsHtml = records.length
+        ? records.map((rec) => {
+          const eff = rec.effects || {};
+          const tags = (rec.attrTags || []).map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
+          const vitalLine = formatVitalEffectLine(eff);
+          return `
+        <article class="task-card daily-record-card" data-record-id="${rec.id}">
+          <div class="task-row">
+            <div class="task-body">
+              <div class="task-title">${escapeHtml(rec.name)}</div>
+              ${rec.description ? `<div class="task-desc">${escapeHtml(rec.description)}</div>` : ""}
+              ${vitalLine || eff.summary ? `<div class="task-desc">${vitalLine}${eff.summary ? `${vitalLine ? " · " : ""}${escapeHtml(eff.summary)}` : ""}</div>` : ""}
+              ${tags ? `<div class="task-attr-tags">${tags}</div>` : ""}
+              <div class="task-meta">
+                <span class="time-meta">${formatDate(rec.recordedAt)}</span>
+              </div>
+            </div>
+            <div class="task-actions">
+              <button type="button" class="btn btn-ghost btn-xs btn-delete-daily-record" data-id="${rec.id}">删除</button>
+            </div>
           </div>
-        </div>`;
-      }).join("");
+        </article>`;
+        }).join("")
+        : '<p class="meta" style="font-size:0.68rem;margin:0.35rem 0 0">登记日常行动后，记录会显示在此（含日期时间与 AI 影响）。</p>';
+      panel.innerHTML = `${todosHtml}<div style="margin-top:0.5rem">${records.length ? '<h4 style="font-size:0.72rem;color:var(--text-muted);margin:0 0 0.35rem;font-weight:600">日常记录</h4>' : ""}${recordsHtml}</div>`;
+      panel.querySelectorAll(".daily-todo-check").forEach((cb) => {
+        cb.addEventListener("change", () => toggleDailyTodo(cb.dataset.id, cb.checked));
+      });
+      panel.querySelectorAll(".btn-delete-daily-todo").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!confirm("删除此每日待办模板？（不影响历史记录）")) return;
+          deleteDailyTodoTemplate(btn.dataset.id);
+        });
+      });
       panel.querySelectorAll(".btn-delete-daily-record").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -10993,8 +11176,7 @@ ${text}
   "sideQuestTitle":"",
   "sideQuestDescription":"",
   "dailyName":"",
-  "dailyDescription":"",
-  "dailyCategory":"exercise|medicine|supplement|entertainment|rest|other"
+  "dailyDescription":""
 }
 
 规则：工作/学习/项目 → main_task 或 new_map；健身/喝酒/休息/吃药 → daily；大陆级跟进 → side_quest；优先复用已有名称。`;
@@ -11008,7 +11190,6 @@ ${text}
         ? raw.intent
         : "main_task";
       const pri = ["high", "medium", "low"].includes(raw.taskPriority) ? raw.taskPriority : "medium";
-      const cat = Object.keys(DAILY_CATEGORY_LABELS).includes(raw.dailyCategory) ? raw.dailyCategory : "other";
       return {
         sourceText: sourceText || "",
         intent,
@@ -11025,7 +11206,6 @@ ${text}
         sideQuestDescription: (raw.sideQuestDescription || "").trim(),
         dailyName: (raw.dailyName || "").trim(),
         dailyDescription: (raw.dailyDescription || "").trim(),
-        dailyCategory: cat,
       };
     }
 
@@ -11064,7 +11244,6 @@ ${text}
       document.getElementById("fuzzySideDesc").value = draft.sideQuestDescription || "";
       document.getElementById("fuzzyDailyName").value = draft.dailyName || "";
       document.getElementById("fuzzyDailyDesc").value = draft.dailyDescription || "";
-      document.getElementById("fuzzyDailyCategory").value = draft.dailyCategory || "other";
       document.getElementById("btnFuzzyConfirm").disabled = false;
       updateFuzzyIntentFieldsVisibility();
     }
@@ -11086,7 +11265,6 @@ ${text}
           sideQuestDescription: document.getElementById("fuzzySideDesc").value,
           dailyName: document.getElementById("fuzzyDailyName").value,
           dailyDescription: document.getElementById("fuzzyDailyDesc").value,
-          dailyCategory: document.getElementById("fuzzyDailyCategory").value,
         },
         document.getElementById("fuzzyInputText").value.trim()
       );
@@ -11105,8 +11283,7 @@ ${text}
         if (hasLlmApiKey()) {
           const analysis = await analyzeDailyActionWithLlm(
             draft.dailyName,
-            draft.dailyDescription,
-            draft.dailyCategory
+            draft.dailyDescription
           );
           effects = normalizeDailyEffects(analysis, analysis.attrTags);
         } else {
@@ -11119,7 +11296,7 @@ ${text}
           id: uid(),
           name: draft.dailyName,
           description: draft.dailyDescription,
-          category: draft.dailyCategory,
+          category: "other",
           attrTags: effects.attrTags || [],
           effects,
           recordedAt: now,
@@ -11357,7 +11534,7 @@ ${text}
           <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.physicalHealth}%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div></div></div>
         <div class="vital-meter"><label><span>精神健康</span><span>${v.mentalHealth}/100</span></label>
           <div class="xp-bar-wrap"><div class="xp-bar-fill" style="width:${v.mentalHealth}%;background:linear-gradient(90deg,#6366f1,#a78bfa)"></div></div></div>
-        <p class="field-hint">力：当下可消耗精力，工作/锻炼消耗、休息恢复，每日 6:00 额外恢复 ${STAMINA_DAILY_RECOVERY}。身：长期身体状态，锻炼/用药提升。精：每日 6:00 重置 ${MENTAL_RESET_VALUE}；工作压力消耗，娱乐/休息恢复。</p>
+        <p class="field-hint">力：每天 6:00 重置为 ${STAMINA_DAILY_RESET}，完成任务一般消耗 2~5。身：不每日重置，每天自动 -${PHYSICAL_DECAY_PER_DAY}，锻炼/用药可提升。精：每天 6:00 重置为 ${MENTAL_RESET_VALUE}。</p>
         <h4 style="font-size:0.82rem;margin:0.65rem 0 0.35rem">成长属性</h4>
         <div class="attr-grid">${PLAYER_ATTR_KEYS.map((k) => `
           <div class="attr-card"><h5>${PLAYER_ATTR_LABELS[k]}</h5><div class="attr-val">${p.attributes[k] || 0}</div></div>`).join("")}</div>`;
@@ -11402,27 +11579,35 @@ ${text}
         });
       });
     }
+    function syncSqCompletedAtFieldVisibility() {
+      const isDone = document.getElementById("sqStatusInput")?.value === "done";
+      const field = document.getElementById("sqCompletedAtField");
+      const input = document.getElementById("sqCompletedAtInput");
+      if (field) field.style.display = isDone ? "" : "none";
+      if (isDone && input && !input.value) {
+        input.value = isoToDatetimeLocal(new Date().toISOString());
+      }
+    }
+
     function openDailyActionModal() {
       dailyModalLlmDraft = null;
       document.getElementById("modalDailyActionTitle").textContent = "登记日常";
       document.getElementById("daNameInput").value = "";
       document.getElementById("daDescInput").value = "";
-      document.getElementById("daCategoryInput").value = "other";
       renderDailyLlmPreviewInModal(null, "", []);
-      document.getElementById("daGenStatus").textContent = "点击 AI 按钮分析体力/身体健康/精神健康与属性标签；保存后立即记为一条新记录。";
+      document.getElementById("daGenStatus").textContent = "点击 AI 按钮自动判断标签与体力/健康影响；保存后立即记为一条新记录。";
       wireDailyLlmRegenButton(null);
       document.getElementById("btnConfirmDailyAction").onclick = () => {
         const name = document.getElementById("daNameInput").value.trim();
         if (!name) { toast("请输入行动名称"); return; }
         const desc = document.getElementById("daDescInput").value.trim();
-        const category = document.getElementById("daCategoryInput").value;
         const eff = dailyModalLlmDraft || { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, attrTags: [], summary: "" };
         const now = new Date().toISOString();
         const record = addDailyRecord({
           id: uid(),
           name,
           description: desc,
-          category,
+          category: "other",
           attrTags: eff.attrTags || [],
           effects: eff,
           recordedAt: now,
@@ -11436,44 +11621,109 @@ ${text}
       };
       openModal("modalDailyAction");
     }
+    function openDailyTodoModal() {
+      document.getElementById("dailyTodoTitleInput").value = "";
+      document.getElementById("btnConfirmDailyTodo").onclick = () => {
+        const title = document.getElementById("dailyTodoTitleInput").value.trim();
+        if (!title) { toast("请输入待办标题"); return; }
+        if (!state.dailyTodoTemplates) state.dailyTodoTemplates = [];
+        state.dailyTodoTemplates.push(normalizeDailyTodoTemplate({
+          id: uid(),
+          title,
+          sortOrder: state.dailyTodoTemplates.length,
+        }));
+        save();
+        closeModal("modalDailyTodo");
+        renderDailyRecordsPanel();
+        toast("每日待办已添加");
+      };
+      openModal("modalDailyTodo");
+      setTimeout(() => document.getElementById("dailyTodoTitleInput")?.focus(), 100);
+    }
     function openSideQuestModal(editId) {
       const sq = editId ? state.sideQuests.find((x) => x.id === editId) : null;
       sideQuestModalLlmDraft = sq
-        ? { questStory: sq.questStory || "", attrTags: sq.attrTags || [], attrDelta: sq.attrDelta || null }
+        ? { questStory: sq.questStory || "", attrTags: sq.attrTags || [], attrDelta: sq.attrDelta || null, vitalOnComplete: sq.vitalOnComplete || null }
         : null;
       document.getElementById("modalSideQuestTitle").textContent = sq ? "编辑支线" : "新建支线";
       fillSideQuestContinentSelect(sq?.continentId || state.tagFilterId || "");
       document.getElementById("sqTitleInput").value = sq?.title || "";
       document.getElementById("sqDescInput").value = sq?.description || "";
+      document.getElementById("sqStatusInput").value = sq?.status || "todo";
+      document.getElementById("sqPriorityInput").value = sq?.priority || "medium";
+      document.getElementById("sqDueDateInput").value = sq?.dueDate || "";
+      document.getElementById("sqCompletedAtInput").value = sq?.completedAt
+        ? isoToDatetimeLocal(sq.completedAt)
+        : isoToDatetimeLocal(new Date().toISOString());
+      document.getElementById("btnClearSqDueDate").onclick = () => {
+        document.getElementById("sqDueDateInput").value = "";
+      };
+      document.getElementById("sqStatusInput").onchange = syncSqCompletedAtFieldVisibility;
+      syncSqCompletedAtFieldVisibility();
       renderSideQuestLlmPreviewInModal(sideQuestModalLlmDraft);
       document.getElementById("sqGenStatus").textContent = sq?.loreGenerated ? "已生成内容保存在 JSON 中，可重新生成。" : "点击上方按钮生成；结果写入 JSON。";
       wireSideQuestLlmRegenButton(editId);
-      document.getElementById("btnConfirmSideQuest").onclick = () => {
+      document.getElementById("btnConfirmSideQuest").onclick = async () => {
         const title = document.getElementById("sqTitleInput").value.trim();
         const continentId = document.getElementById("sqContinentSelect").value;
         if (!title || !continentId) { toast("请填写标题并选择大陆"); return; }
         const desc = document.getElementById("sqDescInput").value.trim();
-        const story = sideQuestModalLlmDraft?.questStory || sq?.questStory || "";
-        const tags = sideQuestModalLlmDraft?.attrTags || sq?.attrTags || [];
-        const item = normalizeSideQuest({
-          ...sq,
-          id: sq?.id || uid(),
+        const now = new Date().toISOString();
+        const newStatus = document.getElementById("sqStatusInput").value;
+        const prevStatus = sq?.status || "todo";
+        const payload = {
           title,
           description: desc,
           continentId,
-          questStory: story,
-          attrTags: tags,
+          status: newStatus,
+          priority: document.getElementById("sqPriorityInput").value,
+          dueDate: normalizeDueDateString(document.getElementById("sqDueDateInput").value),
+          questStory: sideQuestModalLlmDraft?.questStory || sq?.questStory || "",
+          attrTags: sideQuestModalLlmDraft?.attrTags || sq?.attrTags || [],
           attrDelta: sideQuestModalLlmDraft?.attrDelta || sq?.attrDelta || null,
-          loreGenerated: !!story,
-          updatedAt: new Date().toISOString(),
-        });
+          vitalOnComplete: sideQuestModalLlmDraft?.vitalOnComplete || sq?.vitalOnComplete || null,
+          loreGenerated: !!(sideQuestModalLlmDraft?.questStory || sq?.questStory),
+          updatedAt: now,
+        };
+        if (newStatus === "done") {
+          payload.completedAt = readTaskCompletedAtFromForm(sq?.completedAt || now);
+        } else {
+          payload.completedAt = null;
+        }
+        if (newStatus === "done" && prevStatus !== "done") {
+          if (!(await confirmIfLowMental())) return;
+        }
+        const item = normalizeSideQuest({ ...sq, ...payload, id: sq?.id || uid(), createdAt: sq?.createdAt || now });
         if (sq) Object.assign(sq, item);
         else state.sideQuests.push(item);
         state.activeProjectId = SIDE_QUEST_BOARD_ID;
-        save();
-        closeModal("modalSideQuest");
-        render();
-        toast("支线已保存");
+        if (newStatus === "done" && prevStatus !== "done") {
+          save();
+          closeModal("modalSideQuest");
+          render();
+          const xp = awardSideQuestCompletion(sq || item, prevStatus);
+          if (xp) {
+            const map = getTag(item.continentId);
+            presentCompletionRewards(sq || item, { questType: "side", name: item.title }, xp, map);
+          }
+          checkPhysicalHealthNotice();
+          renderTopbarVitals();
+          render();
+        } else if (prevStatus === "done" && newStatus !== "done" && sq) {
+          if (revertSideQuestCompletion(sq)) {
+            updateXpBar();
+            renderTopbarVitals();
+            toast("已回退支线完成：经验、体/精、属性与掉落装备已收回");
+          }
+          save();
+          closeModal("modalSideQuest");
+          render();
+        } else {
+          save();
+          closeModal("modalSideQuest");
+          render();
+          toast("支线已保存");
+        }
       };
       openModal("modalSideQuest");
     }
@@ -11484,6 +11734,7 @@ ${text}
     }
     function bindLifeSystemUi() {
       document.getElementById("btnNewDailyAction")?.addEventListener("click", () => openDailyActionModal());
+      document.getElementById("btnNewDailyTodo")?.addEventListener("click", () => openDailyTodoModal());
       document.getElementById("btnNewSideQuest")?.addEventListener("click", () => openSideQuestModal());
     }
 
