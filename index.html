@@ -4961,9 +4961,9 @@
     const STAMINA_WARN_BELOW = 25;
     const COMBO_WINDOW_MS = 30 * 60 * 1000;
     const COMBO_DISPLAY_MIN = 2;
-    const DAILY_STAMINA_CLAMP = 35;
-    const DAILY_PHYSICAL_CLAMP = 30;
-    const DAILY_MENTAL_CLAMP = 25;
+    const DAILY_STAMINA_CLAMP = 10;
+    const DAILY_PHYSICAL_CLAMP = 5;
+    const DAILY_MENTAL_CLAMP = 5;
     const DAILY_RECORD_XP_MIN = 10;
     const DAILY_TODO_XP_MIN = 6;
 
@@ -4980,11 +4980,11 @@
    - stamina 体力值：当下可消耗的精力。任务完成消耗约 2~5（负值），范围 -10~+10。
    - physicalHealth 身体健康：长期身体状态。任务影响较小，范围 -10~+10。
    - mentalHealth 精神健康：情绪与心理负担。任务范围 -10~0。
-5) 日常行动（登记/每日待办）数值范围更宽：
-   - stamina：-35~+35；休息/睡眠可 +15~+35。
-   - physicalHealth：-15~+30；用药/保健品 +10~+20；健身/运动 +15~+28；睡眠/休息 +8~+18。须明显优于任务完成时的恢复量。
-   - mentalHealth：-25~+25；娱乐/社交/休息可显著恢复。
-6) 示例：健身 stamina-10 physicalHealth+22 mentalHealth+4；睡觉 stamina+25 physicalHealth+14 mentalHealth+12；吃药 physicalHealth+16。
+5) 日常行动（登记/每日待办）数值范围（严格）：
+   - stamina 体力：-10~+10；休息/睡眠可 +5~+10；健身/运动通常 -3~-8。
+   - physicalHealth 身体健康：-5~+5；用药/健身/运动/睡眠等健康行为 +3~+5。
+   - mentalHealth 精神健康：-5~+5；娱乐/休息/社交/睡眠 +2~+5。
+6) 示例：健身 stamina-6 physicalHealth+4 mentalHealth+2；睡觉 stamina+8 physicalHealth+3 mentalHealth+4；吃药 physicalHealth+4。
 7) 日常/任务 attrTags 可选 1 至多个标签，从：体能、精神力、社交能力、科技、人文艺术 中选择。
 8) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
 
@@ -6185,26 +6185,33 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const unhealthy = /喝酒|酗酒|熬夜|通宵|垃圾食品|吸烟|抽烟/.test(text);
 
       if (wellnessStrong) {
-        if (physicalHealth >= 0) {
-          physicalHealth = Math.max(physicalHealth, 15);
-          physicalHealth = Math.min(DAILY_PHYSICAL_CLAMP, physicalHealth + (physicalHealth < 20 ? 6 : 0));
-        }
-        if (stamina > -20 && stamina <= 0) stamina = Math.min(DAILY_STAMINA_CLAMP, stamina - 4);
+        if (physicalHealth >= 0) physicalHealth = Math.max(physicalHealth, 4);
+        if (stamina >= 0) stamina = -4;
+        else if (stamina > -5) stamina = Math.min(stamina, -4);
       }
       if (wellnessMed) {
-        if (physicalHealth >= 0) {
-          physicalHealth = Math.max(physicalHealth, 10);
-          physicalHealth = Math.min(DAILY_PHYSICAL_CLAMP, physicalHealth + (physicalHealth < 16 ? 4 : 0));
+        if (/睡|休息|午休/.test(text)) {
+          if (stamina < 5) stamina = Math.max(stamina, 6);
+          if (mentalHealth < 3) mentalHealth = Math.max(mentalHealth, 3);
+          if (physicalHealth >= 0 && physicalHealth < 2) physicalHealth = Math.max(physicalHealth, 2);
         }
-        if (/睡|休息|午休/.test(text) && stamina < 18) {
-          stamina = Math.max(stamina, 18);
+        if (/药|保健|维生素|营养|补剂/.test(text) && physicalHealth < 4) {
+          physicalHealth = Math.max(physicalHealth, 4);
         }
-        if (/药|保健|维生素|营养|补剂/.test(text) && physicalHealth < 14) {
-          physicalHealth = Math.max(physicalHealth, 14);
+        if (/冥想|按摩|泡脚|休息/.test(text) && mentalHealth < 3) {
+          mentalHealth = Math.max(mentalHealth, 3);
         }
       }
-      if (unhealthy && physicalHealth > -4) physicalHealth = Math.min(physicalHealth, -3);
-      return { ...effects, stamina, physicalHealth, mentalHealth };
+      if (unhealthy) {
+        if (physicalHealth > -3) physicalHealth = Math.min(physicalHealth, -2);
+        if (mentalHealth > -3) mentalHealth = Math.min(mentalHealth, -2);
+      }
+      return {
+        ...effects,
+        stamina: clampDailyVital(stamina, DAILY_STAMINA_CLAMP),
+        physicalHealth: clampDailyVital(physicalHealth, DAILY_PHYSICAL_CLAMP),
+        mentalHealth: clampDailyVital(mentalHealth, DAILY_MENTAL_CLAMP),
+      };
     }
 
     function calcDailyActionXp(effects, { isTodo = false } = {}) {
@@ -10738,8 +10745,8 @@ ${lines.join("\n\n")}`;
     }
     async function analyzeDailyActionWithLlm(name, desc) {
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON（根据名称与描述自动判断 1 至多个 attrTags）：
-{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"stamina":-35~35,"physicalHealth":-15~30,"mentalHealth":-25~25,"attributes":{},"summary":"20字"}
-用药/睡眠/健身/运动须给出较高的 physicalHealth 正数（通常 +10~+28）；休息/睡眠 stamina 可 +15~+35。
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"stamina":-10~10,"physicalHealth":-5~5,"mentalHealth":-5~5,"attributes":{},"summary":"20字"}
+严格限制：stamina ±10；physicalHealth ±5；mentalHealth ±5。用药/睡眠/健身/运动等健康行为在各自上限内尽量给足正数。
 名称：${name}；描述：${desc || "无"}`);
       const fb = { attrTags: [], stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
       const merged = { ...fb, ...(j || {}) };
