@@ -4579,15 +4579,28 @@
   </div>
   <div class="modal-overlay" id="modalDailyTodo">
     <div class="modal">
-      <h3>添加每日待办</h3>
+      <h3 id="modalDailyTodoTitle">添加每日待办</h3>
       <div class="field">
         <label for="dailyTodoTitleInput">待办事项</label>
-        <input type="text" id="dailyTodoTitleInput" placeholder="如：晨间阅读、整理桌面" autocomplete="off" />
-        <p class="field-hint">每天 6:00 后重置为未完成，当天勾选后即标记完成。</p>
+        <input type="text" id="dailyTodoTitleInput" placeholder="如：晨间阅读、健身、用药" autocomplete="off" />
       </div>
+      <div class="field">
+        <label for="dailyTodoDescInput">说明（可选）</label>
+        <textarea id="dailyTodoDescInput" placeholder="补充细节，供 AI 判断属性标签与数值影响"></textarea>
+        <p class="field-hint">每天 6:00 后重置为未完成；勾选完成时应用 AI 分析的效果并获得经验值。</p>
+      </div>
+      <div class="field" id="dtEffectsPreviewField" style="display:none">
+        <label>AI 影响分析</label>
+        <div class="quest-story-box" id="dtEffectsPreview"></div>
+        <div class="task-attr-tags" id="dtAttrTagsPreview" style="display:none;margin-top:0.35rem"></div>
+      </div>
+      <div class="llm-action-row">
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenDailyTodo">✨ AI 生成/重新生成 影响与标签</button>
+      </div>
+      <p class="field-hint" id="dtGenStatus">建议先点击 AI 分析；完成待办时将按分析结果调整体力/健康/属性并获得 XP。</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalDailyTodo">取消</button>
-        <button type="button" class="btn btn-primary" id="btnConfirmDailyTodo">添加</button>
+        <button type="button" class="btn btn-primary" id="btnConfirmDailyTodo">保存</button>
       </div>
     </div>
   </div>
@@ -4933,9 +4946,9 @@
 
   <script>
     const STORAGE_KEY = "wjy-cyber-brain-v1";
-    const STATE_SCHEMA_VERSION = 7;
+    const STATE_SCHEMA_VERSION = 8;
     const SIDE_QUEST_BOARD_ID = "__side_quest_board__";
-    // schema 7: 每日待办、连击、体/健康规则调整
+    // schema 8: 每日待办 AI 效果/XP、日常登记 XP、健康类恢复加强
     const PHYSICAL_DECAY_PER_DAY = 5;
     const MENTAL_RESET_VALUE = 80;
     const STAMINA_DEFAULT = 100;
@@ -4948,6 +4961,11 @@
     const STAMINA_WARN_BELOW = 25;
     const COMBO_WINDOW_MS = 30 * 60 * 1000;
     const COMBO_DISPLAY_MIN = 2;
+    const DAILY_STAMINA_CLAMP = 35;
+    const DAILY_PHYSICAL_CLAMP = 30;
+    const DAILY_MENTAL_CLAMP = 25;
+    const DAILY_RECORD_XP_MIN = 10;
+    const DAILY_TODO_XP_MIN = 6;
 
     const PLAYER_ATTR_KEYS = ["physique","mind","intelligence","technology","humanities","social","lifeSkills"];
     const PLAYER_ATTR_LABELS = { physique:"体格", mind:"心智", intelligence:"智力", technology:"科技", humanities:"人文艺术", social:"社交能力", lifeSkills:"生活力" };
@@ -4959,12 +4977,16 @@
 2) 任务能力标签 attrTags 只能从：体能、精神力、社交能力、科技、人文艺术 中选 0-3 个。
 3) 属性增量 attributes 的键只能是：physique,mind,intelligence,technology,humanities,social,lifeSkills，每项为 0-5 的整数。
 4) 必须区分三种数值（不可混淆）：
-   - stamina 体力值：当下可消耗的精力。一般任务完成消耗约 2~5（负值），范围 -10~+10。
-   - physicalHealth 身体健康：长期身体状态。锻炼/吃药/保健品可提升；不健康行为可略降；一般工作影响较小。范围 -15~+15。
-   - mentalHealth 精神健康：情绪与心理负担。工作/压力消耗；娱乐/休息/社交恢复。范围 -20~+20。
-5) 示例：上班 stamina-4 mentalHealth-5 physicalHealth-1；健身 stamina-8 physicalHealth+8 mentalHealth+2。
-6) 日常/任务 attrTags 可选 1 至多个标签，从：体能、精神力、社交能力、科技、人文艺术 中选择。
-7) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
+   - stamina 体力值：当下可消耗的精力。任务完成消耗约 2~5（负值），范围 -10~+10。
+   - physicalHealth 身体健康：长期身体状态。任务影响较小，范围 -10~+10。
+   - mentalHealth 精神健康：情绪与心理负担。任务范围 -10~0。
+5) 日常行动（登记/每日待办）数值范围更宽：
+   - stamina：-35~+35；休息/睡眠可 +15~+35。
+   - physicalHealth：-15~+30；用药/保健品 +10~+20；健身/运动 +15~+28；睡眠/休息 +8~+18。须明显优于任务完成时的恢复量。
+   - mentalHealth：-25~+25；娱乐/社交/休息可显著恢复。
+6) 示例：健身 stamina-10 physicalHealth+22 mentalHealth+4；睡觉 stamina+25 physicalHealth+14 mentalHealth+12；吃药 physicalHealth+16。
+7) 日常/任务 attrTags 可选 1 至多个标签，从：体能、精神力、社交能力、科技、人文艺术 中选择。
+8) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
 
     const DAILY_CATEGORY_LABELS = { exercise:"锻炼", medicine:"吃药", supplement:"保健品", entertainment:"娱乐", rest:"休息", other:"其他" };
     const PET_GENDER_LABELS = { male: "公", female: "母", unknown: "未知" };
@@ -5411,7 +5433,7 @@
         inventory: [],
         equipment: { weapon: null, armor: null, accessory: null },
         achievements: [],
-        stats: { tasksCompleted: 0, mainTasksCompleted: 0, sideTasksCompleted: 0, sideQuestsCompleted: 0, highPriorityCompleted: 0, nightCompletions: 0, dailyActionsCompleted: 0 },
+        stats: { tasksCompleted: 0, mainTasksCompleted: 0, sideTasksCompleted: 0, sideQuestsCompleted: 0, highPriorityCompleted: 0, nightCompletions: 0, dailyActionsCompleted: 0, dailyTodosCompleted: 0 },
         discoveredItems: [],
         vitals: defaultVitals(),
         attributes: defaultAttributes(),
@@ -6117,10 +6139,10 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       return `体力 ${st >= 0 ? "+" : ""}${st} · 身体健康 ${ph >= 0 ? "+" : ""}${ph} · 精神健康 ${mh >= 0 ? "+" : ""}${mh}`;
     }
 
-    function renderDailyLlmPreviewInModal(effects, summary, attrTags) {
-      const field = document.getElementById("daEffectsPreviewField");
-      const box = document.getElementById("daEffectsPreview");
-      const tagsEl = document.getElementById("daAttrTagsPreview");
+    function renderDailyEffectsPreview(ids, effects, summary, attrTags) {
+      const field = document.getElementById(ids.field);
+      const box = document.getElementById(ids.box);
+      const tagsEl = document.getElementById(ids.tags);
       if (!field || !box) return;
       const tags = attrTags || effects?.attrTags || [];
       const lines = [summary || "", formatVitalEffectLine(effects || {})].filter(Boolean);
@@ -6130,6 +6152,79 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         tagsEl.innerHTML = tags.map((t) => `<span class="task-attr-tag">${escapeHtml(t)}</span>`).join("");
         tagsEl.style.display = tags.length ? "" : "none";
       }
+    }
+
+    function renderDailyLlmPreviewInModal(effects, summary, attrTags) {
+      renderDailyEffectsPreview(
+        { field: "daEffectsPreviewField", box: "daEffectsPreview", tags: "daAttrTagsPreview" },
+        effects,
+        summary,
+        attrTags
+      );
+    }
+
+    function renderDailyTodoLlmPreviewInModal(effects, summary, attrTags) {
+      renderDailyEffectsPreview(
+        { field: "dtEffectsPreviewField", box: "dtEffectsPreview", tags: "dtAttrTagsPreview" },
+        effects,
+        summary,
+        attrTags
+      );
+    }
+
+    function clampDailyVital(n, maxAbs) {
+      if (typeof n !== "number") return 0;
+      return Math.min(maxAbs, Math.max(-maxAbs, Math.round(n)));
+    }
+
+    function boostWellnessDailyEffects(effects, context = {}) {
+      const text = `${context.name || ""} ${context.description || ""} ${effects.summary || ""}`;
+      let { stamina, physicalHealth, mentalHealth } = effects;
+      const wellnessStrong = /健身|运动|锻炼|跑步|游泳|瑜伽|骑车|走路|徒步|力量|有氧|拉伸|俯卧撑|深蹲/.test(text);
+      const wellnessMed = /睡觉|睡眠|午休|休息|用药|吃药|服药|保健品|维生素|营养|补剂|理疗|按摩|泡脚|冥想|早睡/.test(text);
+      const unhealthy = /喝酒|酗酒|熬夜|通宵|垃圾食品|吸烟|抽烟/.test(text);
+
+      if (wellnessStrong) {
+        if (physicalHealth >= 0) {
+          physicalHealth = Math.max(physicalHealth, 15);
+          physicalHealth = Math.min(DAILY_PHYSICAL_CLAMP, physicalHealth + (physicalHealth < 20 ? 6 : 0));
+        }
+        if (stamina > -20 && stamina <= 0) stamina = Math.min(DAILY_STAMINA_CLAMP, stamina - 4);
+      }
+      if (wellnessMed) {
+        if (physicalHealth >= 0) {
+          physicalHealth = Math.max(physicalHealth, 10);
+          physicalHealth = Math.min(DAILY_PHYSICAL_CLAMP, physicalHealth + (physicalHealth < 16 ? 4 : 0));
+        }
+        if (/睡|休息|午休/.test(text) && stamina < 18) {
+          stamina = Math.max(stamina, 18);
+        }
+        if (/药|保健|维生素|营养|补剂/.test(text) && physicalHealth < 14) {
+          physicalHealth = Math.max(physicalHealth, 14);
+        }
+      }
+      if (unhealthy && physicalHealth > -4) physicalHealth = Math.min(physicalHealth, -3);
+      return { ...effects, stamina, physicalHealth, mentalHealth };
+    }
+
+    function calcDailyActionXp(effects, { isTodo = false } = {}) {
+      const e = effects || {};
+      let base = isTodo ? 6 : 10;
+      const boost = Math.abs(e.stamina || 0) + Math.abs(e.physicalHealth || 0) + Math.abs(e.mentalHealth || 0);
+      base += Math.min(10, Math.floor(boost / 4));
+      base += Math.min(3, (e.attrTags || []).length);
+      return Math.max(isTodo ? DAILY_TODO_XP_MIN : DAILY_RECORD_XP_MIN, base);
+    }
+
+    function grantDailyXp(xp) {
+      if (!xp || xp <= 0) return 0;
+      const prevLevel = getLevelFromXp(state.player.xp);
+      state.player.xp += xp;
+      const newLevel = getLevelFromXp(state.player.xp);
+      if (newLevel > prevLevel) grantLevelRewards(newLevel, prevLevel);
+      checkAchievements();
+      updateXpBar();
+      return xp;
     }
 
     function applyMapLoreToTag(tag, lore) {
@@ -6657,6 +6752,8 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
     let projectModalQuestStory = "";
     let taskModalLlmDraft = null;
     let dailyModalLlmDraft = null;
+    let dailyTodoModalLlmDraft = null;
+    let editingDailyTodoId = null;
     let sideQuestModalLlmDraft = null;
     let petPanelTab = "todos";
     let editingPetId = null;
@@ -9649,7 +9746,7 @@ ${lines.join("\n\n")}`;
           physicalHealth: analysis.physicalHealth || 0,
           mentalHealth: analysis.mentalHealth || 0,
           attributes: analysis.attributes || {},
-          attrTags: (analysis.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t)),
+          attrTags: analysis.attrTags || [],
           summary: analysis.summary || "",
         };
         renderDailyLlmPreviewInModal(dailyModalLlmDraft, dailyModalLlmDraft.summary, dailyModalLlmDraft.attrTags);
@@ -9666,6 +9763,50 @@ ${lines.join("\n\n")}`;
         }
         btn.disabled = false;
         toast("日常行动影响已生成");
+      };
+    }
+
+    function wireDailyTodoLlmRegenButton(editId) {
+      const btn = document.getElementById("btnLlmRegenDailyTodo");
+      if (!btn) return;
+      btn.onclick = async () => {
+        if (!hasLlmApiKey()) {
+          toast("请先在「工具 → AI 总结」中配置大模型 API");
+          return;
+        }
+        const title = document.getElementById("dailyTodoTitleInput").value.trim();
+        if (!title) {
+          toast("请先填写待办名称");
+          return;
+        }
+        const desc = document.getElementById("dailyTodoDescInput").value.trim();
+        const statusEl = document.getElementById("dtGenStatus");
+        btn.disabled = true;
+        if (statusEl) statusEl.textContent = "AI 分析影响中…";
+        const analysis = await analyzeDailyActionWithLlm(title, desc);
+        dailyTodoModalLlmDraft = {
+          stamina: analysis.stamina || 0,
+          physicalHealth: analysis.physicalHealth || 0,
+          mentalHealth: analysis.mentalHealth || 0,
+          attributes: analysis.attributes || {},
+          attrTags: analysis.attrTags || [],
+          summary: analysis.summary || "",
+        };
+        renderDailyTodoLlmPreviewInModal(dailyTodoModalLlmDraft, dailyTodoModalLlmDraft.summary, dailyTodoModalLlmDraft.attrTags);
+        const live = editId ? getDailyTodoTemplate(editId) : null;
+        if (live) {
+          live.effects = { ...dailyTodoModalLlmDraft };
+          live.attrTags = dailyTodoModalLlmDraft.attrTags;
+          live.xpOnComplete = calcDailyActionXp(live.effects, { isTodo: true });
+          live.llmGenerated = true;
+          live.updatedAt = new Date().toISOString();
+          save();
+          if (statusEl) statusEl.textContent = "已写入 JSON";
+        } else if (statusEl) {
+          statusEl.textContent = "已生成，保存后写入 JSON";
+        }
+        btn.disabled = false;
+        toast("每日待办影响已生成");
       };
     }
 
@@ -10237,22 +10378,24 @@ ${lines.join("\n\n")}`;
         updatedAt: q.updatedAt || now,
       };
     }
-    function normalizeDailyEffects(effects, attrTags) {
+    function normalizeDailyEffects(effects, attrTags, context = {}) {
       const eff = effects && typeof effects === "object" ? effects : {};
       const tags = Array.isArray(attrTags) ? attrTags.filter((t) => TASK_ATTR_TAGS.includes(t)) : (eff.attrTags || []).filter((t) => TASK_ATTR_TAGS.includes(t));
-      return {
-        stamina: typeof eff.stamina === "number" ? eff.stamina : 0,
-        physicalHealth: typeof eff.physicalHealth === "number" ? eff.physicalHealth : 0,
-        mentalHealth: typeof eff.mentalHealth === "number" ? eff.mentalHealth : 0,
+      const base = {
+        stamina: clampDailyVital(eff.stamina, DAILY_STAMINA_CLAMP),
+        physicalHealth: clampDailyVital(eff.physicalHealth, DAILY_PHYSICAL_CLAMP),
+        mentalHealth: clampDailyVital(eff.mentalHealth, DAILY_MENTAL_CLAMP),
         attributes: eff.attributes && typeof eff.attributes === "object" ? eff.attributes : {},
         attrTags: tags,
         summary: eff.summary || "",
       };
+      return boostWellnessDailyEffects(base, context);
     }
 
     function normalizeDailyRecord(r) {
       const now = new Date().toISOString();
-      const effects = normalizeDailyEffects(r.effects, r.attrTags || r.effects?.attrTags);
+      const ctx = { name: r.name, description: r.description };
+      const effects = normalizeDailyEffects(r.effects, r.attrTags || r.effects?.attrTags, ctx);
       return {
         id: r.id || uid(),
         name: (r.name || "").trim() || "日常记录",
@@ -10260,6 +10403,7 @@ ${lines.join("\n\n")}`;
         category: r.category || "other",
         attrTags: effects.attrTags,
         effects,
+        xpAwarded: typeof r.xpAwarded === "number" ? r.xpAwarded : 0,
         recordedAt: r.recordedAt || r.completedAt || now,
         llmGenerated: !!r.llmGenerated,
         createdAt: r.createdAt || r.recordedAt || now,
@@ -10269,12 +10413,49 @@ ${lines.join("\n\n")}`;
 
     function normalizeDailyTodoTemplate(t) {
       const now = new Date().toISOString();
+      const ctx = { name: t.title, description: t.description };
+      const effects = normalizeDailyEffects(t.effects, t.attrTags || t.effects?.attrTags, ctx);
       return {
         id: t.id || uid(),
         title: (t.title || "").trim() || "待办事项",
+        description: t.description || "",
+        attrTags: effects.attrTags,
+        effects,
+        xpOnComplete: typeof t.xpOnComplete === "number" ? t.xpOnComplete : calcDailyActionXp(effects, { isTodo: true }),
+        llmGenerated: !!t.llmGenerated,
         sortOrder: typeof t.sortOrder === "number" ? t.sortOrder : 0,
         createdAt: t.createdAt || now,
+        updatedAt: t.updatedAt || now,
       };
+    }
+
+    function getDailyTodoTemplate(id) {
+      return (state.dailyTodoTemplates || []).find((t) => t.id === id) || null;
+    }
+
+    function normalizeDailyTodoCompletion(entry) {
+      if (!entry) return null;
+      if (typeof entry === "string") return { completedAt: entry, xpAwarded: 0, effectsApplied: false };
+      return {
+        completedAt: entry.completedAt || new Date().toISOString(),
+        xpAwarded: entry.xpAwarded || 0,
+        effectsApplied: !!entry.effectsApplied,
+      };
+    }
+
+    function applyDailyTodoCompletion(template) {
+      applyDailyRecordEffects({ effects: template.effects, attrTags: template.attrTags || template.effects?.attrTags });
+      const xp = template.xpOnComplete ?? calcDailyActionXp(template.effects, { isTodo: true });
+      grantDailyXp(xp);
+      return xp;
+    }
+
+    function revertDailyTodoCompletion(template, completion) {
+      if (!completion) return;
+      if (completion.effectsApplied) {
+        applyDailyRecordEffects({ effects: template.effects, attrTags: template.attrTags || template.effects?.attrTags }, { reverse: true });
+      }
+      if (completion.xpAwarded > 0) adjustXpAndSkillPoints(-completion.xpAwarded);
     }
 
     function getDailyTodoDoneMap(dayKey = todayLogicalDayKey()) {
@@ -10282,22 +10463,51 @@ ${lines.join("\n\n")}`;
     }
 
     function toggleDailyTodo(id, checked) {
+      const template = getDailyTodoTemplate(id);
+      if (!template) return;
       tickDailyVitals();
       const dayKey = todayLogicalDayKey();
       if (!state.dailyTodoCompletions) state.dailyTodoCompletions = {};
       if (!state.dailyTodoCompletions[dayKey]) state.dailyTodoCompletions[dayKey] = {};
-      if (checked) state.dailyTodoCompletions[dayKey][id] = new Date().toISOString();
-      else delete state.dailyTodoCompletions[dayKey][id];
+      const doneMap = state.dailyTodoCompletions[dayKey];
+      if (checked) {
+        if (doneMap[id]) return;
+        const xp = applyDailyTodoCompletion(template);
+        doneMap[id] = { completedAt: new Date().toISOString(), xpAwarded: xp, effectsApplied: true };
+        state.player.stats.dailyTodosCompleted = (state.player.stats.dailyTodosCompleted || 0) + 1;
+        save();
+        renderTopbarVitals();
+        renderDailyRecordsPanel();
+        checkPhysicalHealthNotice();
+        checkAchievements();
+        toast(`已完成：${template.title} · +${xp} XP`);
+        return;
+      }
+      const completion = normalizeDailyTodoCompletion(doneMap[id]);
+      if (completion) {
+        revertDailyTodoCompletion(template, completion);
+        if (state.player.stats.dailyTodosCompleted > 0) state.player.stats.dailyTodosCompleted--;
+      }
+      delete doneMap[id];
       save();
+      updateXpBar();
+      renderTopbarVitals();
       renderDailyRecordsPanel();
+      toast(`已取消完成：${template.title}`);
     }
 
     function deleteDailyTodoTemplate(id) {
+      const dayKey = todayLogicalDayKey();
+      const completion = normalizeDailyTodoCompletion(state.dailyTodoCompletions?.[dayKey]?.[id]);
+      const template = getDailyTodoTemplate(id);
+      if (template && completion) revertDailyTodoCompletion(template, completion);
       state.dailyTodoTemplates = (state.dailyTodoTemplates || []).filter((t) => t.id !== id);
-      Object.keys(state.dailyTodoCompletions || {}).forEach((dayKey) => {
-        if (state.dailyTodoCompletions[dayKey]?.[id]) delete state.dailyTodoCompletions[dayKey][id];
+      Object.keys(state.dailyTodoCompletions || {}).forEach((dk) => {
+        if (state.dailyTodoCompletions[dk]?.[id]) delete state.dailyTodoCompletions[dk][id];
       });
       save();
+      updateXpBar();
+      renderTopbarVitals();
       renderDailyRecordsPanel();
     }
 
@@ -10307,15 +10517,24 @@ ${lines.join("\n\n")}`;
       const doneMap = getDailyTodoDoneMap(dayKey);
       const doneCount = templates.filter((t) => doneMap[t.id]).length;
       if (!templates.length) {
-        return `<div class="daily-todo-section"><h4>每日待办</h4><p class="meta" style="font-size:0.68rem;margin:0">添加每天需要重复完成的事项，每天 6:00 后重置。</p></div>`;
+        return `<div class="daily-todo-section"><h4>每日待办</h4><p class="meta" style="font-size:0.68rem;margin:0">添加每天需要重复完成的事项；创建时 AI 分析效果，勾选完成获得 XP 与属性调整。</p></div>`;
       }
       return `<div class="daily-todo-section">
         <h4>每日待办 · ${doneCount}/${templates.length}</h4>
         ${templates.map((t) => {
           const done = !!doneMap[t.id];
+          const eff = t.effects || {};
+          const tags = (t.attrTags || eff.attrTags || []).map((tag) => `<span class="task-attr-tag">${escapeHtml(tag)}</span>`).join("");
+          const vitalHint = formatVitalEffectLine(eff);
+          const xpHint = t.xpOnComplete ? `+${t.xpOnComplete} XP` : "";
           return `<div class="daily-todo-item ${done ? "done" : ""}" data-todo-id="${t.id}">
             <input type="checkbox" class="daily-todo-check" data-id="${t.id}" ${done ? "checked" : ""} title="标记今日完成" />
-            <span class="daily-todo-label">${escapeHtml(t.title)}</span>
+            <div class="daily-todo-label">
+              <div>${escapeHtml(t.title)}</div>
+              ${vitalHint && vitalHint !== "体力 +0 · 身体健康 +0 · 精神健康 +0" ? `<div class="meta" style="font-size:0.62rem;margin-top:0.12rem">${escapeHtml(vitalHint)}${xpHint ? ` · ${xpHint}` : ""}</div>` : (xpHint ? `<div class="meta" style="font-size:0.62rem;margin-top:0.12rem">${xpHint}</div>` : "")}
+              ${tags ? `<div class="task-attr-tags" style="margin-top:0.15rem">${tags}</div>` : ""}
+            </div>
+            <button type="button" class="btn btn-ghost btn-xs btn-edit-daily-todo" data-id="${t.id}" title="编辑">编</button>
             <button type="button" class="btn btn-ghost btn-xs btn-delete-daily-todo" data-id="${t.id}" title="删除模板">×</button>
           </div>`;
         }).join("")}
@@ -10519,10 +10738,12 @@ ${lines.join("\n\n")}`;
     }
     async function analyzeDailyActionWithLlm(name, desc) {
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON（根据名称与描述自动判断 1 至多个 attrTags）：
-{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"stamina":-30~30,"physicalHealth":-15~15,"mentalHealth":-20~20,"attributes":{},"summary":"20字"}
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"stamina":-35~35,"physicalHealth":-15~30,"mentalHealth":-25~25,"attributes":{},"summary":"20字"}
+用药/睡眠/健身/运动须给出较高的 physicalHealth 正数（通常 +10~+28）；休息/睡眠 stamina 可 +15~+35。
 名称：${name}；描述：${desc || "无"}`);
       const fb = { attrTags: [], stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: "" };
-      return { ...fb, ...(j || {}) };
+      const merged = { ...fb, ...(j || {}) };
+      return normalizeDailyEffects(merged, merged.attrTags, { name, description: desc });
     }
     function vitalWarnBannerHtml() {
       const v = state.player?.vitals;
@@ -10587,6 +10808,10 @@ ${lines.join("\n\n")}`;
       tickDailyVitals();
       const record = normalizeDailyRecord(item);
       applyDailyRecordEffects(record);
+      if (!record.xpAwarded) {
+        record.xpAwarded = calcDailyActionXp(record.effects);
+        grantDailyXp(record.xpAwarded);
+      }
       if (!state.dailyRecords) state.dailyRecords = [];
       state.dailyRecords.unshift(record);
       state.player.stats.dailyActionsCompleted = (state.player.stats.dailyActionsCompleted || 0) + 1;
@@ -10604,11 +10829,13 @@ ${lines.join("\n\n")}`;
       if (idx < 0) return false;
       const record = state.dailyRecords[idx];
       applyDailyRecordEffects(record, { reverse: true });
+      if (record.xpAwarded > 0) adjustXpAndSkillPoints(-record.xpAwarded);
       state.dailyRecords.splice(idx, 1);
       if (state.player.stats.dailyActionsCompleted > 0) {
         state.player.stats.dailyActionsCompleted--;
       }
       save();
+      updateXpBar();
       renderTopbarVitals();
       renderDailyRecordsPanel();
       renderDailyDigest();
@@ -10637,6 +10864,7 @@ ${lines.join("\n\n")}`;
               ${tags ? `<div class="task-attr-tags">${tags}</div>` : ""}
               <div class="task-meta">
                 <span class="time-meta">${formatDate(rec.recordedAt)}</span>
+                ${rec.xpAwarded ? `<span class="badge" style="background:var(--gold-dim);color:var(--gold)">+${rec.xpAwarded} XP</span>` : ""}
               </div>
             </div>
             <div class="task-actions">
@@ -10653,14 +10881,20 @@ ${lines.join("\n\n")}`;
       panel.querySelectorAll(".btn-delete-daily-todo").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          if (!confirm("删除此每日待办模板？（不影响历史记录）")) return;
+          if (!confirm("删除此每日待办模板？若今日已完成将回退效果与经验。")) return;
           deleteDailyTodoTemplate(btn.dataset.id);
+        });
+      });
+      panel.querySelectorAll(".btn-edit-daily-todo").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          openDailyTodoModal(btn.dataset.id);
         });
       });
       panel.querySelectorAll(".btn-delete-daily-record").forEach((btn) => {
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
-          if (!confirm("删除此条日常记录？将回退对应的体力/健康/属性影响。")) return;
+          if (!confirm("删除此条日常记录？将回退对应的体力/健康/属性影响与经验。")) return;
           deleteDailyRecord(btn.dataset.id);
         });
       });
@@ -11285,14 +11519,15 @@ ${text}
             draft.dailyName,
             draft.dailyDescription
           );
-          effects = normalizeDailyEffects(analysis, analysis.attrTags);
+          effects = normalizeDailyEffects(analysis, analysis.attrTags, { name: draft.dailyName, description: draft.dailyDescription });
         } else {
           effects = normalizeDailyEffects(
             { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, summary: draft.dailyDescription },
-            []
+            [],
+            { name: draft.dailyName, description: draft.dailyDescription }
           );
         }
-        addDailyRecord({
+        const record = addDailyRecord({
           id: uid(),
           name: draft.dailyName,
           description: draft.dailyDescription,
@@ -11601,7 +11836,11 @@ ${text}
         const name = document.getElementById("daNameInput").value.trim();
         if (!name) { toast("请输入行动名称"); return; }
         const desc = document.getElementById("daDescInput").value.trim();
-        const eff = dailyModalLlmDraft || { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, attrTags: [], summary: "" };
+        const eff = normalizeDailyEffects(
+          dailyModalLlmDraft || { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, attrTags: [], summary: "" },
+          dailyModalLlmDraft?.attrTags || [],
+          { name, description: desc }
+        );
         const now = new Date().toISOString();
         const record = addDailyRecord({
           id: uid(),
@@ -11617,25 +11856,54 @@ ${text}
         });
         closeModal("modalDailyAction");
         render();
-        toast(`已记录：${record.name}`);
+        toast(`已记录：${record.name} · +${record.xpAwarded} XP`);
       };
       openModal("modalDailyAction");
     }
-    function openDailyTodoModal() {
-      document.getElementById("dailyTodoTitleInput").value = "";
+    function openDailyTodoModal(editId = null) {
+      editingDailyTodoId = editId;
+      dailyTodoModalLlmDraft = null;
+      const tpl = editId ? getDailyTodoTemplate(editId) : null;
+      document.getElementById("modalDailyTodoTitle").textContent = tpl ? "编辑每日待办" : "添加每日待办";
+      document.getElementById("dailyTodoTitleInput").value = tpl?.title || "";
+      document.getElementById("dailyTodoDescInput").value = tpl?.description || "";
+      if (tpl?.effects) {
+        dailyTodoModalLlmDraft = { ...tpl.effects, attrTags: tpl.attrTags || tpl.effects.attrTags || [] };
+        renderDailyTodoLlmPreviewInModal(dailyTodoModalLlmDraft, dailyTodoModalLlmDraft.summary, dailyTodoModalLlmDraft.attrTags);
+      } else {
+        renderDailyTodoLlmPreviewInModal(null, "", []);
+      }
+      document.getElementById("dtGenStatus").textContent = tpl?.llmGenerated
+        ? "已保存 AI 分析，可重新生成。勾选完成时将应用效果并获得 XP。"
+        : "建议先点击 AI 分析；完成待办时将按分析结果调整数值并获得 XP。";
+      wireDailyTodoLlmRegenButton(editId);
       document.getElementById("btnConfirmDailyTodo").onclick = () => {
         const title = document.getElementById("dailyTodoTitleInput").value.trim();
         if (!title) { toast("请输入待办标题"); return; }
-        if (!state.dailyTodoTemplates) state.dailyTodoTemplates = [];
-        state.dailyTodoTemplates.push(normalizeDailyTodoTemplate({
-          id: uid(),
+        const desc = document.getElementById("dailyTodoDescInput").value.trim();
+        const eff = dailyTodoModalLlmDraft || { stamina: 0, physicalHealth: 0, mentalHealth: 0, attributes: {}, attrTags: [], summary: "" };
+        const item = normalizeDailyTodoTemplate({
+          ...tpl,
+          id: tpl?.id || uid(),
           title,
-          sortOrder: state.dailyTodoTemplates.length,
-        }));
+          description: desc,
+          attrTags: eff.attrTags || [],
+          effects: eff,
+          xpOnComplete: calcDailyActionXp(eff, { isTodo: true }),
+          llmGenerated: !!dailyTodoModalLlmDraft || !!tpl?.llmGenerated,
+          sortOrder: tpl?.sortOrder ?? (state.dailyTodoTemplates || []).length,
+          updatedAt: new Date().toISOString(),
+        });
+        if (!state.dailyTodoTemplates) state.dailyTodoTemplates = [];
+        if (tpl) {
+          Object.assign(tpl, item);
+        } else {
+          state.dailyTodoTemplates.push(item);
+        }
         save();
         closeModal("modalDailyTodo");
         renderDailyRecordsPanel();
-        toast("每日待办已添加");
+        toast(tpl ? "每日待办已更新" : "每日待办已添加");
       };
       openModal("modalDailyTodo");
       setTimeout(() => document.getElementById("dailyTodoTitleInput")?.focus(), 100);
