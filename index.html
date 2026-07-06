@@ -4845,7 +4845,7 @@
   <div class="modal-overlay" id="modalSummary">
     <div class="modal modal-summary">
       <h3>AI 完成总结</h3>
-      <p class="meta" style="margin-bottom:0.75rem">根据所选时间段与标签汇总已完成任务，按任务分段生成工作总结（每项一段，基于条目信息，不编造）。日期按 6:00～次日 6:00 为一天统计。</p>
+      <p class="meta" style="margin-bottom:0.75rem">按<strong>大陆 → 地图</strong>分层总结所选时间内已完成事项：先写大陆整体进展，再逐张地图汇总该时段内完成的工作。依据任务/支线的标题与说明，以及大陆、地图的名称与简介；商务事实陈述，不编造。日期按 6:00～次日 6:00 为一天。</p>
       <div class="field">
         <label for="summaryProviderSelect">大模型</label>
         <select id="summaryProviderSelect">
@@ -7742,6 +7742,70 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
         }));
     }
 
+    const SUMMARY_SYSTEM_PROMPT =
+      "你是工作汇报撰写助手。根据用户提供的、按大陆与地图整理的任务完成记录，撰写中文工作总结。" +
+      "要求：先写各大陆整体进展，再分地图说明该时段内完成的具体事项；语气为商务/事实陈述，客观描述真实已完成的工作；" +
+      "禁止使用游戏、玄幻、RPG、冒险、征程等修辞；不得编造记录中未出现的任务、成果或数据；" +
+      "使用 Markdown：大陆用 ## 标题，地图用 ### 地图：{名称}，段间空一行。";
+
+    function collectSummaryDataByContinent(fromKey, toKey, filterTagId) {
+      return (state.tags || [])
+        .filter((t) => !filterTagId || t.id === filterTagId)
+        .map((tag) => {
+          const maps = (state.projects || [])
+            .filter((p) => (p.questType || "main") !== "side" && (p.tagIds || []).includes(tag.id))
+            .map((project) => {
+              const tasks = (project.tasks || [])
+                .filter((task) => task.status === "done" && task.completedAt)
+                .filter((task) => {
+                  const key = dayKey(task.completedAt);
+                  return key >= fromKey && key <= toKey;
+                })
+                .map((task) => ({
+                  title: task.title,
+                  description: (task.description || "").trim(),
+                  completedAt: task.completedAt,
+                  completedDay: dayKey(task.completedAt),
+                }))
+                .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+              return {
+                id: project.id,
+                name: project.name,
+                description: (project.description || "").trim(),
+                tasks,
+              };
+            })
+            .filter((m) => m.tasks.length > 0);
+
+          const sideQuests = (state.sideQuests || [])
+            .map(normalizeSideQuest)
+            .filter((sq) => sq.continentId === tag.id && sq.status === "done" && sq.completedAt)
+            .filter((sq) => {
+              const key = dayKey(sq.completedAt);
+              return key >= fromKey && key <= toKey;
+            })
+            .map((sq) => ({
+              title: sq.title,
+              description: (sq.description || "").trim(),
+              completedAt: sq.completedAt,
+              completedDay: dayKey(sq.completedAt),
+            }))
+            .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+
+          const mapTaskCount = maps.reduce((s, m) => s + m.tasks.length, 0);
+          return {
+            id: tag.id,
+            name: tag.name,
+            regionName: (tag.regionName || "").trim(),
+            maps,
+            sideQuests,
+            mapTaskCount,
+            totalCompleted: mapTaskCount + sideQuests.length,
+          };
+        })
+        .filter((c) => c.totalCompleted > 0);
+    }
+
     function collectCompletedTasksForSummary(fromKey, toKey, tagId) {
       const items = [];
       state.projects.forEach((project) => {
@@ -7772,7 +7836,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           kind: "side",
           projectName: map ? map.name : "未归属大陆",
           taskTitle: q.title,
-          taskDescription: q.description || q.questStory || "",
+          taskDescription: q.description || "",
           completedAt: q.completedAt,
           completedDay: key,
           tagNames: map ? [map.name] : [],
@@ -7880,32 +7944,69 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       document.getElementById("deepseekConfigPanel").hidden = isKimi;
     }
 
-    function buildSummaryPrompt(tasks, tagLabel, fromKey, toKey) {
-      const lines = tasks.map((t, i) => {
-        const desc = (t.taskDescription || "").trim() || "（无任务说明）";
-        const completedTime = t.completedAt ? formatDate(t.completedAt) : t.completedDay;
-        const projectLabel = t.kind === "side" ? `支线 · ${t.projectName}` : t.projectName;
-        return `${i + 1}. 完成时间：${completedTime}
-   项目：${projectLabel}
-   任务标题：${t.taskTitle}
-   任务说明：${desc}`;
-      });
+    function buildSummaryPrompt(structure, fromKey, toKey) {
       const periodLabel = fromKey === toKey ? fromKey : `${fromKey} 至 ${toKey}`;
-      const dayWord = fromKey === toKey ? "今天" : "这段时间";
-      return `以下是 ${periodLabel} 期间已完成的主线任务与支线任务记录（筛选：${tagLabel}）。请根据这些条目，写${dayWord}的工作总结，说明${dayWord}做了些什么。
+      const dayWord = fromKey === toKey ? "该日" : "该时间段";
+      const dataLines = [];
+
+      structure.forEach((continent, ci) => {
+        const regionHint =
+          continent.regionName && continent.regionName !== continent.name
+            ? `（${continent.regionName}）`
+            : "";
+        dataLines.push(`\n===== 大陆 ${ci + 1}：${continent.name}${regionHint} =====`);
+        dataLines.push(
+          `${dayWord}共完成 ${continent.totalCompleted} 项：地图内任务 ${continent.mapTaskCount} 项，大陆级支线 ${continent.sideQuests.length} 项。`
+        );
+
+        continent.maps.forEach((map) => {
+          dataLines.push(`\n--- 地图：${map.name} ---`);
+          if (map.description) dataLines.push(`地图简介：${map.description}`);
+          dataLines.push(`本时段完成 ${map.tasks.length} 项：`);
+          map.tasks.forEach((t, ti) => {
+            dataLines.push(`${ti + 1}. 标题：${t.title}`);
+            dataLines.push(`   完成时间：${formatDate(t.completedAt)}`);
+            if (t.description) dataLines.push(`   说明：${t.description}`);
+          });
+        });
+
+        if (continent.sideQuests.length) {
+          dataLines.push(`\n--- 大陆级支线（不归属具体地图）---`);
+          continent.sideQuests.forEach((sq, si) => {
+            dataLines.push(`${si + 1}. 标题：${sq.title}`);
+            dataLines.push(`   完成时间：${formatDate(sq.completedAt)}`);
+            if (sq.description) dataLines.push(`   说明：${sq.description}`);
+          });
+        }
+      });
+
+      const structureGuide = structure
+        .map(
+          (c) =>
+            `- 「${c.name}」：先写 ## ${c.name} 作为大陆总览（${dayWord}整体进展，2~5 句）；` +
+            `再依次写 ${c.maps.map((m) => `### 地图：${m.name}（覆盖 ${m.tasks.length} 项完成记录）`).join("、") || "（无地图任务）"}` +
+            `${c.sideQuests.length ? `；最后写 ### 大陆支线（${c.sideQuests.length} 项）` : ""}`
+        )
+        .join("\n");
+
+      return `请根据 ${periodLabel} 期间的真实工作完成记录，撰写中文工作总结。
+
+输出结构（严格按大陆分组，顺序如下）：
+${structureGuide}
 
 写作要求：
-- 每个任务单独成段：共 ${tasks.length} 项须输出 ${tasks.length} 个自然段，段与段之间空一行
-- 每段只描述对应序号的一条任务，段首不要写编号；须体现该任务的项目名称（支线任务标注为「支线 · 大陆名」）、任务标题、任务说明（可改写语序，含义须一致；无说明的可不展开）
-- 禁止把多个任务的内容混写在同一段里，禁止分点、小标题或编号列表
-- 仅依据清单已有信息总结，禁止编造清单中未出现的工作、结论、数据或评价
-- 语气平实，像日报/周报里的完成情况说明
+- 商务/事实陈述，像工作汇报或周报，只写实际完成的工作内容
+- 禁止使用玄幻、游戏、冒险、RPG 等修辞；不要「探索」「征程」「大陆命运」等套话
+- 大陆总览：综合该大陆下各地图任务与支线，概括${dayWord}整体进展
+- 每个地图小节：仅整理该地图在${dayWord}内完成的事项，须覆盖清单中全部任务，可合并同类但不可遗漏
+- 仅依据下方原始记录，禁止编造未出现的任务、成果、数据或评价
+- 使用 Markdown：大陆 ##，地图 ### 地图：{名称}，大陆支线 ### 大陆支线；段间空一行
 
-任务记录（共 ${tasks.length} 项）：
-${lines.join("\n\n")}`;
+原始记录：
+${dataLines.join("\n")}`;
     }
 
-    async function callLlmChat(userPrompt) {
+    async function callLlmChat(userPrompt, systemPrompt = SUMMARY_SYSTEM_PROMPT) {
       const allCfg = readLlmSummaryConfigFromForm();
       const { provider, cfg } = getActiveLlmFromConfig(allCfg);
       const label = LLM_PROVIDER_LABELS[provider];
@@ -7920,11 +8021,7 @@ ${lines.join("\n\n")}`;
         body: JSON.stringify({
           model: cfg.model,
           messages: [
-            {
-              role: "system",
-              content:
-                "你是 WjyCyberBrain 的工作总结助手。根据用户提供的主线任务与支线任务完成记录撰写中文总结。要求：每个任务单独一个自然段，段与段之间空一行；每段只描述一条任务，须体现项目名（支线为「支线 · 大陆名」）、任务标题与任务说明，不得把多条任务混在同一段；不得遗漏任何一条任务，不得编造记录中没有的内容。不要分点、不要列表、不要标题、不要段首编号。",
-            },
+            { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
           temperature: cfg.temperature,
@@ -7944,7 +8041,7 @@ ${lines.join("\n\n")}`;
       const sel = document.getElementById("summaryTagSelect");
       const cur = sel.value;
       sel.innerHTML =
-        '<option value="">全部标签</option>' +
+        '<option value="">全部大陆</option>' +
         (state.tags || [])
           .map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`)
           .join("");
@@ -7982,18 +8079,18 @@ ${lines.join("\n\n")}`;
       saveLlmSummaryConfig(llmCfg);
       const providerLabel = LLM_PROVIDER_LABELS[llmCfg.provider] || "模型";
 
-      const tasks = collectCompletedTasksForSummary(fromKey, toKey, tagId);
-      if (!tasks.length) {
+      const structure = collectSummaryDataByContinent(fromKey, toKey, tagId);
+      if (!structure.length) {
         out.className = "summary-output";
-        out.textContent = "该时间段与标签下没有已完成的主线任务或支线，无法生成总结。";
+        out.textContent = "该时间段与大陆筛选下没有已完成的主线任务或支线，无法生成总结。";
         return;
       }
 
-      const tagLabel = tagId ? `标签「${getTag(tagId)?.name || ""}」` : "全部标签";
-      const prompt = buildSummaryPrompt(tasks, tagLabel, fromKey, toKey);
+      const totalItems = structure.reduce((s, c) => s + c.totalCompleted, 0);
+      const prompt = buildSummaryPrompt(structure, fromKey, toKey);
 
       out.className = "summary-output loading";
-      out.textContent = `正在请求 ${providerLabel} 生成总结，请稍候…`;
+      out.textContent = `正在请求 ${providerLabel} 生成总结（${structure.length} 个大陆、共 ${totalItems} 项完成记录），请稍候…`;
       document.getElementById("btnGenerateSummary").disabled = true;
 
       try {
