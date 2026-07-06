@@ -4535,7 +4535,7 @@
         </div>
       </div>
       <div class="field" id="sqStoryPreviewField" style="display:none">
-        <label>支线剧情（AI）</label>
+        <label>档案记录（AI）</label>
         <div class="quest-story-box" id="sqStoryPreview"></div>
       </div>
       <div class="field" id="sqAttrTagsField" style="display:none">
@@ -4543,7 +4543,7 @@
         <div class="task-attr-tags" id="sqAttrTagsPreview"></div>
       </div>
       <div class="llm-action-row">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenSideQuest">✨ AI 生成/重新生成 剧情与标签</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenSideQuest">✨ AI 生成/重新生成 档案与标签</button>
       </div>
       <p class="field-hint" id="sqGenStatus">生成结果会写入 JSON，导出/导入时同步。</p>
       <div class="field" id="sqCompletedAtField" style="display:none">
@@ -4693,12 +4693,12 @@
         </div>
       </div>
       <div class="field" id="taskStoryPreviewField" style="display:none">
-        <label>任务剧情（AI）</label>
+        <label>档案记录（AI）</label>
         <div class="quest-story-box" id="taskStoryPreview"></div>
       </div>
       <div class="field" id="taskAttrTagsField" style="display:none"><label>能力标签（AI）</label><div class="task-attr-tags" id="taskAttrTagsPreview"></div></div>
       <div class="llm-action-row">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenTask">✨ AI 生成/重新生成 剧情与标签</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenTask">✨ AI 生成/重新生成 档案与标签</button>
       </div>
       <p class="field-hint" id="taskGenStatus">生成结果会写入 JSON（含已完成任务），导出/导入时同步。</p>
       <div class="field" id="taskCompletedAtField" style="display:none">
@@ -4986,7 +4986,11 @@
    - mentalHealth 精神健康：-5~+5；娱乐/休息/社交/睡眠 +2~+5。
 6) 示例：健身 stamina-6 physicalHealth+4 mentalHealth+2；睡觉 stamina+8 physicalHealth+3 mentalHealth+4；吃药 physicalHealth+4。
 7) 日常/任务 attrTags 可选 1 至多个标签，从：体能、精神力、社交能力、科技、人文艺术 中选择。
-8) 故事须贴合已有大陆/地图/任务背景，中文，简洁有 RPG 感。`;
+8) taskStory / questStory 须写成「档案条目」风格（类似解谜游戏中的记录/日志），不要玄幻、冒险、RPG 修辞。
+   - 结构示例：【档案 · 大陆名/地图名】+ 条目标题 + 客观陈述 + 可选 *备注/待跟进*
+   - 只依据已有标题、描述、大陆/地图信息陈述，不编造清单外内容
+   - 语气客观平实，像办事记录或线索卡，80 字以内
+   - 禁止：征程、命运、探索、改写世界、冒险、开启传说等套话`;
 
     const DAILY_CATEGORY_LABELS = { exercise:"锻炼", medicine:"吃药", supplement:"保健品", entertainment:"娱乐", rest:"休息", other:"其他" };
     const PET_GENDER_LABELS = { male: "公", female: "母", unknown: "未知" };
@@ -9756,7 +9760,7 @@ ${dataLines.join("\n")}`;
           description: document.getElementById("taskDescInput").value.trim(),
         };
         btn.disabled = true;
-        if (statusEl) statusEl.textContent = "AI 分析任务剧情与标签中…";
+        if (statusEl) statusEl.textContent = "AI 分析档案记录与标签中…";
         const analysis = await analyzeTaskWithLlm(draft, liveProject);
         taskModalLlmDraft = analysis;
         renderTaskLlmPreviewInModal({
@@ -9774,7 +9778,7 @@ ${dataLines.join("\n")}`;
           statusEl.textContent = "已生成，保存任务后写入 JSON";
         }
         btn.disabled = false;
-        toast("任务剧情与标签已生成");
+        toast("任务档案与标签已生成");
       };
     }
 
@@ -9799,7 +9803,7 @@ ${dataLines.join("\n")}`;
           continentId,
         };
         btn.disabled = true;
-        if (statusEl) statusEl.textContent = "AI 撰写支线剧情中…";
+        if (statusEl) statusEl.textContent = "AI 撰写档案记录中…";
         const analysis = await analyzeSideQuestWithLlm(draft);
         sideQuestModalLlmDraft = {
           questStory: analysis?.questStory || "",
@@ -9823,7 +9827,7 @@ ${dataLines.join("\n")}`;
           statusEl.textContent = "已生成，保存后写入 JSON";
         }
         btn.disabled = false;
-        toast("支线剧情与标签已生成");
+        toast("支线档案与标签已生成");
       };
     }
 
@@ -10822,23 +10826,38 @@ ${dataLines.join("\n")}`;
     }
     async function analyzeTaskWithLlm(task, project) {
       const map = getTag((project.tagIds || [])[0]);
+      const mapLabel = map?.name || "未知大陆";
+      const descSnippet = (task.description || "").trim();
       const fallback = {
         attrTags: task.title.match(/会议|社交|客户/) ? ["社交能力"] : task.title.match(/代码|开发|技术/) ? ["科技"] : ["精神力"],
-        taskStory: `${task.title}：在大陆「${map?.name || "未知"}」的地图「${project.name}」中推进的一步。`,
+        taskStory: `【档案 · ${mapLabel} / ${project.name}】\n条目：「${task.title}」\n${descSnippet ? `依据说明完成记录归档。${descSnippet.slice(0, 36)}${descSnippet.length > 36 ? "…" : ""}` : "记录已建立，待执行。"}`,
         attributes: {}, stamina: -STAMINA_COST_PER_TASK, physicalHealth: 0, mentalHealth: -MENTAL_COST_PER_TASK,
       };
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析主线任务并输出 JSON：
-{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"60字内任务剧情","attributes":{},"stamina":-2~-10,"physicalHealth":-5~5,"mentalHealth":-10~0}
-大陆：${map?.name || ""}；地图：${project.name}；地图背景：${(project.questStory || "").slice(0,120)}
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"taskStory":"档案条目80字内","attributes":{},"stamina":-2~-10,"physicalHealth":-5~5,"mentalHealth":-10~0}
+
+taskStory 须为档案/日志风格（解谜游戏线索卡感）：以【档案 · 大陆/地图】开头，写条目标题与客观陈述，可加 *备注*；禁止玄幻/RPG/冒险修辞；只依据下方信息，不编造。
+
+大陆：${mapLabel}；地图：${project.name}；地图背景：${(project.questStory || project.description || "").slice(0, 120)}
 任务标题：${task.title}；描述：${task.description || "无"}`);
       return { ...fallback, ...(j || {}) };
     }
     async function analyzeSideQuestWithLlm(sq) {
       const map = getTag(sq.continentId);
+      const mapLabel = map?.name || "未知大陆";
+      const descSnippet = (sq.description || "").trim();
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析大陆支线任务 JSON：
-{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"questStory":"60字","attributes":{},"stamina":-2~-10,"physicalHealth":-5~5,"mentalHealth":-10~0}
-大陆：${map?.name || ""}；标题：${sq.title}；描述：${sq.description || ""}`);
-      return j || { attrTags: ["精神力"], questStory: `${sq.title}：${map?.name || "大陆"}上的支线。`, stamina: -STAMINA_COST_PER_TASK, mentalHealth: -MENTAL_COST_PER_TASK };
+{"attrTags":["体能|精神力|社交能力|科技|人文艺术"],"questStory":"档案条目80字内","attributes":{},"stamina":-2~-10,"physicalHealth":-5~5,"mentalHealth":-10~0}
+
+questStory 须为档案/日志风格：以【档案 · 大陆名 / 未归属地图】开头，写条目与客观陈述，可加 *备注/待跟进*；禁止玄幻/RPG；只依据下方信息。
+
+大陆：${mapLabel}；标题：${sq.title}；描述：${sq.description || "无"}`);
+      return j || {
+        attrTags: ["精神力"],
+        questStory: `【档案 · ${mapLabel} / 未归属地图】\n条目：「${sq.title}」\n${descSnippet ? `${descSnippet.slice(0, 40)}${descSnippet.length > 40 ? "…" : ""}` : "记录已建立，待跟进。"}`,
+        stamina: -STAMINA_COST_PER_TASK,
+        mentalHealth: -MENTAL_COST_PER_TASK,
+      };
     }
     async function analyzeDailyActionWithLlm(name, desc) {
       const j = await callLlmJson(LLM_SYSTEM_GAME, `分析日常行动 JSON（根据名称与描述自动判断 1 至多个 attrTags）：
