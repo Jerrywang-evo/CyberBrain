@@ -4352,14 +4352,14 @@
   <div class="modal-overlay" id="modalTags">
     <div class="modal modal-wide">
       <h3>🗺️ 大陆管理</h3>
-      <p class="meta" style="margin-bottom:0.75rem">每块大陆是一处可探索的地图区域，拥有独立剧情。主线与支线任务线都归属某块大陆。新建大陆时可由 AI 生成背景故事。</p>
+      <p class="meta" style="margin-bottom:0.75rem">每块大陆对应一份区域档案，用于归类地图与任务线。新建大陆后可由 AI 生成档案设定（非玄幻叙事）。</p>
       <div class="tag-editor-list" id="tagEditorList"></div>
       <div class="tag-add-row">
         <input type="text" id="newTagNameInput" placeholder="大陆名称，如：北境霜原" autocomplete="off" />
         <div class="color-options" id="newTagColors"></div>
         <button type="button" class="btn btn-primary btn-sm" id="btnAddTag">开辟大陆</button>
       </div>
-      <p class="field-hint" id="mapGenStatus">新建大陆后，在列表中点击「✨ AI 生成/重新生成」补充剧情（写入 JSON）。</p>
+      <p class="field-hint" id="mapGenStatus">新建大陆后，在列表中点击「✨ AI 生成/重新生成」补充档案设定（写入 JSON）。</p>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalTags">关闭</button>
       </div>
@@ -4385,7 +4385,7 @@
       <div id="mapDetailCanvas"></div>
       <p class="field-hint">下方地图：金色 = 区域地图（主线），地标为大陆地貌；点击区域条目或地图上的标记可跳转。</p>
       <div class="modal-actions">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnRegenMapDetail">✨ AI 生成/重新生成 大陆设定</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnRegenMapDetail">✨ AI 生成/重新生成 档案设定</button>
         <button type="button" class="btn btn-ghost" data-close="modalMapDetail">关闭</button>
       </div>
     </div>
@@ -4642,11 +4642,11 @@
         <textarea id="projectDescInput" placeholder="描述这条任务线的目标与背景…"></textarea>
       </div>
       <div class="field" id="projectQuestStoryField" style="display:none">
-        <label>地图剧情（AI）</label>
+        <label>地图档案（AI）</label>
         <div id="projectQuestStoryBox" class="quest-story-box"></div>
       </div>
       <div class="llm-action-row">
-        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenProjectStory">✨ AI 生成/重新生成 地图剧情</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnLlmRegenProjectStory">✨ AI 生成/重新生成 地图档案</button>
       </div>
       <p class="field-hint" id="questGenStatus">生成结果会写入 JSON，导出/导入时同步。</p>
       <div class="modal-actions">
@@ -4990,7 +4990,14 @@
    - 结构示例：【档案 · 大陆名/地图名】+ 条目标题 + 客观陈述 + 可选 *备注/待跟进*
    - 只依据已有标题、描述、大陆/地图信息陈述，不编造清单外内容
    - 语气客观平实，像办事记录或线索卡，80 字以内
-   - 禁止：征程、命运、探索、改写世界、冒险、开启传说等套话`;
+   - 禁止：征程、命运、探索、改写世界、冒险、开启传说等套话
+9) mapStory（大陆档案）/ 地图 questStory（地图档案）同样须为档案/登记册风格，不要玄幻世界观叙事。
+   - mapStory：【档案 · 大陆名】+ 区域性质/用途的客观综述，80~120 字
+   - landmarks 名称像真实地点标注（门户、登记处、档案库），禁止传说、秘境、命运等命名`;
+
+    const LLM_ARCHIVE_LORE_SYSTEM =
+      "你是档案编纂助手。为 Earth-Online 中的大陆与地图撰写设定，风格须像解谜游戏中的机构档案、区域登记册。" +
+      "语气客观平实，只输出要求的 JSON 或纯文本（按用户说明）；禁止玄幻、冒险、RPG、传说、命运、探索未知等修辞。";
 
     const DAILY_CATEGORY_LABELS = { exercise:"锻炼", medicine:"吃药", supplement:"保健品", entertainment:"娱乐", rest:"休息", other:"其他" };
     const PET_GENDER_LABELS = { male: "公", female: "母", unknown: "未知" };
@@ -6039,14 +6046,16 @@
         regionName: mapName,
         terrain: terrainGuess,
         mapEmoji: MAP_TERRAIN_EMOJI[terrainGuess] || "🗺️",
-        mapStory: `${mapName}是 Earth-Online 世界中一片等待探索的大陆。霜雾与传说交织，主线与支线任务如脉络延伸，每完成一项，都会改写此地的命运。`,
+        mapStory: `【档案 · ${mapName}】\n区域登记：本区用于归类与追踪相关地图及任务线；地标坐标已标注，具体条目见下属地图档案。\n*备注：档案建立，待补充事项记录。*`,
         mapLayout: fallbackMapLayout(mapName, terrainGuess),
       };
       const text = await callLlmNarrative(
-        "你是 Earth-Online 世界观编剧。只输出 JSON，不要 markdown。",
-        `为游戏大陆「${mapName}」生成设定。JSON 格式：
-{"regionName":"地域副标题","terrain":"forest|desert|ocean|mountain|volcanic|tundra","mapEmoji":"单个emoji作大陆图标","mapStory":"100字内有画面感的背景故事","landmarks":[{"name":"地点名","x":0-100,"y":0-100,"icon":"emoji"}]}
-landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
+        LLM_ARCHIVE_LORE_SYSTEM + " 只输出 JSON，不要 markdown。",
+        `为区域「${mapName}」生成大陆档案设定。JSON 格式：
+{"regionName":"地域副标题（务实，如北部办公区）","terrain":"forest|desert|ocean|mountain|volcanic|tundra","mapEmoji":"单个emoji","mapStory":"档案综述80~120字","landmarks":[{"name":"地点名","x":0-100,"y":0-100,"icon":"emoji"}]}
+
+mapStory 须为档案/登记册风格：以【档案 · ${mapName}】开头或可独立成段；客观陈述区域性质、用途；禁止玄幻/RPG/传说修辞。
+landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库、A区通道等），禁止传说、秘境、命运等命名；x/y 为地图百分比坐标，分布合理不重叠。`
       );
       if (!text) return fallback;
       try {
@@ -6072,9 +6081,9 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       return {
         landmarks: [
           { id: uid(), name: `${mapName}·门户`, x: 18, y: 72, icon: "🚩" },
-          { id: uid(), name: "主路枢纽", x: 42, y: 48, icon: hub },
-          { id: uid(), name: "远境前哨", x: 68, y: 32, icon: "⛺" },
-          { id: uid(), name: "传说之地", x: 82, y: 58, icon: "✦" },
+          { id: uid(), name: "主登记处", x: 42, y: 48, icon: hub },
+          { id: uid(), name: "B区通道", x: 68, y: 32, icon: "⛺" },
+          { id: uid(), name: "归档库", x: 82, y: 58, icon: "📁" },
         ],
       };
     }
@@ -6363,7 +6372,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       const lore = await generateMapLore(live.name, live);
       applyMapLoreToTag(live, lore);
       save();
-      if (showToast) toast(`「${live.name}」大陆设定已生成`);
+      if (showToast) toast(`「${live.name}」档案设定已生成`);
       return live;
     }
 
@@ -6376,7 +6385,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       live.loreGenerated = true;
       live.updatedAt = new Date().toISOString();
       save();
-      if (showToast) toast(`「${live.name}」地图剧情已生成`);
+      if (showToast) toast(`「${live.name}」地图档案已生成`);
       return live;
     }
 
@@ -6418,7 +6427,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       applySideQuestAnalysis(live, analysis);
       live.updatedAt = new Date().toISOString();
       save();
-      if (showToast) toast(`支线「${live.title}」剧情已生成`);
+      if (showToast) toast(`支线「${live.title}」档案已生成`);
       return live;
     }
 
@@ -6456,10 +6465,15 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
 
     async function generateQuestStory(projectName, map, questType, desc) {
       const typeLabel = questType === "main" ? "主线" : "支线";
-      const fallback = `${typeLabel}任务线「${projectName}」已在${map?.name || "未知大陆"}开启。${desc ? desc.slice(0, 60) : "前路未卜，唯有一步一脚印。"}`;
+      const mapLabel = map?.name || "未知大陆";
+      const descSnippet = (desc || "").trim();
+      const fallback = `【档案 · ${mapLabel} / ${projectName}】\n任务线登记：${projectName}（${typeLabel}）。${descSnippet ? descSnippet.slice(0, 80) : "本线用于收纳该地图下的待办与完成记录。"}\n*备注：条目随任务推进更新。*`;
       const text = await callLlmNarrative(
-        "你是 Earth-Online 任务编剧。用中文，一段式，80字内，有 RPG 任务 briefing 感。",
-        `大陆：${map?.name}（${map?.mapStory || ""}）。${typeLabel}任务线：${projectName}。简介：${desc || "无"}。写任务开场剧情。`
+        LLM_ARCHIVE_LORE_SYSTEM,
+        `为地图「${projectName}」撰写档案综述（${typeLabel}任务线）。
+大陆：${mapLabel}；大陆档案摘录：${(map?.mapStory || "").slice(0, 150)}；地图简介：${descSnippet || "无"}。
+
+要求：档案/日志风格，80~120字；以【档案 · 大陆/地图】开头；客观陈述该任务线的用途或范畴；可加 *备注*；禁止玄幻/RPG/冒险修辞。只输出正文，不要 JSON。`
       );
       return text || fallback;
     }
@@ -7474,7 +7488,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
           <div class="map-editor-item" data-tag-id="${tag.id}">
             <div class="map-card-visual terrain-${tag.terrain || "forest"}" style="height:48px;margin-bottom:0.5rem;border-radius:8px;display:flex;align-items:center;justify-content:center">${terrainIconHtml(tag.terrain || "forest", 28)}</div>
             <input type="text" class="tag-name-input" value="${escapeHtml(tag.name)}" data-tag-id="${tag.id}" style="width:100%;margin-bottom:0.35rem" />
-            <p class="map-story-preview">${escapeHtml(tag.mapStory || "暂无背景故事")}</p>
+            <p class="map-story-preview">${escapeHtml(tag.mapStory || "暂无档案记录")}</p>
             <span class="meta" style="font-size:0.68rem">${used} 条任务线 · ${escapeHtml(tag.regionName || "")}</span>
             <div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin-top:0.45rem">
               <button type="button" class="btn btn-ghost btn-sm btn-enrich-map" data-id="${tag.id}">✨ AI 生成/重新生成</button>
@@ -7568,7 +7582,7 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       renderTagEditor();
       renderTagFilters();
       checkAchievements();
-      toast("新大陆已开辟，可点击「AI 生成/重新生成」补充剧情");
+      toast("新大陆已开辟，可点击「AI 生成/重新生成」补充档案设定");
     }
 
     function openTagsModal() {
@@ -7599,11 +7613,19 @@ landmarks 需 3-5 个，x/y 为地图百分比坐标，分布合理不重叠。`
       return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
     }
 
-    function readTaskCompletedAtFromForm(fallbackIso) {
-      const raw = document.getElementById("taskCompletedAtInput").value;
+    function readCompletedAtFromForm(inputId, fallbackIso) {
+      const raw = document.getElementById(inputId)?.value;
       if (!raw) return fallbackIso || new Date().toISOString();
       const d = new Date(raw);
       return Number.isNaN(d.getTime()) ? fallbackIso || new Date().toISOString() : d.toISOString();
+    }
+
+    function readTaskCompletedAtFromForm(fallbackIso) {
+      return readCompletedAtFromForm("taskCompletedAtInput", fallbackIso);
+    }
+
+    function readSideQuestCompletedAtFromForm(fallbackIso) {
+      return readCompletedAtFromForm("sqCompletedAtInput", fallbackIso);
     }
 
     function syncTaskCompletedAtFieldVisibility() {
@@ -9631,7 +9653,7 @@ ${dataLines.join("\n")}`;
         const map = getTag(mapId);
         const statusEl = document.getElementById("questGenStatus");
         btn.disabled = true;
-        if (statusEl) statusEl.textContent = "AI 撰写地图剧情中…";
+        if (statusEl) statusEl.textContent = "AI 撰写地图档案中…";
         const story = await generateQuestStory(name, map, "main", desc);
         projectModalQuestStory = story || "";
         renderProjectLlmPreviewInModal(projectModalQuestStory);
@@ -9644,7 +9666,7 @@ ${dataLines.join("\n")}`;
         }
         if (statusEl) statusEl.textContent = "已生成，保存后写入 JSON";
         btn.disabled = false;
-        toast("地图剧情已生成");
+        toast("地图档案已生成");
       };
     }
 
@@ -12077,7 +12099,7 @@ ${text}
           updatedAt: now,
         };
         if (newStatus === "done") {
-          payload.completedAt = readTaskCompletedAtFromForm(sq?.completedAt || now);
+          payload.completedAt = readSideQuestCompletedAtFromForm(sq?.completedAt || now);
         } else {
           payload.completedAt = null;
         }
