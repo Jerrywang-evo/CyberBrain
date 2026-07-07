@@ -4844,8 +4844,8 @@
 
   <div class="modal-overlay" id="modalSummary">
     <div class="modal modal-summary">
-      <h3>AI 完成总结</h3>
-      <p class="meta" style="margin-bottom:0.75rem">按<strong>大陆 → 地图</strong>分层总结所选时间内已完成事项：先写大陆整体进展，再逐张地图汇总该时段内完成的工作。依据任务/支线的标题与说明，以及大陆、地图的名称与简介；商务事实陈述，不编造。日期按 6:00～次日 6:00 为一天。</p>
+      <h3>AI 总结</h3>
+      <p class="meta" style="margin-bottom:0.75rem">按<strong>大陆 → 地图</strong>分层生成总结。完成总结汇总所选时段内<strong>已完成</strong>事项；待办总结汇总<strong>待办/进行中</strong>的后续工作（依据标题、说明、截止时间等）。商务事实陈述，不编造。</p>
       <div class="field">
         <label for="summaryProviderSelect">大模型</label>
         <select id="summaryProviderSelect">
@@ -4871,7 +4871,7 @@
       </div>
       <div class="field">
         <label>总结结果</label>
-        <div class="summary-output" id="summaryOutput">选择条件后点击「生成总结」</div>
+        <div class="summary-output" id="summaryOutput">选择条件后点击「生成完成总结」或「生成待办总结」</div>
       </div>
       <details class="llm-config-panel" id="kimiConfigPanel" open>
         <summary>Kimi API 配置（仅存本地浏览器）</summary>
@@ -4918,7 +4918,8 @@
       <button type="button" class="btn btn-ghost btn-sm" id="btnSaveLlmConfig" style="margin-top:0.5rem">保存 API 配置</button>
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost" data-close="modalSummary">关闭</button>
-        <button type="button" class="btn btn-primary" id="btnGenerateSummary">生成总结</button>
+        <button type="button" class="btn btn-ghost" id="btnGeneratePendingSummary">生成待办总结</button>
+        <button type="button" class="btn btn-primary" id="btnGenerateSummary">生成完成总结</button>
       </div>
     </div>
   </div>
@@ -7774,6 +7775,104 @@ landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库�
       "禁止使用游戏、玄幻、RPG、冒险、征程等修辞；不得编造记录中未出现的任务、成果或数据；" +
       "使用 Markdown：大陆用 ## 标题，地图用 ### 地图：{名称}，段间空一行。";
 
+    const PENDING_SUMMARY_SYSTEM_PROMPT =
+      "你是工作计划撰写助手。根据用户提供的、按大陆与地图整理的待办与进行中任务清单，撰写中文后续工作安排说明。" +
+      "要求：先写各大陆整体待办概况，再分地图列出待开展事项；语气为商务/事实陈述，客观描述将要开展的工作；" +
+      "须体现每项的状态、优先级、截止时间（如有）及标题说明；禁止玄幻/RPG 修辞；不得编造清单外任务；" +
+      "使用 Markdown：大陆用 ## 标题，地图用 ### 地图：{名称}，段间空一行。";
+
+    const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 };
+
+    function pendingItemMatchesDateWindow(item, fromKey, toKey) {
+      if (item.status === "doing") return true;
+      if (!item.dueDate) return true;
+      if (item.dueDate <= toKey) return true;
+      return false;
+    }
+
+    function sortPendingItems(items) {
+      return [...items].sort((a, b) => {
+        const ad = a.dueDate || "9999-99-99";
+        const bd = b.dueDate || "9999-99-99";
+        if (ad !== bd) return ad.localeCompare(bd);
+        const ap = PRIORITY_ORDER[a.priority] ?? 1;
+        const bp = PRIORITY_ORDER[b.priority] ?? 1;
+        if (ap !== bp) return ap - bp;
+        return (a.title || "").localeCompare(b.title || "");
+      });
+    }
+
+    function formatPendingItemMeta(item) {
+      const parts = [`状态：${TASK_STATUS_LABELS[item.status] || item.status}`];
+      parts.push(`优先级：${PRIORITY_LABELS[item.priority] || "中"}`);
+      if (item.dueDate) {
+        const dueHint = formatDueLabel(item.dueDate, item.status);
+        parts.push(`截止：${item.dueDate}${dueHint ? `（${dueHint}）` : ""}`);
+      } else {
+        parts.push("截止：未设置");
+      }
+      if (item.updatedAt) parts.push(`更新：${formatDate(item.updatedAt)}`);
+      return parts.join(" · ");
+    }
+
+    function collectPendingSummaryDataByContinent(fromKey, toKey, filterTagId) {
+      return (state.tags || [])
+        .filter((t) => !filterTagId || t.id === filterTagId)
+        .map((tag) => {
+          const maps = (state.projects || [])
+            .filter((p) => (p.questType || "main") !== "side" && (p.tagIds || []).includes(tag.id))
+            .map((project) => {
+              const tasks = sortPendingItems(
+                (project.tasks || [])
+                  .filter((task) => task.status === "todo" || task.status === "doing")
+                  .map((task) => ({
+                    title: task.title,
+                    description: (task.description || "").trim(),
+                    status: task.status,
+                    priority: task.priority || "medium",
+                    dueDate: normalizeDueDateString(task.dueDate),
+                    updatedAt: task.updatedAt || task.createdAt || null,
+                  }))
+                  .filter((task) => pendingItemMatchesDateWindow(task, fromKey, toKey))
+              );
+              return {
+                id: project.id,
+                name: project.name,
+                description: (project.description || "").trim(),
+                tasks,
+              };
+            })
+            .filter((m) => m.tasks.length > 0);
+
+          const sideQuests = sortPendingItems(
+            (state.sideQuests || [])
+              .map(normalizeSideQuest)
+              .filter((sq) => sq.continentId === tag.id && (sq.status === "todo" || sq.status === "doing"))
+              .map((sq) => ({
+                title: sq.title,
+                description: (sq.description || "").trim(),
+                status: sq.status,
+                priority: sq.priority || "medium",
+                dueDate: sq.dueDate || null,
+                updatedAt: sq.updatedAt || sq.createdAt || null,
+              }))
+              .filter((sq) => pendingItemMatchesDateWindow(sq, fromKey, toKey))
+          );
+
+          const mapTaskCount = maps.reduce((s, m) => s + m.tasks.length, 0);
+          return {
+            id: tag.id,
+            name: tag.name,
+            regionName: (tag.regionName || "").trim(),
+            maps,
+            sideQuests,
+            mapTaskCount,
+            totalPending: mapTaskCount + sideQuests.length,
+          };
+        })
+        .filter((c) => c.totalPending > 0);
+    }
+
     function collectSummaryDataByContinent(fromKey, toKey, filterTagId) {
       return (state.tags || [])
         .filter((t) => !filterTagId || t.id === filterTagId)
@@ -8032,6 +8131,142 @@ ${structureGuide}
 ${dataLines.join("\n")}`;
     }
 
+    function buildPendingSummaryPrompt(structure, fromKey, toKey) {
+      const periodLabel = fromKey === toKey ? fromKey : `${fromKey} 至 ${toKey}`;
+      const dataLines = [];
+
+      structure.forEach((continent, ci) => {
+        const regionHint =
+          continent.regionName && continent.regionName !== continent.name
+            ? `（${continent.regionName}）`
+            : "";
+        dataLines.push(`\n===== 大陆 ${ci + 1}：${continent.name}${regionHint} =====`);
+        dataLines.push(
+          `待开展 ${continent.totalPending} 项：地图内 ${continent.mapTaskCount} 项，大陆支线 ${continent.sideQuests.length} 项。`
+        );
+
+        continent.maps.forEach((map) => {
+          dataLines.push(`\n--- 地图：${map.name} ---`);
+          if (map.description) dataLines.push(`地图简介：${map.description}`);
+          dataLines.push(`待办/进行中 ${map.tasks.length} 项：`);
+          map.tasks.forEach((t, ti) => {
+            dataLines.push(`${ti + 1}. 标题：${t.title}`);
+            dataLines.push(`   ${formatPendingItemMeta(t)}`);
+            if (t.description) dataLines.push(`   说明：${t.description}`);
+          });
+        });
+
+        if (continent.sideQuests.length) {
+          dataLines.push(`\n--- 大陆级支线（不归属具体地图）---`);
+          continent.sideQuests.forEach((sq, si) => {
+            dataLines.push(`${si + 1}. 标题：${sq.title}`);
+            dataLines.push(`   ${formatPendingItemMeta(sq)}`);
+            if (sq.description) dataLines.push(`   说明：${sq.description}`);
+          });
+        }
+      });
+
+      const structureGuide = structure
+        .map(
+          (c) =>
+            `- 「${c.name}」：先写 ## ${c.name} 作为大陆待办总览（2~5 句，概括后续工作重点）；` +
+            `再依次写 ${c.maps.map((m) => `### 地图：${m.name}（${m.tasks.length} 项待开展）`).join("、") || "（无地图待办）"}` +
+            `${c.sideQuests.length ? `；最后写 ### 大陆支线（${c.sideQuests.length} 项）` : ""}`
+        )
+        .join("\n");
+
+      return `请根据以下待办与进行中任务清单，撰写中文后续工作安排说明（参考时段截止 ${periodLabel}）。
+
+筛选说明：包含进行中事项；无截止日期的事项；截止日期不晚于 ${toKey} 的待办；已逾期仍未完成的待办。
+
+输出结构（严格按大陆分组，顺序如下）：
+${structureGuide}
+
+写作要求：
+- 商务/事实陈述，像工作计划或待办清单说明，只写将要开展的工作
+- 禁止使用玄幻、游戏、冒险、RPG 等修辞
+- 大陆总览：概括该大陆后续需推进的事项与优先级倾向
+- 每个地图小节：列出该地图下全部待办/进行中事项，须覆盖清单中每一项，可合并同类但不可遗漏
+- 须体现截止时间、状态、优先级等已有信息，禁止编造
+- 使用 Markdown：大陆 ##，地图 ### 地图：{名称}，大陆支线 ### 大陆支线；段间空一行
+
+原始记录：
+${dataLines.join("\n")}`;
+    }
+
+    function setSummaryButtonsDisabled(disabled) {
+      document.getElementById("btnGenerateSummary").disabled = disabled;
+      const pendingBtn = document.getElementById("btnGeneratePendingSummary");
+      if (pendingBtn) pendingBtn.disabled = disabled;
+    }
+
+    async function runAiSummary(mode) {
+      const fromKey = document.getElementById("summaryDateFrom").value;
+      const toKey = document.getElementById("summaryDateTo").value;
+      const tagId = document.getElementById("summaryTagSelect").value || null;
+      const out = document.getElementById("summaryOutput");
+
+      if (!fromKey || !toKey) {
+        toast("请选择开始与结束日期");
+        return;
+      }
+      if (fromKey > toKey) {
+        toast("开始日期不能晚于结束日期");
+        return;
+      }
+
+      const llmCfg = readLlmSummaryConfigFromForm();
+      saveLlmSummaryConfig(llmCfg);
+      const providerLabel = LLM_PROVIDER_LABELS[llmCfg.provider] || "模型";
+      const isPending = mode === "pending";
+
+      const structure = isPending
+        ? collectPendingSummaryDataByContinent(fromKey, toKey, tagId)
+        : collectSummaryDataByContinent(fromKey, toKey, tagId);
+
+      if (!structure.length) {
+        out.className = "summary-output";
+        out.textContent = isPending
+          ? "该时段与大陆筛选下没有符合条件的待办/进行中任务，无法生成总结。"
+          : "该时间段与大陆筛选下没有已完成的主线任务或支线，无法生成总结。";
+        return;
+      }
+
+      const totalItems = structure.reduce(
+        (s, c) => s + (isPending ? c.totalPending : c.totalCompleted),
+        0
+      );
+      const prompt = isPending
+        ? buildPendingSummaryPrompt(structure, fromKey, toKey)
+        : buildSummaryPrompt(structure, fromKey, toKey);
+      const systemPrompt = isPending ? PENDING_SUMMARY_SYSTEM_PROMPT : SUMMARY_SYSTEM_PROMPT;
+
+      out.className = "summary-output loading";
+      out.textContent = `正在请求 ${providerLabel} 生成${isPending ? "待办" : "完成"}总结（${structure.length} 个大陆、共 ${totalItems} 项），请稍候…`;
+      setSummaryButtonsDisabled(true);
+
+      try {
+        const text = await callLlmChat(prompt, systemPrompt);
+        out.className = "summary-output";
+        out.textContent = text;
+        toast(isPending ? "待办总结已生成" : "完成总结已生成");
+      } catch (e) {
+        out.className = "summary-output error";
+        out.textContent = `生成失败：${e.message}\n\n请检查 ${providerLabel} API Key、模型名与 Temperature 设置；若提示跨域，请确认网络可访问对应 API。`;
+        toast("总结生成失败");
+      } finally {
+        setSummaryButtonsDisabled(false);
+      }
+    }
+
+    async function generateAiSummary() {
+      return runAiSummary("completed");
+    }
+
+    async function generateAiPendingSummary() {
+      return runAiSummary("pending");
+    }
+
     async function callLlmChat(userPrompt, systemPrompt = SUMMARY_SYSTEM_PROMPT) {
       const allCfg = readLlmSummaryConfigFromForm();
       const { provider, cfg } = getActiveLlmFromConfig(allCfg);
@@ -8079,58 +8314,11 @@ ${dataLines.join("\n")}`;
       document.getElementById("summaryDateFrom").value = today;
       document.getElementById("summaryDateTo").value = today;
       if (state.tagFilterId) document.getElementById("summaryTagSelect").value = state.tagFilterId;
-      document.getElementById("summaryOutput").textContent = "选择条件后点击「生成总结」";
+      document.getElementById("summaryOutput").textContent = "选择条件后点击「生成完成总结」或「生成待办总结」";
       document.getElementById("summaryOutput").className = "summary-output";
       renderSummaryTagSelect();
       fillLlmSummaryConfigForm();
       openModal("modalSummary");
-    }
-
-    async function generateAiSummary() {
-      const fromKey = document.getElementById("summaryDateFrom").value;
-      const toKey = document.getElementById("summaryDateTo").value;
-      const tagId = document.getElementById("summaryTagSelect").value || null;
-      const out = document.getElementById("summaryOutput");
-
-      if (!fromKey || !toKey) {
-        toast("请选择开始与结束日期");
-        return;
-      }
-      if (fromKey > toKey) {
-        toast("开始日期不能晚于结束日期");
-        return;
-      }
-
-      const llmCfg = readLlmSummaryConfigFromForm();
-      saveLlmSummaryConfig(llmCfg);
-      const providerLabel = LLM_PROVIDER_LABELS[llmCfg.provider] || "模型";
-
-      const structure = collectSummaryDataByContinent(fromKey, toKey, tagId);
-      if (!structure.length) {
-        out.className = "summary-output";
-        out.textContent = "该时间段与大陆筛选下没有已完成的主线任务或支线，无法生成总结。";
-        return;
-      }
-
-      const totalItems = structure.reduce((s, c) => s + c.totalCompleted, 0);
-      const prompt = buildSummaryPrompt(structure, fromKey, toKey);
-
-      out.className = "summary-output loading";
-      out.textContent = `正在请求 ${providerLabel} 生成总结（${structure.length} 个大陆、共 ${totalItems} 项完成记录），请稍候…`;
-      document.getElementById("btnGenerateSummary").disabled = true;
-
-      try {
-        const text = await callLlmChat(prompt);
-        out.className = "summary-output";
-        out.textContent = text;
-        toast("总结已生成");
-      } catch (e) {
-        out.className = "summary-output error";
-        out.textContent = `生成失败：${e.message}\n\n请检查 ${providerLabel} API Key、模型名与 Temperature 设置；若提示跨域，请确认网络可访问对应 API。`;
-        toast("总结生成失败");
-      } finally {
-        document.getElementById("btnGenerateSummary").disabled = false;
-      }
     }
 
     function syncDailyFilterUI() {
@@ -10337,6 +10525,7 @@ ${dataLines.join("\n")}`;
     );
     document.getElementById("btnPushGithub").addEventListener("click", () => pushToGitHubManual());
     document.getElementById("btnGenerateSummary").addEventListener("click", generateAiSummary);
+    document.getElementById("btnGeneratePendingSummary").addEventListener("click", generateAiPendingSummary);
     document.getElementById("summaryProviderSelect").addEventListener("change", () => {
       updateSummaryProviderPanels();
       saveLlmSummaryConfig(readLlmSummaryConfigFromForm());
