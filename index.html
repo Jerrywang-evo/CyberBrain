@@ -4744,12 +4744,9 @@
   <div class="modal-overlay" id="modalGithub">
     <div class="modal modal-summary">
       <h3>GitHub 同步</h3>
-      <p class="meta" style="margin-bottom:0.75rem">将项目数据保存到 GitHub 仓库中的 JSON 文件，Mac / iPhone 等多端打开同一 Pages 地址即可共享数据（需配置 Token）。</p>
+      <p class="meta" style="margin-bottom:0.75rem">将项目数据保存到 GitHub 仓库中的 JSON 文件，Mac / iPhone 等多端打开同一 Pages 地址即可共享数据（需配置 Token）。数据<strong>不会自动推送</strong>，请在需要时手动点击「推送到 GitHub」。</p>
       <div class="field">
         <label><input type="checkbox" id="githubEnabled" /> 启用 GitHub 同步</label>
-      </div>
-      <div class="field">
-        <label><input type="checkbox" id="githubAutoSync" checked /> 保存后自动推送到 GitHub</label>
       </div>
       <div class="field">
         <label for="githubTokenInput">Personal Access Token</label>
@@ -5143,7 +5140,7 @@
     const LLM_CONFIG_KEY = "wjy-llm-summary-config";
     const GITHUB_DEFAULTS = {
       enabled: false,
-      autoSync: true,
+      autoSync: false,
       token: "",
       owner: "",
       repo: "",
@@ -6899,7 +6896,11 @@ landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库�
     function loadGithubConfig() {
       try {
         const raw = localStorage.getItem(GITHUB_CONFIG_KEY);
-        if (raw) return { ...GITHUB_DEFAULTS, ...JSON.parse(raw) };
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          // 已取消自动推送：始终关闭 autoSync，仅保留手动推送
+          return { ...GITHUB_DEFAULTS, ...parsed, autoSync: false };
+        }
       } catch (e) {
         console.warn("读取 GitHub 配置失败", e);
       }
@@ -6907,13 +6908,12 @@ landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库�
     }
 
     function saveGithubConfig(cfg) {
-      localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify(cfg));
+      localStorage.setItem(GITHUB_CONFIG_KEY, JSON.stringify({ ...cfg, autoSync: false }));
     }
 
     function fillGithubConfigForm() {
       const cfg = loadGithubConfig();
       document.getElementById("githubEnabled").checked = !!cfg.enabled;
-      document.getElementById("githubAutoSync").checked = cfg.autoSync !== false;
       document.getElementById("githubTokenInput").value = cfg.token || "";
       document.getElementById("githubOwnerInput").value = cfg.owner || "";
       document.getElementById("githubRepoInput").value = cfg.repo || "";
@@ -6925,7 +6925,7 @@ landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库�
     function readGithubConfigFromForm() {
       return {
         enabled: document.getElementById("githubEnabled").checked,
-        autoSync: document.getElementById("githubAutoSync").checked,
+        autoSync: false,
         token: document.getElementById("githubTokenInput").value.trim(),
         owner: document.getElementById("githubOwnerInput").value.trim(),
         repo: document.getElementById("githubRepoInput").value.trim(),
@@ -7073,13 +7073,6 @@ landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库�
       }
     }
 
-    function scheduleGitHubSync() {
-      const cfg = loadGithubConfig();
-      if (!cfg.enabled || !cfg.autoSync) return;
-      clearTimeout(githubSyncTimer);
-      githubSyncTimer = setTimeout(() => pushToGitHub(false), 2000);
-    }
-
     async function pullFromGitHub(confirmOverwrite = true) {
       const cfg = loadGithubConfig();
       const remote = await fetchGitHubState(cfg);
@@ -7101,17 +7094,12 @@ landmarks 须 3-5 个，名称像真实地点（门户、登记处、档案库�
       if (!cfg.enabled || !cfg.token || !cfg.owner || !cfg.repo) return;
       try {
         const remote = await fetchGitHubState(cfg);
-        if (!remote) {
-          if (state.projects.length && cfg.autoSync) await pushToGitHub(false);
-          return;
-        }
+        if (!remote) return;
         const remoteTime = remote.updatedAt ? new Date(remote.updatedAt).getTime() : 0;
         const localTime = state.updatedAt ? new Date(state.updatedAt).getTime() : 0;
         if (remoteTime > localTime) {
           applyStateFromData(remote);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } else if (localTime > remoteTime && cfg.autoSync) {
-          await pushToGitHub(false);
         }
       } catch (e) {
         console.warn("GitHub 启动同步失败", e);
@@ -9110,7 +9098,6 @@ ${dataLines.join("\n")}`;
       normalizeStateForPersistence();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       showSaveHint();
-      scheduleGitHubSync();
     }
 
     function debouncedSave() {
