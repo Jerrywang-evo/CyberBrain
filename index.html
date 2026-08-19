@@ -86,6 +86,7 @@
       --z-topbar-dropdown: 121;
       --z-mobile-sheet: 135;
       --z-mobile-tabbar: 140;
+      --z-mobile-nav: 160;
       --z-modal: 600;
       --z-toast: 700;
     }
@@ -268,8 +269,13 @@
       z-index: var(--z-topbar-dropdown);
     }
 
+    .topbar-dropdown.open {
+      z-index: 20;
+    }
+
     .topbar-dropdown.open .topbar-dropdown-menu {
       display: block;
+      z-index: var(--z-topbar-dropdown);
     }
 
     .topbar-dropdown-item {
@@ -498,6 +504,7 @@
 
       .topbar-nav-backdrop:not([hidden]) {
         display: block;
+        z-index: var(--z-mobile-nav);
       }
 
       .topbar-nav {
@@ -506,7 +513,7 @@
         top: calc(var(--topbar-h) + 6px);
         left: max(0.5rem, env(safe-area-inset-left));
         right: max(0.5rem, env(safe-area-inset-right));
-        z-index: var(--z-topbar-dropdown);
+        z-index: calc(var(--z-mobile-nav) + 1);
         flex-direction: column;
         align-items: stretch;
         gap: 0.35rem;
@@ -539,16 +546,24 @@
       .topbar-dropdown-toggle {
         width: 100%;
         text-align: left;
-        padding: 0.72rem 0.75rem;
-        font-size: 0.9rem;
-        min-height: 44px;
+        padding: 0.45rem 0.75rem 0.15rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        min-height: auto;
+        pointer-events: none;
+      }
+
+      .topbar-dropdown-toggle::after {
+        display: none;
       }
 
       .topbar-dropdown-menu {
+        display: block;
         position: static;
         min-width: 0;
-        margin-top: 0.15rem;
-        padding: 0 0 0.25rem 0.5rem;
+        margin-top: 0;
+        padding: 0 0 0.35rem 0.5rem;
         background: transparent;
         border: none;
         box-shadow: none;
@@ -4131,6 +4146,11 @@
     }
 
     body.mobile-layout.mobile-modal-open #mobileTabbar {
+      pointer-events: none !important;
+      visibility: hidden !important;
+    }
+
+    body.mobile-nav-open #mobileTabbar {
       pointer-events: none !important;
       visibility: hidden !important;
     }
@@ -8564,6 +8584,7 @@ ${dataLines.join("\n")}`;
     function setTopbarNavOpen(open) {
       const nav = document.getElementById("topbarNav");
       nav?.classList.toggle("open", open);
+      document.body.classList.toggle("mobile-nav-open", !!open && isMobileLayout());
       syncTopbarNavBackdrop();
       updateBodyScrollLock();
     }
@@ -10589,6 +10610,9 @@ ${dataLines.join("\n")}`;
           if (!wasOpen) {
             dd.classList.add("open");
             btn.setAttribute("aria-expanded", "true");
+            requestAnimationFrame(() => {
+              dd.querySelector(".topbar-dropdown-menu")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+            });
           }
         });
       });
