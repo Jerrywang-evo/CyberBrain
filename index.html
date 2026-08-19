@@ -504,7 +504,7 @@
 
       .topbar-nav-backdrop:not([hidden]) {
         display: block;
-        z-index: var(--z-mobile-nav);
+        z-index: var(--z-topbar-backdrop);
       }
 
       .topbar-nav {
@@ -513,7 +513,8 @@
         top: calc(var(--topbar-h) + 6px);
         left: max(0.5rem, env(safe-area-inset-left));
         right: max(0.5rem, env(safe-area-inset-right));
-        z-index: calc(var(--z-mobile-nav) + 1);
+        z-index: 2;
+        pointer-events: auto;
         flex-direction: column;
         align-items: stretch;
         gap: 0.35rem;
@@ -575,6 +576,8 @@
         padding: 0.72rem 0.65rem;
         font-size: 0.88rem;
         min-height: 44px;
+        pointer-events: auto;
+        color: var(--text);
       }
 
       .mobile-adventure-sheet {
@@ -4153,6 +4156,14 @@
     body.mobile-nav-open #mobileTabbar {
       pointer-events: none !important;
       visibility: hidden !important;
+    }
+
+    body.mobile-nav-open .topbar {
+      z-index: calc(var(--z-mobile-nav) + 1) !important;
+    }
+
+    body.mobile-nav-open .topbar-nav-backdrop:not([hidden]) {
+      z-index: var(--z-mobile-nav) !important;
     }
 
     body.mobile-modal-open .modal-overlay:not(.open) {
